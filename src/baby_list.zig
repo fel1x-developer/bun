@@ -14,6 +14,12 @@ pub fn BabyList(comptime Type: type) type {
 
         pub const Elem = Type;
 
+        pub fn moveBytesToBeginning(this: *@This(), offset: usize, len: usize) void {
+            bun.C.memmove(this.ptr, this.ptr[offset..], len);
+            bun.debugAssert(this.len >= len);
+            this.len = @truncate(len);
+        }
+
         pub fn set(this: *@This(), slice_: []Type) void {
             this.ptr = slice_.ptr;
             this.len = @as(u32, @truncate(slice_.len));
