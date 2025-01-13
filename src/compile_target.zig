@@ -5,6 +5,7 @@
 /// It stores the downloaded binary into the bun install cache.
 ///
 const bun = @import("root").bun;
+const C = @import("root").C;
 const std = @import("std");
 const Environment = bun.Environment;
 const strings = bun.strings;
@@ -73,23 +74,23 @@ pub fn toNPMRegistryURLWithURL(this: *const CompileTarget, buf: []u8, registry_u
     return switch (this.os) {
         inline else => |os| switch (this.arch) {
             inline else => |arch| switch (this.libc) {
-              inline else => |libc| switch (this.baseline) {
-                  // https://registry.npmjs.org/@oven/bun-linux-x64/-/bun-linux-x64-0.1.6.tgz
-                  inline else => |is_baseline| try std.fmt.bufPrint(buf, comptime "{s}/@oven/bun-" ++
-                      os.npmName() ++ "-" ++ arch.npmName() ++
-                      libc.npmName() ++
-                      (if (is_baseline) "-baseline" else "") ++
-                      "/-/bun-" ++
-                      os.npmName() ++ "-" ++ arch.npmName() ++
-                      libc.npmName() ++
-                      (if (is_baseline) "-baseline" else "") ++
-                      "-" ++
-                      "{d}.{d}.{d}.tgz", .{
-                      registry_url,
-                      this.version.major,
-                      this.version.minor,
-                      this.version.patch,
-                  }),
+                inline else => |libc| switch (this.baseline) {
+                    // https://registry.npmjs.org/@oven/bun-linux-x64/-/bun-linux-x64-0.1.6.tgz
+                    inline else => |is_baseline| try std.fmt.bufPrint(buf, comptime "{s}/@oven/bun-" ++
+                        os.npmName() ++ "-" ++ arch.npmName() ++
+                        libc.npmName() ++
+                        (if (is_baseline) "-baseline" else "") ++
+                        "/-/bun-" ++
+                        os.npmName() ++ "-" ++ arch.npmName() ++
+                        libc.npmName() ++
+                        (if (is_baseline) "-baseline" else "") ++
+                        "-" ++
+                        "{d}.{d}.{d}.tgz", .{
+                        registry_url,
+                        this.version.major,
+                        this.version.minor,
+                        this.version.patch,
+                    }),
                 },
             },
         },
@@ -297,7 +298,7 @@ pub fn downloadToPath(this: *const CompileTarget, env: *bun.DotEnv.Loader, alloc
 
                 var did_retry = false;
                 while (true) {
-                    bun.C.moveFileZ(bun.toFD(tmpdir), if (this.os == .windows) "bun.exe" else "bun", bun.invalid_fd, dest_z) catch |err| {
+                    C.moveFileZ(bun.toFD(tmpdir), if (this.os == .windows) "bun.exe" else "bun", bun.invalid_fd, dest_z) catch |err| {
                         if (!did_retry) {
                             did_retry = true;
                             const dirname = bun.path.dirname(dest_z, .loose);

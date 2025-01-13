@@ -11,6 +11,7 @@ const JSGlobalObject = JSC.JSGlobalObject;
 const posix = std.posix;
 const Output = bun.Output;
 const os = std.os;
+const C = @import("root").C;
 
 const uv = bun.windows.libuv;
 pub const Stdio = union(enum) {
@@ -47,7 +48,7 @@ pub const Stdio = union(enum) {
         stdin_used_as_out,
         out_used_as_stdin,
         blob_used_as_out,
-        uv_pipe: bun.C.E,
+        uv_pipe: C.E,
 
         pub fn toStr(this: *const @This()) []const u8 {
             return switch (this.*) {

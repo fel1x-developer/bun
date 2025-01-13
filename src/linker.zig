@@ -10,7 +10,7 @@ const MutableString = bun.MutableString;
 const stringZ = bun.stringZ;
 const default_allocator = bun.default_allocator;
 const FileDescriptorType = bun.FileDescriptor;
-const C = bun.C;
+const C = @import("root").C;
 const Ref = @import("./ast/base.zig").Ref;
 
 const std = @import("std");

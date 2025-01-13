@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const C = @import("root").C;
 const JSC = bun.JSC;
 const std = @import("std");
 const Blob = JSC.WebCore.Blob;
@@ -287,7 +288,7 @@ pub const WriteFile = struct {
             // seemed to have zero performance impact in
             // microbenchmarks.
             if (!this.could_block and this.bytes_blob.sharedView().len > 1024) {
-                bun.C.preallocate_file(fd.cast(), 0, @intCast(this.bytes_blob.sharedView().len)) catch {}; // we don't care if it fails.
+                C.preallocate_file(fd.cast(), 0, @intCast(this.bytes_blob.sharedView().len)) catch {}; // we don't care if it fails.
             }
         }
 
@@ -434,7 +435,7 @@ pub const WriteFileWindows = struct {
             &this.io_request,
             &(std.posix.toPosixPath(path) catch {
                 this.throw(bun.sys.Error{
-                    .errno = @intFromEnum(bun.C.E.NAMETOOLONG),
+                    .errno = @intFromEnum(C.E.NAMETOOLONG),
                     .syscall = .open,
                 });
                 return;

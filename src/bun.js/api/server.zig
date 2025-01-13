@@ -1,6 +1,7 @@
 const Bun = @This();
 const default_allocator = bun.default_allocator;
 const bun = @import("root").bun;
+const C = @import("root").C;
 const Environment = bun.Environment;
 const AnyBlob = bun.JSC.WebCore.AnyBlob;
 const Global = bun.Global;
@@ -2592,7 +2593,7 @@ fn NewRequestContext(comptime ssl_enabled: bool, comptime debug_mode: bool, comp
                 const val = linux.sendfile(this.sendfile.socket_fd.cast(), this.sendfile.fd.cast(), &signed_offset, this.sendfile.remain);
                 this.sendfile.offset = @as(Blob.SizeType, @intCast(signed_offset));
 
-                const errcode = bun.C.getErrno(val);
+                const errcode = C.getErrno(val);
 
                 this.sendfile.remain -|= @as(Blob.SizeType, @intCast(this.sendfile.offset -| start));
 
@@ -2607,7 +2608,7 @@ fn NewRequestContext(comptime ssl_enabled: bool, comptime debug_mode: bool, comp
             } else {
                 var sbytes: std.posix.off_t = adjusted_count;
                 const signed_offset = @as(i64, @bitCast(@as(u64, this.sendfile.offset)));
-                const errcode = bun.C.getErrno(std.c.sendfile(
+                const errcode = C.getErrno(std.c.sendfile(
                     this.sendfile.fd.cast(),
                     this.sendfile.socket_fd.cast(),
                     signed_offset,
@@ -6826,7 +6827,7 @@ pub fn NewServer(comptime NamespaceType: type, comptime ssl_enabled_: bool, comp
                             if (comptime Environment.isLinux) {
                                 const rc: i32 = -1;
                                 const code = Sys.getErrno(rc);
-                                if (code == bun.C.E.ACCES) {
+                                if (code == C.E.ACCES) {
                                     error_instance = (JSC.SystemError{
                                         .message = bun.String.init(std.fmt.bufPrint(&output_buf, "permission denied {s}:{d}", .{ tcp.hostname orelse "0.0.0.0", tcp.port }) catch "Failed to start server"),
                                         .code = bun.String.static("EACCES"),

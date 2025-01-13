@@ -7,7 +7,7 @@ const strings = bun.strings;
 const MutableString = bun.MutableString;
 const stringZ = bun.stringZ;
 const default_allocator = bun.default_allocator;
-const C = bun.C;
+const C = @import("root").C;
 const std = @import("std");
 const OOM = bun.OOM;
 
@@ -933,7 +933,7 @@ pub const CommandLineReporter = struct {
         if (comptime reporters.lcov) {
             try lcov_buffered_writer.flush();
             lcov_file.close();
-            bun.C.moveFileZ(
+            C.moveFileZ(
                 bun.toFD(std.fs.cwd()),
                 lcov_name,
                 bun.toFD(std.fs.cwd()),

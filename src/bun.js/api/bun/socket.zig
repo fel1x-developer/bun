@@ -1,5 +1,6 @@
 const default_allocator = bun.default_allocator;
 const bun = @import("root").bun;
+const C = @import("root").C;
 const Environment = bun.Environment;
 
 const Global = bun.Global;
@@ -693,10 +694,10 @@ pub const Listener = struct {
                 hostname_or_unix.deinit();
             }
 
-            const errno = @intFromEnum(bun.C.getErrno(@as(c_int, -1)));
+            const errno = @intFromEnum(C.getErrno(@as(c_int, -1)));
             if (errno != 0) {
                 err.put(globalObject, ZigString.static("errno"), JSValue.jsNumber(errno));
-                if (bun.C.SystemErrno.init(errno)) |str| {
+                if (C.SystemErrno.init(errno)) |str| {
                     err.put(globalObject, ZigString.static("code"), ZigString.init(@tagName(str)).toJS(globalObject));
                 }
             }
@@ -793,7 +794,7 @@ pub const Listener = struct {
             log("Failed to listen {d}", .{errno});
             if (errno != 0) {
                 err.put(globalObject, ZigString.static("errno"), JSValue.jsNumber(errno));
-                if (bun.C.SystemErrno.init(errno)) |str| {
+                if (C.SystemErrno.init(errno)) |str| {
                     err.put(globalObject, ZigString.static("code"), ZigString.init(@tagName(str)).toJS(globalObject));
                 }
             }
@@ -1267,7 +1268,7 @@ pub const Listener = struct {
                 SocketType.dataSetCached(socket.getThisValue(globalObject), globalObject, default_data);
                 socket.flags.allow_half_open = socket_config.allowHalfOpen;
                 socket.doConnect(connection) catch {
-                    socket.handleConnectError(@intFromEnum(if (port == null) bun.C.SystemErrno.ENOENT else bun.C.SystemErrno.ECONNREFUSED));
+                    socket.handleConnectError(@intFromEnum(if (port == null) C.SystemErrno.ENOENT else C.SystemErrno.ECONNREFUSED));
                     return promise_value;
                 };
 
@@ -1615,9 +1616,9 @@ fn NewSocket(comptime ssl: bool) type {
                 .syscall = bun.String.static("connect"),
                 // For some reason errno is 0 which causes this to be success.
                 // Unix socket emits ENOENT
-                .code = if (errno == @intFromEnum(bun.C.SystemErrno.ENOENT)) bun.String.static("ENOENT") else bun.String.static("ECONNREFUSED"),
+                .code = if (errno == @intFromEnum(C.SystemErrno.ENOENT)) bun.String.static("ENOENT") else bun.String.static("ECONNREFUSED"),
                 // .code = bun.String.static(@tagName(bun.sys.getErrno(errno))),
-                // .code = bun.String.static(@tagName(@as(bun.C.E, @enumFromInt(errno)))),
+                // .code = bun.String.static(@tagName(@as(C.E, @enumFromInt(errno)))),
             };
             vm.eventLoop().enter();
             defer {
@@ -2261,7 +2262,7 @@ fn NewSocket(comptime ssl: bool) type {
                         if (written > 0) {
                             if (remaining_in_buffered_data.len > 0) {
                                 var input_buffer = this.buffered_data_for_node_net.slice();
-                                bun.C.memmove(input_buffer.ptr, input_buffer.ptr[written..], remaining_in_buffered_data.len);
+                                C.memmove(input_buffer.ptr, input_buffer.ptr[written..], remaining_in_buffered_data.len);
                                 this.buffered_data_for_node_net.len = @truncate(remaining_in_buffered_data.len);
                             }
                         }
@@ -2289,7 +2290,7 @@ fn NewSocket(comptime ssl: bool) type {
                         const len = @as(usize, @intCast(this.buffered_data_for_node_net.len)) - wrote;
                         bun.debugAssert(len <= this.buffered_data_for_node_net.len);
                         bun.debugAssert(len <= this.buffered_data_for_node_net.cap);
-                        bun.C.memmove(this.buffered_data_for_node_net.ptr, this.buffered_data_for_node_net.ptr[wrote..], len);
+                        C.memmove(this.buffered_data_for_node_net.ptr, this.buffered_data_for_node_net.ptr[wrote..], len);
                         this.buffered_data_for_node_net.len = @truncate(len);
                     }
                 }
@@ -2425,7 +2426,7 @@ fn NewSocket(comptime ssl: bool) type {
                 if (written > 0) {
                     if (this.buffered_data_for_node_net.len > written) {
                         const remaining = this.buffered_data_for_node_net.slice()[written..];
-                        bun.C.memmove(this.buffered_data_for_node_net.ptr, remaining.ptr, remaining.len);
+                        C.memmove(this.buffered_data_for_node_net.ptr, remaining.ptr, remaining.len);
                         this.buffered_data_for_node_net.len = @truncate(remaining.len);
                     } else {
                         this.buffered_data_for_node_net.deinitWithAllocator(bun.default_allocator);
@@ -3718,7 +3719,7 @@ pub const DuplexUpgradeContext = struct {
             }
         } else {
             if (this.tls) |tls| {
-                tls.handleConnectError(@intFromEnum(bun.C.SystemErrno.ECONNREFUSED));
+                tls.handleConnectError(@intFromEnum(C.SystemErrno.ECONNREFUSED));
             }
         }
     }
@@ -3751,7 +3752,7 @@ pub const DuplexUpgradeContext = struct {
                                 bun.outOfMemory();
                             },
                             else => {
-                                const errno = @intFromEnum(bun.C.SystemErrno.ECONNREFUSED);
+                                const errno = @intFromEnum(C.SystemErrno.ECONNREFUSED);
                                 if (this.tls) |tls| {
                                     const socket = TLSSocket.Socket.fromDuplex(&this.upgrade);
 
@@ -4116,10 +4117,10 @@ pub const WindowsNamedPipeContext = if (Environment.isWindows) struct {
         errdefer {
             switch (socket) {
                 .tls => |tls| {
-                    tls.handleConnectError(@intFromEnum(bun.C.SystemErrno.ENOENT));
+                    tls.handleConnectError(@intFromEnum(C.SystemErrno.ENOENT));
                 },
                 .tcp => |tcp| {
-                    tcp.handleConnectError(@intFromEnum(bun.C.SystemErrno.ENOENT));
+                    tcp.handleConnectError(@intFromEnum(C.SystemErrno.ENOENT));
                 },
                 .none => {},
             }
@@ -4136,10 +4137,10 @@ pub const WindowsNamedPipeContext = if (Environment.isWindows) struct {
         errdefer {
             switch (socket) {
                 .tls => |tls| {
-                    tls.handleConnectError(@intFromEnum(bun.C.SystemErrno.ENOENT));
+                    tls.handleConnectError(@intFromEnum(C.SystemErrno.ENOENT));
                 },
                 .tcp => |tcp| {
-                    tcp.handleConnectError(@intFromEnum(bun.C.SystemErrno.ENOENT));
+                    tcp.handleConnectError(@intFromEnum(C.SystemErrno.ENOENT));
                 },
                 .none => {},
             }
@@ -4334,7 +4335,7 @@ pub fn jsCreateSocketPair(global: *JSC.JSGlobalObject, _: *JSC.CallFrame) bun.JS
     var fds_: [2]std.c.fd_t = .{ 0, 0 };
     const rc = std.c.socketpair(std.posix.AF.UNIX, std.posix.SOCK.STREAM, 0, &fds_);
     if (rc != 0) {
-        const err = bun.sys.Error.fromCode(bun.C.getErrno(rc), .socketpair);
+        const err = bun.sys.Error.fromCode(C.getErrno(rc), .socketpair);
         return global.throwValue(err.toJSC(global));
     }
 

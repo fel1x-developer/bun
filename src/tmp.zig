@@ -1,5 +1,6 @@
-const bun = @import("root").bun;
 const std = @import("std");
+const bun = @import("root").bun;
+const C = @import("root").C;
 const Environment = bun.Environment;
 const O = bun.O;
 
@@ -84,6 +85,6 @@ pub const Tmpfile = struct {
             }
         }
 
-        try bun.C.moveFileZWithHandle(this.fd, this.destination_dir, this.tmpfilename, this.destination_dir, destname);
+        try C.moveFileZWithHandle(this.fd, this.destination_dir, this.tmpfilename, this.destination_dir, destname);
     }
 };

@@ -1,5 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
+const C = @import("root").C;
 const builtin = @import("builtin");
 const win32 = std.os.windows;
 const posix = std.posix;
@@ -1067,7 +1068,7 @@ pub const UV_EUNATCH = -uv.UV_EUNATCH;
 pub const off_t = i64;
 pub fn preallocate_file(_: posix.fd_t, _: off_t, _: off_t) !void {}
 
-const uv = @import("./deps/libuv.zig");
+const uv = @import("../deps/libuv.zig");
 
 pub const E = enum(u16) {
     SUCCESS = 0,
@@ -1437,7 +1438,7 @@ pub fn moveOpenedFileAt(
     var rename_info_buf: [struct_buf_len]u8 align(@alignOf(w.FILE_RENAME_INFORMATION_EX)) = undefined;
 
     const struct_len = @sizeOf(w.FILE_RENAME_INFORMATION_EX) - 1 + new_file_name.len * 2;
-    if (struct_len > struct_buf_len) return Maybe(void).errno(bun.C.E.NAMETOOLONG, .NtSetInformationFile);
+    if (struct_len > struct_buf_len) return Maybe(void).errno(C.E.NAMETOOLONG, .NtSetInformationFile);
 
     const rename_info = @as(*w.FILE_RENAME_INFORMATION_EX, @ptrCast(&rename_info_buf));
     var io_status_block: w.IO_STATUS_BLOCK = undefined;

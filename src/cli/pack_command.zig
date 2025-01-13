@@ -1,5 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
+const C = @import("root").C;
 const Global = bun.Global;
 const Output = bun.Output;
 const Command = bun.CLI.Command;
@@ -2395,7 +2396,7 @@ pub const bindings = struct {
                 },
                 else => {
                     const pathname = archive_entry.pathname();
-                    const kind = bun.C.kindFromMode(archive_entry.filetype());
+                    const kind = C.kindFromMode(archive_entry.filetype());
                     const perm = archive_entry.perm();
 
                     var entry_info: EntryInfo = .{

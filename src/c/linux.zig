@@ -1,5 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
+const C = @import("root").C;
 pub extern "C" fn memmem(haystack: [*]const u8, haystacklen: usize, needle: [*]const u8, needlelen: usize) ?[*]const u8;
 pub const SystemErrno = enum(u8) {
     SUCCESS = 0,
@@ -619,14 +620,14 @@ const posix_spawn_file_actions_addchdir_np_type = *const fn (actions: *posix_spa
 
 /// When not available, these functions will return 0.
 pub fn posix_spawn_file_actions_addfchdir_np(actions: *posix_spawn_file_actions_t, filedes: std.posix.fd_t) c_int {
-    const function = bun.C.dlsym(posix_spawn_file_actions_addfchdir_np_type, "posix_spawn_file_actions_addfchdir_np") orelse
+    const function = C.dlsym(posix_spawn_file_actions_addfchdir_np_type, "posix_spawn_file_actions_addfchdir_np") orelse
         return 0;
     return function(actions, filedes);
 }
 
 /// When not available, these functions will return 0.
 pub fn posix_spawn_file_actions_addchdir_np(actions: *posix_spawn_file_actions_t, path: [*:0]const u8) c_int {
-    const function = bun.C.dlsym(posix_spawn_file_actions_addchdir_np_type, "posix_spawn_file_actions_addchdir_np") orelse
+    const function = C.dlsym(posix_spawn_file_actions_addchdir_np_type, "posix_spawn_file_actions_addchdir_np") orelse
         return 0;
     return function(actions, path);
 }

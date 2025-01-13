@@ -10,7 +10,7 @@ const strings = bun.strings;
 const MutableString = bun.MutableString;
 const stringZ = bun.stringZ;
 const default_allocator = bun.default_allocator;
-const C = bun.C;
+const C = @import("root").C;
 
 // zig build-exe -Doptimize=ReleaseFast --main-pkg-path ../ ./readlink-getfd.zig
 pub fn main() anyerror!void {

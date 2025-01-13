@@ -1,5 +1,12 @@
 const std = @import("std");
 
+pub const LinuxMemFdAllocator = @import("allocators/linux_memfd_allocator.zig").LinuxMemFdAllocator;
+pub const MaxHeapAllocator = @import("allocators/max_heap_allocator.zig").MaxHeapAllocator;
+pub const MemoryAllocator = @import("allocators/memory_allocator.zig");
+pub const Minimalloc = @import("allocators/mimalloc.zig");
+pub const MinimallocArena = @import("allocators/mimalloc_arena.zig");
+pub const NullableAllocator = @import("allocators/NullableAllocator.zig");
+
 const FeatureFlags = @import("./feature_flags.zig");
 const Environment = @import("./env.zig");
 const FixedBufferAllocator = std.heap.FixedBufferAllocator;

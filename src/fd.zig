@@ -2,6 +2,7 @@ const std = @import("std");
 const posix = std.posix;
 
 const bun = @import("root").bun;
+const C = @import("root").C;
 const env = bun.Environment;
 const JSC = bun.JSC;
 const JSValue = JSC.JSValue;
@@ -242,7 +243,7 @@ pub const FDImpl = packed struct {
                 const fd = this.encode();
                 bun.assert(fd != bun.invalid_fd);
                 bun.assert(fd.cast() >= 0);
-                break :result switch (bun.C.getErrno(bun.sys.syscall.close(fd.cast()))) {
+                break :result switch (C.getErrno(bun.sys.syscall.close(fd.cast()))) {
                     .BADF => bun.sys.Error{ .errno = @intFromEnum(posix.E.BADF), .syscall = .close, .fd = fd },
                     else => null,
                 };
@@ -251,7 +252,7 @@ pub const FDImpl = packed struct {
                 const fd = this.encode();
                 bun.assert(fd != bun.invalid_fd);
                 bun.assert(fd.cast() >= 0);
-                break :result switch (bun.C.getErrno(bun.sys.syscall.@"close$NOCANCEL"(fd.cast()))) {
+                break :result switch (C.getErrno(bun.sys.syscall.@"close$NOCANCEL"(fd.cast()))) {
                     .BADF => bun.sys.Error{ .errno = @intFromEnum(posix.E.BADF), .syscall = .close, .fd = fd },
                     else => null,
                 };

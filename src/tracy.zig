@@ -9,6 +9,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const build_options = @import("build_options");
 const bun = @import("root").bun;
+const C = @import("root").C;
 
 pub const enable_allocation = false;
 pub const enable_callstack = false;
@@ -492,7 +493,7 @@ fn dlsym(comptime Type: type, comptime symbol: [:0]const u8) ?Type {
 
     if (comptime bun.Environment.isLinux) {
         // use LD_PRELOAD on linux
-        if (bun.C.dlsym(Type, symbol)) |val| {
+        if (C.dlsym(Type, symbol)) |val| {
             return val;
         }
     }
@@ -537,14 +538,14 @@ fn dlsym(comptime Type: type, comptime symbol: [:0]const u8) ?Type {
                 0;
 
             if (bun.getenvZ("BUN_TRACY_PATH")) |path| {
-                const handle = bun.C.dlopen(&(std.posix.toPosixPath(path) catch unreachable), RLTD);
+                const handle = C.dlopen(&(std.posix.toPosixPath(path) catch unreachable), RLTD);
                 if (handle != null) {
                     Handle.handle = handle;
                     break :get;
                 }
             }
             inline for (comptime paths_to_try) |path| {
-                const handle = bun.C.dlopen(path, RLTD);
+                const handle = C.dlopen(path, RLTD);
                 if (handle != null) {
                     Handle.handle = handle;
                     break;
@@ -556,5 +557,5 @@ fn dlsym(comptime Type: type, comptime symbol: [:0]const u8) ?Type {
         }
     }
 
-    return bun.C.dlsymWithHandle(Type, symbol, Handle.getter);
+    return C.dlsymWithHandle(Type, symbol, Handle.getter);
 }

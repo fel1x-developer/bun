@@ -13,6 +13,7 @@ const Dir = std.fs.Dir;
 const JSC = bun.JSC;
 const PathString = JSC.PathString;
 const bun = @import("root").bun;
+const C = @import("root").C;
 
 const IteratorError = error{ AccessDenied, SystemResources } || posix.UnexpectedError;
 const mem = std.mem;
@@ -270,7 +271,7 @@ pub fn NewIterator(comptime use_windows_ospath: bool) type {
                             bun.sys.syslog("NtQueryDirectoryFile({}) = {s}", .{ bun.toFD(self.dir.fd), @tagName(rc) });
                             return .{
                                 .err = .{
-                                    .errno = @intFromEnum(bun.C.SystemErrno.ENOTDIR),
+                                    .errno = @intFromEnum(C.SystemErrno.ENOTDIR),
                                     .syscall = .NtQueryDirectoryFile,
                                 },
                             };
@@ -296,7 +297,7 @@ pub fn NewIterator(comptime use_windows_ospath: bool) type {
 
                             return .{
                                 .err = .{
-                                    .errno = @intFromEnum(bun.C.SystemErrno.EUNKNOWN),
+                                    .errno = @intFromEnum(C.SystemErrno.EUNKNOWN),
                                     .syscall = .NtQueryDirectoryFile,
                                 },
                             };

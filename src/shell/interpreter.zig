@@ -20,6 +20,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const string = []const u8;
 const bun = @import("root").bun;
+const C = @import("root").C;
 const posix = std.posix;
 const Arena = std.heap.ArenaAllocator;
 const Allocator = std.mem.Allocator;
@@ -5688,7 +5689,7 @@ pub const Interpreter = struct {
 
         pub fn done(this: *Builtin, exit_code: anytype) void {
             const code: ExitCode = switch (@TypeOf(exit_code)) {
-                bun.C.E => @intFromEnum(exit_code),
+                C.E => @intFromEnum(exit_code),
                 u1, u8, u16 => exit_code,
                 comptime_int => exit_code,
                 else => @compileError("Invalid type: " ++ @typeName(@TypeOf(exit_code))),
@@ -5775,7 +5776,7 @@ pub const Interpreter = struct {
                 },
                 .arraybuf => {
                     if (io.arraybuf.i >= io.arraybuf.buf.array_buffer.byte_len) {
-                        return Maybe(usize).initErr(Syscall.Error.fromCode(bun.C.E.NOSPC, .write));
+                        return Maybe(usize).initErr(Syscall.Error.fromCode(C.E.NOSPC, .write));
                     }
 
                     const len = buf.len;
@@ -5801,10 +5802,10 @@ pub const Interpreter = struct {
         fn taskErrorToString(this: *Builtin, comptime kind: Kind, err: anytype) []const u8 {
             switch (@TypeOf(err)) {
                 Syscall.Error => return switch (err.getErrno()) {
-                    bun.C.E.NOENT => this.fmtErrorArena(kind, "{s}: No such file or directory\n", .{err.path}),
-                    bun.C.E.NAMETOOLONG => this.fmtErrorArena(kind, "{s}: File name too long\n", .{err.path}),
-                    bun.C.E.ISDIR => this.fmtErrorArena(kind, "{s}: is a directory\n", .{err.path}),
-                    bun.C.E.NOTEMPTY => this.fmtErrorArena(kind, "{s}: Directory not empty\n", .{err.path}),
+                    C.E.NOENT => this.fmtErrorArena(kind, "{s}: No such file or directory\n", .{err.path}),
+                    C.E.NAMETOOLONG => this.fmtErrorArena(kind, "{s}: File name too long\n", .{err.path}),
+                    C.E.ISDIR => this.fmtErrorArena(kind, "{s}: is a directory\n", .{err.path}),
+                    C.E.NOTEMPTY => this.fmtErrorArena(kind, "{s}: Directory not empty\n", .{err.path}),
                     else => this.fmtErrorArena(kind, "{s}\n", .{err.toSystemError().message.byteSlice()}),
                 },
                 JSC.SystemError => {
@@ -6428,7 +6429,7 @@ pub const Interpreter = struct {
                         .path = .{ .string = bun.PathString.init(filepath) },
                     };
                     if (node_fs.utimes(args, .callback).asErr()) |err| out: {
-                        if (err.getErrno() == bun.C.E.NOENT) {
+                        if (err.getErrno() == C.E.NOENT) {
                             const perm = 0o664;
                             switch (Syscall.open(filepath, bun.O.CREAT | bun.O.WRONLY, perm)) {
                                 .result => |fd| {
@@ -7335,7 +7336,7 @@ pub const Interpreter = struct {
                 const errno: usize = @intCast(err.errno);
 
                 switch (errno) {
-                    @as(usize, @intFromEnum(bun.C.E.NOTDIR)) => {
+                    @as(usize, @intFromEnum(C.E.NOTDIR)) => {
                         if (this.bltn.stderr.needsIO() == null) {
                             const buf = this.bltn.fmtErrorArena(.cd, "not a directory: {s}\n", .{new_cwd_});
                             _ = this.bltn.writeNoIO(.stderr, buf);
@@ -7348,7 +7349,7 @@ pub const Interpreter = struct {
                         this.writeStderrNonBlocking("not a directory: {s}\n", .{new_cwd_});
                         return Maybe(void).success;
                     },
-                    @as(usize, @intFromEnum(bun.C.E.NOENT)) => {
+                    @as(usize, @intFromEnum(C.E.NOENT)) => {
                         if (this.bltn.stderr.needsIO() == null) {
                             const buf = this.bltn.fmtErrorArena(.cd, "not a directory: {s}\n", .{new_cwd_});
                             _ = this.bltn.writeNoIO(.stderr, buf);
@@ -7726,10 +7727,10 @@ pub const Interpreter = struct {
                     const fd = switch (ShellSyscall.openat(this.cwd, this.path, bun.O.RDONLY | bun.O.DIRECTORY, 0)) {
                         .err => |e| {
                             switch (e.getErrno()) {
-                                bun.C.E.NOENT => {
+                                C.E.NOENT => {
                                     this.err = this.errorWithPath(e, this.path);
                                 },
-                                bun.C.E.NOTDIR => {
+                                C.E.NOTDIR => {
                                     this.result_kind = .file;
                                     this.addEntry(this.path);
                                 },
@@ -8297,7 +8298,7 @@ pub const Interpreter = struct {
                     const fd = switch (ShellSyscall.openat(this.cwd, this.target, bun.O.RDONLY | bun.O.DIRECTORY, 0)) {
                         .err => |e| {
                             switch (e.getErrno()) {
-                                bun.C.E.NOTDIR => {
+                                C.E.NOTDIR => {
                                     this.result = .{ .result = null };
                                 },
                                 else => {
@@ -8363,7 +8364,7 @@ pub const Interpreter = struct {
                 pub fn moveInDir(this: *@This(), src: [:0]const u8, buf: *bun.PathBuffer) bool {
                     const path_in_dir_ = bun.path.normalizeBuf(ResolvePath.basename(src), buf, .auto);
                     if (path_in_dir_.len + 1 >= buf.len) {
-                        this.err = Syscall.Error.fromCode(bun.C.E.NAMETOOLONG, .rename);
+                        this.err = Syscall.Error.fromCode(C.E.NAMETOOLONG, .rename);
                         return false;
                     }
                     buf[path_in_dir_.len] = 0;
@@ -8481,7 +8482,7 @@ pub const Interpreter = struct {
                             const maybe_fd: ?bun.FileDescriptor = switch (check_target.task.result.?) {
                                 .err => |e| brk: {
                                     switch (e.getErrno()) {
-                                        bun.C.E.NOENT => {
+                                        C.E.NOENT => {
                                             // Means we are renaming entry, not moving to a directory
                                             if (this.args.sources.len == 1) break :brk null;
 
@@ -9590,11 +9591,11 @@ pub const Interpreter = struct {
                                 .result => return Maybe(void).success,
                                 .err => |e| {
                                     switch (e.getErrno()) {
-                                        bun.C.E.NOENT => {
+                                        C.E.NOENT => {
                                             if (this.opts.force) return this.verboseDeleted(dir_task, path);
                                             return .{ .err = this.errorWithPath(e, path) };
                                         },
-                                        bun.C.E.NOTDIR => {
+                                        C.E.NOTDIR => {
                                             delete_state.treat_as_dir = false;
                                             if (this.removeEntryFile(dir_task, dir_task.path, is_absolute, buf, &delete_state).asErr()) |err| {
                                                 return .{ .err = this.errorWithPath(err, path) };
@@ -9610,7 +9611,7 @@ pub const Interpreter = struct {
                     }
 
                     if (!this.opts.recursive) {
-                        return Maybe(void).initErr(Syscall.Error.fromCode(bun.C.E.ISDIR, .TODO).withPath(bun.default_allocator.dupeZ(u8, dir_task.path) catch bun.outOfMemory()));
+                        return Maybe(void).initErr(Syscall.Error.fromCode(C.E.ISDIR, .TODO).withPath(bun.default_allocator.dupeZ(u8, dir_task.path) catch bun.outOfMemory()));
                     }
 
                     const flags = bun.O.DIRECTORY | bun.O.RDONLY;
@@ -9618,11 +9619,11 @@ pub const Interpreter = struct {
                         .result => |fd| fd,
                         .err => |e| {
                             switch (e.getErrno()) {
-                                bun.C.E.NOENT => {
+                                C.E.NOENT => {
                                     if (this.opts.force) return this.verboseDeleted(dir_task, path);
                                     return .{ .err = this.errorWithPath(e, path) };
                                 },
-                                bun.C.E.NOTDIR => {
+                                C.E.NOTDIR => {
                                     return this.removeEntryFile(dir_task, dir_task.path, is_absolute, buf, &DummyRemoveFile.dummy);
                                 },
                                 else => return .{ .err = this.errorWithPath(e, path) },
@@ -9714,7 +9715,7 @@ pub const Interpreter = struct {
                         },
                         .err => |e| {
                             switch (e.getErrno()) {
-                                bun.C.E.NOENT => {
+                                C.E.NOENT => {
                                     if (this.opts.force) {
                                         switch (this.verboseDeleted(dir_task, path)) {
                                             .err => |e2| return .{ .err = e2 },
@@ -9819,14 +9820,14 @@ pub const Interpreter = struct {
                                 },
                                 .err => |e| {
                                     switch (e.getErrno()) {
-                                        bun.C.E.NOENT => {
+                                        C.E.NOENT => {
                                             if (this.opts.force) {
                                                 _ = this.verboseDeleted(dir_task, dir_task.path);
                                                 return .{ .result = true };
                                             }
                                             return .{ .err = this.errorWithPath(e, dir_task.path) };
                                         },
-                                        bun.C.E.NOTDIR => {
+                                        C.E.NOTDIR => {
                                             state.treat_as_dir = false;
                                             continue;
                                         },
@@ -9869,17 +9870,17 @@ pub const Interpreter = struct {
                         .err => |e| {
                             debug("unlinkatWithFlags({s}) = {s}", .{ path, @tagName(e.getErrno()) });
                             switch (e.getErrno()) {
-                                bun.C.E.NOENT => {
+                                C.E.NOENT => {
                                     if (this.opts.force)
                                         return this.verboseDeleted(parent_dir_task, path);
 
                                     return .{ .err = this.errorWithPath(e, path) };
                                 },
-                                bun.C.E.ISDIR => {
+                                C.E.ISDIR => {
                                     return Handler.onIsDir(vtable, parent_dir_task, path, is_absolute, buf);
                                 },
                                 // This might happen if the file is actually a directory
-                                bun.C.E.PERM => {
+                                C.E.PERM => {
                                     switch (builtin.os.tag) {
                                         // non-Linux POSIX systems and Windows return EPERM when trying to delete a directory, so
                                         // we need to handle that case specifically and translate the error
@@ -9894,13 +9895,13 @@ pub const Interpreter = struct {
                                                     .err => |e2| {
                                                         return switch (e2.getErrno()) {
                                                             // not empty, process directory as we would normally
-                                                            bun.C.E.NOTEMPTY => {
+                                                            C.E.NOTEMPTY => {
                                                                 // this.enqueueNoJoin(parent_dir_task, path, .dir);
                                                                 // return Maybe(void).success;
                                                                 return Handler.onDirNotEmpty(vtable, parent_dir_task, path, is_absolute, buf);
                                                             },
                                                             // actually a file, the error is a permissions error
-                                                            bun.C.E.NOTDIR => .{ .err = this.errorWithPath(e, path) },
+                                                            C.E.NOTDIR => .{ .err = this.errorWithPath(e, path) },
                                                             else => .{ .err = this.errorWithPath(e2, path) },
                                                         };
                                                     },
@@ -10824,7 +10825,7 @@ pub const Interpreter = struct {
                     if (bun.Environment.isWindows) {
                         const attributes = bun.sys.getFileAttributes(path[0..path.len]) orelse {
                             const err: Syscall.Error = .{
-                                .errno = @intFromEnum(bun.C.SystemErrno.ENOENT),
+                                .errno = @intFromEnum(C.SystemErrno.ENOENT),
                                 .syscall = .copyfile,
                                 .path = path,
                             };
@@ -10919,7 +10920,7 @@ pub const Interpreter = struct {
                     const tgt_is_dir: bool, const tgt_exists: bool = switch (this.isDir(tgt)) {
                         .result => |is_dir| .{ is_dir, true },
                         .err => |e| brk: {
-                            if (e.getErrno() == bun.C.E.NOENT) {
+                            if (e.getErrno() == C.E.NOENT) {
                                 // If it has a trailing directory separator, its a directory
                                 const is_dir = hasTrailingSep(tgt);
                                 break :brk .{ is_dir, false };

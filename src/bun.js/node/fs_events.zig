@@ -1,5 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
+const C = @import("root").C;
 const Environment = bun.Environment;
 const Mutex = bun.Mutex;
 const sync = @import("../../sync.zig");
@@ -191,7 +192,7 @@ var fsevents_cf: ?CoreFoundation = null;
 var fsevents_cs: ?CoreServices = null;
 
 fn InitLibrary() void {
-    const fsevents_cf_handle = bun.C.dlopen("/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation", RTLD_LAZY | RTLD_LOCAL);
+    const fsevents_cf_handle = C.dlopen("/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation", RTLD_LAZY | RTLD_LOCAL);
     if (fsevents_cf_handle == null) @panic("Cannot Load CoreFoundation");
 
     fsevents_cf = CoreFoundation{
@@ -210,7 +211,7 @@ fn InitLibrary() void {
         .RunLoopDefaultMode = dlsym(fsevents_cf_handle, *CFStringRef, "kCFRunLoopDefaultMode") orelse @panic("Cannot Load CoreFoundation"),
     };
 
-    const fsevents_cs_handle = bun.C.dlopen("/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices", RTLD_LAZY | RTLD_LOCAL);
+    const fsevents_cs_handle = C.dlopen("/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices", RTLD_LAZY | RTLD_LOCAL);
     if (fsevents_cs_handle == null) @panic("Cannot Load CoreServices");
 
     fsevents_cs = CoreServices{

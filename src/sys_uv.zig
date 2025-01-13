@@ -11,7 +11,7 @@ const kernel32 = bun.windows;
 const linux = posix.linux;
 const uv = bun.windows.libuv;
 
-const C = bun.C;
+const C = @import("root").C;
 const E = C.E;
 const Environment = bun.Environment;
 const FDImpl = bun.FDImpl;

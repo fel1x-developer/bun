@@ -9,7 +9,7 @@ const MutableString = bun.MutableString;
 const stringZ = bun.stringZ;
 const FeatureFlags = bun.FeatureFlags;
 const default_allocator = bun.default_allocator;
-const C = bun.C;
+const C = @import("root").C;
 
 const js_ast = bun.JSAst;
 const logger = bun.logger;

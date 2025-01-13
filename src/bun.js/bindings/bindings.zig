@@ -1,5 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
+const C = @import("root").C;
 const string = bun.string;
 const Output = bun.Output;
 const C_API = bun.JSC.C;
@@ -1747,7 +1748,7 @@ pub const SystemError = extern struct {
     pub const name = "SystemError";
     pub const namespace = "";
 
-    pub fn getErrno(this: *const SystemError) bun.C.E {
+    pub fn getErrno(this: *const SystemError) C.E {
         // The inverse in bun.sys.Error.toSystemError()
         return @enumFromInt(this.errno * -1);
     }

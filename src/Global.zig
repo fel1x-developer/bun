@@ -6,6 +6,7 @@ const use_mimalloc = bun.use_mimalloc;
 const StringTypes = @import("./string_types.zig");
 const Mimalloc = bun.Mimalloc;
 const bun = @import("root").bun;
+const C = @import("root").C;
 
 const version_string = Environment.version_string;
 
@@ -119,7 +120,7 @@ pub fn exit(code: u32) noreturn {
             Bun__onExit();
             std.os.windows.kernel32.ExitProcess(code);
         },
-        else => bun.C.quick_exit(@bitCast(code)),
+        else => C.quick_exit(@bitCast(code)),
     }
 }
 

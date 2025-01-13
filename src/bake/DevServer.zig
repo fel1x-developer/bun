@@ -6,6 +6,53 @@
 //! adjusting imports) must always rebundle only that one file.
 //!
 //! All work is held in-memory, using manually managed data-oriented design.
+
+const std = @import("std");
+const Allocator = std.mem.Allocator;
+const Mutex = bun.Mutex;
+const ArrayListUnmanaged = std.ArrayListUnmanaged;
+const AutoArrayHashMapUnmanaged = std.AutoArrayHashMapUnmanaged;
+
+const bun = @import("root").bun;
+const Environment = bun.Environment;
+const assert = bun.assert;
+const DynamicBitSetUnmanaged = bun.bit_set.DynamicBitSetUnmanaged;
+
+const bake = bun.bake;
+const FrameworkRouter = bake.FrameworkRouter;
+const Route = FrameworkRouter.Route;
+const OpaqueFileId = FrameworkRouter.OpaqueFileId;
+
+const Log = bun.logger.Log;
+const Output = bun.Output;
+
+const Transpiler = bun.transpiler.Transpiler;
+const BundleV2 = bun.bundle_v2.BundleV2;
+
+const Define = bun.options.Define;
+const OutputFile = bun.options.OutputFile;
+
+const uws = bun.uws;
+const App = uws.NewApp(false);
+const AnyWebSocket = uws.AnyWebSocket;
+const Request = uws.Request;
+const Response = App.Response;
+
+const MimeType = bun.http.MimeType;
+
+const JSC = bun.JSC;
+const Watcher = bun.JSC.Watcher;
+const JSValue = JSC.JSValue;
+const VirtualMachine = JSC.VirtualMachine;
+const JSModuleLoader = JSC.JSModuleLoader;
+const EventLoopHandle = JSC.EventLoopHandle;
+const JSInternalPromise = JSC.JSInternalPromise;
+
+const ThreadlocalArena = @import("../allocators/mimalloc_arena.zig").Arena;
+const Chunk = bun.bundle_v2.Chunk;
+
+const C = @import("root").C;
+
 pub const DevServer = @This();
 pub const debug = bun.Output.Scoped(.Bake, false);
 pub const igLog = bun.Output.scoped(.IncrementalGraph, false);
@@ -4258,7 +4305,7 @@ pub fn onFileUpdate(dev: *DevServer, events: []Watcher.Event, changed_files: []?
 
 pub fn onWatchError(_: *DevServer, err: bun.sys.Error) void {
     // TODO: how to recover? the watcher can't just ... crash????????
-    Output.err(@as(bun.C.E, @enumFromInt(err.errno)), "Watcher crashed", .{});
+    Output.err(@as(C.E, @enumFromInt(err.errno)), "Watcher crashed", .{});
     if (bun.Environment.isDebug) {
         bun.todoPanic(@src(), "Watcher crash", .{});
     }
@@ -4443,47 +4490,3 @@ pub const EntryPointList = struct {
         }
     }
 };
-
-const std = @import("std");
-const Allocator = std.mem.Allocator;
-const Mutex = bun.Mutex;
-const ArrayListUnmanaged = std.ArrayListUnmanaged;
-const AutoArrayHashMapUnmanaged = std.AutoArrayHashMapUnmanaged;
-
-const bun = @import("root").bun;
-const Environment = bun.Environment;
-const assert = bun.assert;
-const DynamicBitSetUnmanaged = bun.bit_set.DynamicBitSetUnmanaged;
-
-const bake = bun.bake;
-const FrameworkRouter = bake.FrameworkRouter;
-const Route = FrameworkRouter.Route;
-const OpaqueFileId = FrameworkRouter.OpaqueFileId;
-
-const Log = bun.logger.Log;
-const Output = bun.Output;
-
-const Transpiler = bun.transpiler.Transpiler;
-const BundleV2 = bun.bundle_v2.BundleV2;
-
-const Define = bun.options.Define;
-const OutputFile = bun.options.OutputFile;
-
-const uws = bun.uws;
-const App = uws.NewApp(false);
-const AnyWebSocket = uws.AnyWebSocket;
-const Request = uws.Request;
-const Response = App.Response;
-
-const MimeType = bun.http.MimeType;
-
-const JSC = bun.JSC;
-const Watcher = bun.JSC.Watcher;
-const JSValue = JSC.JSValue;
-const VirtualMachine = JSC.VirtualMachine;
-const JSModuleLoader = JSC.JSModuleLoader;
-const EventLoopHandle = JSC.EventLoopHandle;
-const JSInternalPromise = JSC.JSInternalPromise;
-
-const ThreadlocalArena = @import("../allocators/mimalloc_arena.zig").Arena;
-const Chunk = bun.bundle_v2.Chunk;

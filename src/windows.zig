@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const C = @import("root").C;
 const windows = std.os.windows;
 const win32 = windows;
 pub const PATH_MAX_WIDE = windows.PATH_MAX_WIDE;
@@ -156,7 +157,7 @@ pub extern "kernel32" fn SetCurrentDirectoryW(
 pub const SetCurrentDirectory = SetCurrentDirectoryW;
 pub extern "ntdll" fn RtlNtStatusToDosError(win32.NTSTATUS) callconv(windows.WINAPI) Win32Error;
 
-const SystemErrno = bun.C.SystemErrno;
+const SystemErrno = C.SystemErrno;
 
 // This was originally copied from Zig's standard library
 /// Codes are from https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/18d8fbe8-a967-4f1c-ae50-99ca8e491d2d
@@ -3038,15 +3039,15 @@ pub extern "kernel32" fn SetFileInformationByHandle(
     bufferSize: DWORD,
 ) BOOL;
 
-pub fn getLastErrno() bun.C.E {
-    return (bun.C.SystemErrno.init(bun.windows.kernel32.GetLastError()) orelse SystemErrno.EUNKNOWN).toE();
+pub fn getLastErrno() C.E {
+    return (C.SystemErrno.init(bun.windows.kernel32.GetLastError()) orelse SystemErrno.EUNKNOWN).toE();
 }
 
 pub fn getLastError() anyerror {
     return bun.errnoToZigErr(getLastErrno());
 }
 
-pub fn translateNTStatusToErrno(err: win32.NTSTATUS) bun.C.E {
+pub fn translateNTStatusToErrno(err: win32.NTSTATUS) C.E {
     return switch (err) {
         .SUCCESS => .SUCCESS,
         .ACCESS_DENIED => .PERM,

@@ -2,6 +2,7 @@ const Bun = @This();
 const default_allocator = bun.default_allocator;
 const bun = @import("root").bun;
 const Environment = bun.Environment;
+const C = @import("root").C;
 
 const Global = bun.Global;
 const strings = bun.strings;
@@ -44,7 +45,7 @@ const LibInfo = struct {
         const RTLD_LAZY = 1;
         const RTLD_LOCAL = 4;
 
-        handle = bun.C.dlopen("libinfo.dylib", RTLD_LAZY | RTLD_LOCAL);
+        handle = C.dlopen("libinfo.dylib", RTLD_LAZY | RTLD_LOCAL);
         if (handle == null)
             Output.debug("libinfo.dylib not found", .{});
         return handle;
@@ -54,7 +55,7 @@ const LibInfo = struct {
         pub fn get() ?*const GetaddrinfoAsyncStart {
             bun.Environment.onlyMac();
 
-            return bun.C.dlsymWithHandle(*const GetaddrinfoAsyncStart, "getaddrinfo_async_start", getHandle);
+            return C.dlsymWithHandle(*const GetaddrinfoAsyncStart, "getaddrinfo_async_start", getHandle);
         }
     }.get;
 
@@ -62,14 +63,14 @@ const LibInfo = struct {
         pub fn get() ?*const GetaddrinfoAsyncHandleReply {
             bun.Environment.onlyMac();
 
-            return bun.C.dlsymWithHandle(*const GetaddrinfoAsyncHandleReply, "getaddrinfo_async_handle_reply", getHandle);
+            return C.dlsymWithHandle(*const GetaddrinfoAsyncHandleReply, "getaddrinfo_async_handle_reply", getHandle);
         }
     }.get;
 
     pub fn get() ?*const GetaddrinfoAsyncCancel {
         bun.Environment.onlyMac();
 
-        return bun.C.dlsymWithHandle(*const GetaddrinfoAsyncCancel, "getaddrinfo_async_cancel", getHandle);
+        return C.dlsymWithHandle(*const GetaddrinfoAsyncCancel, "getaddrinfo_async_cancel", getHandle);
     }
 
     pub fn lookup(this: *DNSResolver, query: GetAddrInfo, globalThis: *JSC.JSGlobalObject) JSC.JSValue {
@@ -115,7 +116,7 @@ const LibInfo = struct {
         );
 
         if (errno != 0) {
-            request.head.promise.rejectTask(globalThis, globalThis.createErrorInstance("getaddrinfo_async_start error: {s}", .{@tagName(bun.C.getErrno(errno))}));
+            request.head.promise.rejectTask(globalThis, globalThis.createErrorInstance("getaddrinfo_async_start error: {s}", .{@tagName(C.getErrno(errno))}));
             if (request.cache.pending_cache) this.pending_host_cache_native.available.set(request.cache.pos_in_pending);
             this.vm.allocator.destroy(request);
 
@@ -1395,7 +1396,7 @@ pub const InternalDNS = struct {
         // https://github.com/nodejs/node/issues/33816
         // https://github.com/aio-libs/aiohttp/issues/5357
         // https://github.com/libuv/libuv/issues/2225
-        .flags = if (Environment.isPosix) bun.C.netdb.AI_ADDRCONFIG else 0,
+        .flags = if (Environment.isPosix) C.netdb.AI_ADDRCONFIG else 0,
         .next = null,
         .protocol = 0,
         .socktype = std.c.SOCK.STREAM,

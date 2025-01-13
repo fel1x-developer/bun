@@ -1,6 +1,7 @@
 const std = @import("std");
 const JSC = bun.JSC;
 const bun = @import("root").bun;
+const C = @import("root").C;
 const Fs = @import("../../fs.zig");
 const Path = @import("../../resolver/resolve_path.zig");
 const Encoder = JSC.WebCore.Encoder;
@@ -196,7 +197,7 @@ pub const FSWatcher = struct {
     };
 
     pub const FSWatchTaskWindows = struct {
-        event: Event = .{ .@"error" = .{ .errno = @intFromEnum(bun.C.SystemErrno.EINVAL), .syscall = .watch } },
+        event: Event = .{ .@"error" = .{ .errno = @intFromEnum(C.SystemErrno.EINVAL), .syscall = .watch } },
         ctx: *FSWatcher,
 
         /// Unused: To match the API of the posix version

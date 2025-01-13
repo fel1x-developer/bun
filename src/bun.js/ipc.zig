@@ -6,6 +6,7 @@ const strings = bun.strings;
 const string = bun.string;
 const Output = bun.Output;
 const MutableString = bun.MutableString;
+const C = @import("root").C;
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const JSC = bun.JSC;
@@ -601,7 +602,7 @@ const NamedPipeIPCData = struct {
 
         const stream = this.writer.getStream() orelse {
             this.close(false);
-            return JSC.Maybe(void).errno(bun.C.E.PIPE, .pipe);
+            return JSC.Maybe(void).errno(C.E.PIPE, .pipe);
         };
 
         const readStartResult = stream.readStart(instance, NewNamedPipeIPCHandler(Context).onReadAlloc, NewNamedPipeIPCHandler(Context).onReadError, NewNamedPipeIPCHandler(Context).onRead);
@@ -824,7 +825,7 @@ fn NewNamedPipeIPCHandler(comptime Context: type) type {
             return available.ptr[0..suggested_size];
         }
 
-        fn onReadError(this: *Context, err: bun.C.E) void {
+        fn onReadError(this: *Context, err: C.E) void {
             log("NewNamedPipeIPCHandler#onReadError {}", .{err});
             if (this.ipc()) |ipc_data| {
                 ipc_data.close(true);

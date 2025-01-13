@@ -1,4 +1,5 @@
 const std = @import("std");
+const C = @import("root").C;
 
 const UnboundedQueue = @import("../unbounded_queue.zig").UnboundedQueue;
 const Path = @import("../../resolver/resolve_path.zig");
@@ -96,7 +97,7 @@ pub const PathWatcherManager = struct {
             .windows => bun.sys.openDirAtWindowsA(bun.FD.cwd(), path, .{ .iterable = true, .read_only = true }),
         }) {
             .err => |e| {
-                if (e.errno == @intFromEnum(bun.C.E.NOTDIR)) {
+                if (e.errno == @intFromEnum(C.E.NOTDIR)) {
                     const file = switch (bun.sys.open(path, 0, 0)) {
                         .err => |file_err| return .{ .err = file_err.withPath(path) },
                         .result => |r| r,
@@ -448,11 +449,11 @@ pub const PathWatcherManager = struct {
                 return .{
                     .err = .{
                         .errno = @truncate(@intFromEnum(switch (err) {
-                            error.AccessDenied => bun.C.E.ACCES,
-                            error.SystemResources => bun.C.E.NOMEM,
+                            error.AccessDenied => C.E.ACCES,
+                            error.SystemResources => C.E.NOMEM,
                             error.Unexpected,
                             error.InvalidUtf8,
-                            => bun.C.E.INVAL,
+                            => C.E.INVAL,
                         })),
                         .syscall = .watch,
                     },
@@ -481,7 +482,7 @@ pub const PathWatcherManager = struct {
                         manager._decrementPathRef(entry_path_z);
                         return switch (err) {
                             error.OutOfMemory => .{ .err = .{
-                                .errno = @truncate(@intFromEnum(bun.C.E.NOMEM)),
+                                .errno = @truncate(@intFromEnum(C.E.NOMEM)),
                                 .syscall = .watch,
                             } },
                         };
@@ -554,8 +555,8 @@ pub const PathWatcherManager = struct {
             .result = DirectoryRegisterTask.schedule(this, watcher, path) catch |err| return .{
                 .err = .{
                     .errno = @truncate(@intFromEnum(switch (err) {
-                        error.OutOfMemory => bun.C.E.NOMEM,
-                        error.UnexpectedFailure => bun.C.E.INVAL,
+                        error.OutOfMemory => C.E.NOMEM,
+                        error.UnexpectedFailure => C.E.INVAL,
                     })),
                 },
             },
@@ -954,16 +955,16 @@ pub fn watch(
             default_manager = PathWatcherManager.init(vm) catch |e| {
                 return .{ .err = .{
                     .errno = @truncate(@intFromEnum(switch (e) {
-                        error.SystemResources, error.LockedMemoryLimitExceeded, error.OutOfMemory => bun.C.E.NOMEM,
+                        error.SystemResources, error.LockedMemoryLimitExceeded, error.OutOfMemory => C.E.NOMEM,
 
                         error.ProcessFdQuotaExceeded,
                         error.SystemFdQuotaExceeded,
                         error.ThreadQuotaExceeded,
-                        => bun.C.E.MFILE,
+                        => C.E.MFILE,
 
-                        error.Unexpected => bun.C.E.NOMEM,
+                        error.Unexpected => C.E.NOMEM,
 
-                        error.KQueueError => bun.C.E.INVAL,
+                        error.KQueueError => C.E.INVAL,
                     })),
                     .syscall = .watch,
                 } };
@@ -990,29 +991,29 @@ pub fn watch(
                 error.BadPathName,
                 error.InvalidUtf8,
                 error.InvalidWtf8,
-                => bun.C.E.INVAL,
+                => C.E.INVAL,
 
                 error.OutOfMemory,
                 error.SystemResources,
-                => bun.C.E.NOMEM,
+                => C.E.NOMEM,
 
                 error.FileNotFound,
                 error.NetworkNotFound,
                 error.NoDevice,
-                => bun.C.E.NOENT,
+                => C.E.NOENT,
 
-                error.DeviceBusy => bun.C.E.BUSY,
-                error.AccessDenied => bun.C.E.PERM,
-                error.InvalidHandle => bun.C.E.BADF,
-                error.SymLinkLoop => bun.C.E.LOOP,
-                error.NotDir => bun.C.E.NOTDIR,
+                error.DeviceBusy => C.E.BUSY,
+                error.AccessDenied => C.E.PERM,
+                error.InvalidHandle => C.E.BADF,
+                error.SymLinkLoop => C.E.LOOP,
+                error.NotDir => C.E.NOTDIR,
 
                 error.ProcessFdQuotaExceeded,
                 error.SystemFdQuotaExceeded,
                 error.UserResourceLimitReached,
-                => bun.C.E.MFILE,
+                => C.E.MFILE,
 
-                else => bun.C.E.INVAL,
+                else => C.E.INVAL,
             })),
             .syscall = .watch,
         } };

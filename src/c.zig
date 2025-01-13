@@ -1,18 +1,18 @@
 const std = @import("std");
 const bun = @import("root").bun;
-const Environment = @import("./env.zig");
+const C = @import("root").C;
+const Environment = bun.Environment;
 
 pub const translated = @import("translated-c-headers");
 
 const PlatformSpecific = switch (Environment.os) {
-    .mac => @import("./darwin_c.zig"),
-    .linux => @import("./linux_c.zig"),
-    .windows => @import("./windows_c.zig"),
+    .mac => @import("c/darwin.zig"),
+    .linux => @import("c/linux.zig"),
+    .windows => @import("c/windows.zig"),
     else => struct {},
 };
 pub usingnamespace PlatformSpecific;
 
-const C = std.c;
 const builtin = @import("builtin");
 const posix = std.posix;
 const mem = std.mem;
@@ -25,8 +25,8 @@ const mode_t = bun.Mode;
 const libc_stat = bun.Stat;
 
 const zeroes = mem.zeroes;
-pub const darwin = @import("./darwin_c.zig");
-pub const linux = @import("./linux_c.zig");
+pub const darwin = @import("c/darwin.zig");
+pub const linux = @import("c/linux.zig");
 pub extern "c" fn chmod([*c]const u8, mode_t) c_int;
 pub extern "c" fn fchmod(std.c.fd_t, mode_t) c_int;
 pub extern "c" fn fchmodat(c_int, [*c]const u8, mode_t, c_int) c_int;
@@ -50,7 +50,7 @@ pub fn lstat_absolute(path: [:0]const u8) !Stat {
     }
 
     var st = zeroes(libc_stat);
-    switch (errno(bun.C.lstat(path.ptr, &st))) {
+    switch (errno(C.lstat(path.ptr, &st))) {
         .SUCCESS => {},
         .NOENT => return error.FileNotFound,
         // .EINVAL => unreachable,
@@ -167,9 +167,9 @@ pub fn copyFileZSlowWithHandle(in_handle: bun.FileDescriptor, to_dir: bun.FileDe
         };
         const src_len = bun.windows.GetFinalPathNameByHandleW(in_handle.cast(), &buf1, buf1.len, 0);
         if (src_len == 0) {
-            return Maybe(void).errno(bun.C.E.BUSY, .GetFinalPathNameByHandle);
+            return Maybe(void).errno(C.E.BUSY, .GetFinalPathNameByHandle);
         } else if (src_len >= buf1.len) {
-            return Maybe(void).errno(bun.C.E.NAMETOOLONG, .GetFinalPathNameByHandle);
+            return Maybe(void).errno(C.E.NAMETOOLONG, .GetFinalPathNameByHandle);
         }
         const src = buf1[0..src_len :0];
         return bun.copyFile(src, dest);
@@ -501,5 +501,5 @@ pub const geteuid = translated.geteuid;
 pub const getpwuid_r = translated.getpwuid_r;
 
 export fn Bun__errnoName(err: c_int) ?[*:0]const u8 {
-    return @tagName(bun.C.SystemErrno.init(err) orelse return null);
+    return @tagName(C.SystemErrno.init(err) orelse return null);
 }

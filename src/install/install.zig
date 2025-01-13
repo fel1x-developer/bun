@@ -16,7 +16,7 @@ const strings = bun.strings;
 const MutableString = bun.MutableString;
 const stringZ = bun.stringZ;
 const default_allocator = bun.default_allocator;
-const C = bun.C;
+const C = @import("root").C;
 const std = @import("std");
 const uws = @import("../deps/uws.zig");
 const JSC = bun.JSC;
@@ -13539,9 +13539,9 @@ pub const PackageManager = struct {
                                         Global.exit(1);
                                     };
 
-                                    const is_writable = if (stat.uid == bun.C.getuid())
+                                    const is_writable = if (stat.uid == C.getuid())
                                         stat.mode & bun.S.IWUSR > 0
-                                    else if (stat.gid == bun.C.getgid())
+                                    else if (stat.gid == C.getgid())
                                         stat.mode & bun.S.IWGRP > 0
                                     else
                                         stat.mode & bun.S.IWOTH > 0;

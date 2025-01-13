@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const C = @import("root").C;
 const Maybe = bun.JSC.Maybe;
 
 const WORD = c_ushort;
@@ -634,7 +635,7 @@ pub const Loop = extern struct {
         return loop_alive;
     }
 
-    pub fn init(ptr: *Loop) ?bun.C.E {
+    pub fn init(ptr: *Loop) ?C.E {
         if (uv_loop_init(ptr).errEnum()) |err| return err;
         return null;
     }
@@ -2573,78 +2574,78 @@ pub fn uv_is_closed(handle: *const uv_handle_t) bool {
     return (handle.flags & UV_HANDLE_CLOSED != 0);
 }
 
-pub fn translateUVErrorToE(code_in: anytype) bun.C.E {
+pub fn translateUVErrorToE(code_in: anytype) C.E {
     const code: c_int = @intCast(code_in);
 
     return switch (code) {
-        UV_EPERM => bun.C.E.PERM,
-        UV_ENOENT => bun.C.E.NOENT,
-        UV_ESRCH => bun.C.E.SRCH,
-        UV_EINTR => bun.C.E.INTR,
-        UV_EIO => bun.C.E.IO,
-        UV_ENXIO => bun.C.E.NXIO,
-        UV_E2BIG => bun.C.E.@"2BIG",
-        UV_EBADF => bun.C.E.BADF,
-        UV_EAGAIN => bun.C.E.AGAIN,
-        UV_ENOMEM => bun.C.E.NOMEM,
-        UV_EACCES => bun.C.E.ACCES,
-        UV_EFAULT => bun.C.E.FAULT,
-        UV_EBUSY => bun.C.E.BUSY,
-        UV_EEXIST => bun.C.E.EXIST,
-        UV_EXDEV => bun.C.E.XDEV,
-        UV_ENODEV => bun.C.E.NODEV,
-        UV_ENOTDIR => bun.C.E.NOTDIR,
-        UV_EISDIR => bun.C.E.ISDIR,
-        UV_EINVAL => bun.C.E.INVAL,
-        UV_ENFILE => bun.C.E.NFILE,
-        UV_EMFILE => bun.C.E.MFILE,
-        UV_ENOTTY => bun.C.E.NOTTY,
-        UV_ETXTBSY => bun.C.E.TXTBSY,
-        UV_EFBIG => bun.C.E.FBIG,
-        UV_ENOSPC => bun.C.E.NOSPC,
-        UV_ESPIPE => bun.C.E.SPIPE,
-        UV_EROFS => bun.C.E.ROFS,
-        UV_EMLINK => bun.C.E.MLINK,
-        UV_EPIPE => bun.C.E.PIPE,
-        UV_ERANGE => bun.C.E.RANGE,
-        UV_ENAMETOOLONG => bun.C.E.NAMETOOLONG,
-        UV_ENOSYS => bun.C.E.NOSYS,
-        UV_ENOTEMPTY => bun.C.E.NOTEMPTY,
-        UV_ELOOP => bun.C.E.LOOP,
-        UV_EUNATCH => bun.C.E.UNATCH,
-        UV_ENODATA => bun.C.E.NODATA,
-        UV_ENONET => bun.C.E.NONET,
-        UV_EPROTO => bun.C.E.PROTO,
-        UV_EOVERFLOW => bun.C.E.OVERFLOW,
-        UV_EILSEQ => bun.C.E.ILSEQ,
-        UV_ENOTSOCK => bun.C.E.NOTSOCK,
-        UV_EDESTADDRREQ => bun.C.E.DESTADDRREQ,
-        UV_EMSGSIZE => bun.C.E.MSGSIZE,
-        UV_EPROTOTYPE => bun.C.E.PROTOTYPE,
-        UV_ENOPROTOOPT => bun.C.E.NOPROTOOPT,
-        UV_EPROTONOSUPPORT => bun.C.E.PROTONOSUPPORT,
-        UV_ESOCKTNOSUPPORT => bun.C.E.SOCKTNOSUPPORT,
-        UV_ENOTSUP => bun.C.E.NOTSUP,
-        UV_EAFNOSUPPORT => bun.C.E.AFNOSUPPORT,
-        UV_EADDRINUSE => bun.C.E.ADDRINUSE,
-        UV_EADDRNOTAVAIL => bun.C.E.ADDRNOTAVAIL,
-        UV_ENETDOWN => bun.C.E.NETDOWN,
-        UV_ENETUNREACH => bun.C.E.NETUNREACH,
-        UV_ECONNABORTED => bun.C.E.CONNABORTED,
-        UV_ECONNRESET => bun.C.E.CONNRESET,
-        UV_ENOBUFS => bun.C.E.NOBUFS,
-        UV_EISCONN => bun.C.E.ISCONN,
-        UV_ENOTCONN => bun.C.E.NOTCONN,
-        UV_ESHUTDOWN => bun.C.E.SHUTDOWN,
-        UV_ETIMEDOUT => bun.C.E.TIMEDOUT,
-        UV_ECONNREFUSED => bun.C.E.CONNREFUSED,
-        UV_EHOSTDOWN => bun.C.E.HOSTDOWN,
-        UV_EHOSTUNREACH => bun.C.E.HOSTUNREACH,
-        UV_EALREADY => bun.C.E.ALREADY,
-        UV_EREMOTEIO => bun.C.E.REMOTEIO,
-        UV_ECANCELED => bun.C.E.CANCELED,
-        UV_ECHARSET => bun.C.E.CHARSET,
-        UV_EOF => bun.C.E.EOF,
+        UV_EPERM => C.E.PERM,
+        UV_ENOENT => C.E.NOENT,
+        UV_ESRCH => C.E.SRCH,
+        UV_EINTR => C.E.INTR,
+        UV_EIO => C.E.IO,
+        UV_ENXIO => C.E.NXIO,
+        UV_E2BIG => C.E.@"2BIG",
+        UV_EBADF => C.E.BADF,
+        UV_EAGAIN => C.E.AGAIN,
+        UV_ENOMEM => C.E.NOMEM,
+        UV_EACCES => C.E.ACCES,
+        UV_EFAULT => C.E.FAULT,
+        UV_EBUSY => C.E.BUSY,
+        UV_EEXIST => C.E.EXIST,
+        UV_EXDEV => C.E.XDEV,
+        UV_ENODEV => C.E.NODEV,
+        UV_ENOTDIR => C.E.NOTDIR,
+        UV_EISDIR => C.E.ISDIR,
+        UV_EINVAL => C.E.INVAL,
+        UV_ENFILE => C.E.NFILE,
+        UV_EMFILE => C.E.MFILE,
+        UV_ENOTTY => C.E.NOTTY,
+        UV_ETXTBSY => C.E.TXTBSY,
+        UV_EFBIG => C.E.FBIG,
+        UV_ENOSPC => C.E.NOSPC,
+        UV_ESPIPE => C.E.SPIPE,
+        UV_EROFS => C.E.ROFS,
+        UV_EMLINK => C.E.MLINK,
+        UV_EPIPE => C.E.PIPE,
+        UV_ERANGE => C.E.RANGE,
+        UV_ENAMETOOLONG => C.E.NAMETOOLONG,
+        UV_ENOSYS => C.E.NOSYS,
+        UV_ENOTEMPTY => C.E.NOTEMPTY,
+        UV_ELOOP => C.E.LOOP,
+        UV_EUNATCH => C.E.UNATCH,
+        UV_ENODATA => C.E.NODATA,
+        UV_ENONET => C.E.NONET,
+        UV_EPROTO => C.E.PROTO,
+        UV_EOVERFLOW => C.E.OVERFLOW,
+        UV_EILSEQ => C.E.ILSEQ,
+        UV_ENOTSOCK => C.E.NOTSOCK,
+        UV_EDESTADDRREQ => C.E.DESTADDRREQ,
+        UV_EMSGSIZE => C.E.MSGSIZE,
+        UV_EPROTOTYPE => C.E.PROTOTYPE,
+        UV_ENOPROTOOPT => C.E.NOPROTOOPT,
+        UV_EPROTONOSUPPORT => C.E.PROTONOSUPPORT,
+        UV_ESOCKTNOSUPPORT => C.E.SOCKTNOSUPPORT,
+        UV_ENOTSUP => C.E.NOTSUP,
+        UV_EAFNOSUPPORT => C.E.AFNOSUPPORT,
+        UV_EADDRINUSE => C.E.ADDRINUSE,
+        UV_EADDRNOTAVAIL => C.E.ADDRNOTAVAIL,
+        UV_ENETDOWN => C.E.NETDOWN,
+        UV_ENETUNREACH => C.E.NETUNREACH,
+        UV_ECONNABORTED => C.E.CONNABORTED,
+        UV_ECONNRESET => C.E.CONNRESET,
+        UV_ENOBUFS => C.E.NOBUFS,
+        UV_EISCONN => C.E.ISCONN,
+        UV_ENOTCONN => C.E.NOTCONN,
+        UV_ESHUTDOWN => C.E.SHUTDOWN,
+        UV_ETIMEDOUT => C.E.TIMEDOUT,
+        UV_ECONNREFUSED => C.E.CONNREFUSED,
+        UV_EHOSTDOWN => C.E.HOSTDOWN,
+        UV_EHOSTUNREACH => C.E.HOSTUNREACH,
+        UV_EALREADY => C.E.ALREADY,
+        UV_EREMOTEIO => C.E.REMOTEIO,
+        UV_ECANCELED => C.E.CANCELED,
+        UV_ECHARSET => C.E.CHARSET,
+        UV_EOF => C.E.EOF,
         else => @enumFromInt(-code),
     };
 }
@@ -2679,84 +2680,84 @@ pub const ReturnCode = enum(c_int) {
         return null;
     }
 
-    pub inline fn errno(this: ReturnCode) ?@TypeOf(@intFromEnum(bun.C.E.ACCES)) {
+    pub inline fn errno(this: ReturnCode) ?@TypeOf(@intFromEnum(C.E.ACCES)) {
         return if (this.int() < 0)
             switch (this.int()) {
-                UV_EPERM => @intFromEnum(bun.C.E.PERM),
-                UV_ENOENT => @intFromEnum(bun.C.E.NOENT),
-                UV_ESRCH => @intFromEnum(bun.C.E.SRCH),
-                UV_EINTR => @intFromEnum(bun.C.E.INTR),
-                UV_EIO => @intFromEnum(bun.C.E.IO),
-                UV_ENXIO => @intFromEnum(bun.C.E.NXIO),
-                UV_E2BIG => @intFromEnum(bun.C.E.@"2BIG"),
-                UV_EBADF => @intFromEnum(bun.C.E.BADF),
-                UV_EAGAIN => @intFromEnum(bun.C.E.AGAIN),
-                UV_ENOMEM => @intFromEnum(bun.C.E.NOMEM),
-                UV_EACCES => @intFromEnum(bun.C.E.ACCES),
-                UV_EFAULT => @intFromEnum(bun.C.E.FAULT),
-                UV_EBUSY => @intFromEnum(bun.C.E.BUSY),
-                UV_EEXIST => @intFromEnum(bun.C.E.EXIST),
-                UV_EXDEV => @intFromEnum(bun.C.E.XDEV),
-                UV_ENODEV => @intFromEnum(bun.C.E.NODEV),
-                UV_ENOTDIR => @intFromEnum(bun.C.E.NOTDIR),
-                UV_EISDIR => @intFromEnum(bun.C.E.ISDIR),
-                UV_EINVAL => @intFromEnum(bun.C.E.INVAL),
-                UV_ENFILE => @intFromEnum(bun.C.E.NFILE),
-                UV_EMFILE => @intFromEnum(bun.C.E.MFILE),
-                UV_ENOTTY => @intFromEnum(bun.C.E.NOTTY),
-                UV_ETXTBSY => @intFromEnum(bun.C.E.TXTBSY),
-                UV_EFBIG => @intFromEnum(bun.C.E.FBIG),
-                UV_ENOSPC => @intFromEnum(bun.C.E.NOSPC),
-                UV_ESPIPE => @intFromEnum(bun.C.E.SPIPE),
-                UV_EROFS => @intFromEnum(bun.C.E.ROFS),
-                UV_EMLINK => @intFromEnum(bun.C.E.MLINK),
-                UV_EPIPE => @intFromEnum(bun.C.E.PIPE),
-                UV_ERANGE => @intFromEnum(bun.C.E.RANGE),
-                UV_ENAMETOOLONG => @intFromEnum(bun.C.E.NAMETOOLONG),
-                UV_ENOSYS => @intFromEnum(bun.C.E.NOSYS),
-                UV_ENOTEMPTY => @intFromEnum(bun.C.E.NOTEMPTY),
-                UV_ELOOP => @intFromEnum(bun.C.E.LOOP),
-                UV_EUNATCH => @intFromEnum(bun.C.E.UNATCH),
-                UV_ENODATA => @intFromEnum(bun.C.E.NODATA),
-                UV_ENONET => @intFromEnum(bun.C.E.NONET),
-                UV_EPROTO => @intFromEnum(bun.C.E.PROTO),
-                UV_EOVERFLOW => @intFromEnum(bun.C.E.OVERFLOW),
-                UV_EILSEQ => @intFromEnum(bun.C.E.ILSEQ),
-                UV_ENOTSOCK => @intFromEnum(bun.C.E.NOTSOCK),
-                UV_EDESTADDRREQ => @intFromEnum(bun.C.E.DESTADDRREQ),
-                UV_EMSGSIZE => @intFromEnum(bun.C.E.MSGSIZE),
-                UV_EPROTOTYPE => @intFromEnum(bun.C.E.PROTOTYPE),
-                UV_ENOPROTOOPT => @intFromEnum(bun.C.E.NOPROTOOPT),
-                UV_EPROTONOSUPPORT => @intFromEnum(bun.C.E.PROTONOSUPPORT),
-                UV_ESOCKTNOSUPPORT => @intFromEnum(bun.C.E.SOCKTNOSUPPORT),
-                UV_ENOTSUP => @intFromEnum(bun.C.E.NOTSUP),
-                UV_EAFNOSUPPORT => @intFromEnum(bun.C.E.AFNOSUPPORT),
-                UV_EADDRINUSE => @intFromEnum(bun.C.E.ADDRINUSE),
-                UV_EADDRNOTAVAIL => @intFromEnum(bun.C.E.ADDRNOTAVAIL),
-                UV_ENETDOWN => @intFromEnum(bun.C.E.NETDOWN),
-                UV_ENETUNREACH => @intFromEnum(bun.C.E.NETUNREACH),
-                UV_ECONNABORTED => @intFromEnum(bun.C.E.CONNABORTED),
-                UV_ECONNRESET => @intFromEnum(bun.C.E.CONNRESET),
-                UV_ENOBUFS => @intFromEnum(bun.C.E.NOBUFS),
-                UV_EISCONN => @intFromEnum(bun.C.E.ISCONN),
-                UV_ENOTCONN => @intFromEnum(bun.C.E.NOTCONN),
-                UV_ESHUTDOWN => @intFromEnum(bun.C.E.SHUTDOWN),
-                UV_ETIMEDOUT => @intFromEnum(bun.C.E.TIMEDOUT),
-                UV_ECONNREFUSED => @intFromEnum(bun.C.E.CONNREFUSED),
-                UV_EHOSTDOWN => @intFromEnum(bun.C.E.HOSTDOWN),
-                UV_EHOSTUNREACH => @intFromEnum(bun.C.E.HOSTUNREACH),
-                UV_EALREADY => @intFromEnum(bun.C.E.ALREADY),
-                UV_EREMOTEIO => @intFromEnum(bun.C.E.REMOTEIO),
-                UV_ECANCELED => @intFromEnum(bun.C.E.CANCELED),
-                UV_ECHARSET => @intFromEnum(bun.C.E.CHARSET),
-                UV_EOF => @intFromEnum(bun.C.E.EOF),
+                UV_EPERM => @intFromEnum(C.E.PERM),
+                UV_ENOENT => @intFromEnum(C.E.NOENT),
+                UV_ESRCH => @intFromEnum(C.E.SRCH),
+                UV_EINTR => @intFromEnum(C.E.INTR),
+                UV_EIO => @intFromEnum(C.E.IO),
+                UV_ENXIO => @intFromEnum(C.E.NXIO),
+                UV_E2BIG => @intFromEnum(C.E.@"2BIG"),
+                UV_EBADF => @intFromEnum(C.E.BADF),
+                UV_EAGAIN => @intFromEnum(C.E.AGAIN),
+                UV_ENOMEM => @intFromEnum(C.E.NOMEM),
+                UV_EACCES => @intFromEnum(C.E.ACCES),
+                UV_EFAULT => @intFromEnum(C.E.FAULT),
+                UV_EBUSY => @intFromEnum(C.E.BUSY),
+                UV_EEXIST => @intFromEnum(C.E.EXIST),
+                UV_EXDEV => @intFromEnum(C.E.XDEV),
+                UV_ENODEV => @intFromEnum(C.E.NODEV),
+                UV_ENOTDIR => @intFromEnum(C.E.NOTDIR),
+                UV_EISDIR => @intFromEnum(C.E.ISDIR),
+                UV_EINVAL => @intFromEnum(C.E.INVAL),
+                UV_ENFILE => @intFromEnum(C.E.NFILE),
+                UV_EMFILE => @intFromEnum(C.E.MFILE),
+                UV_ENOTTY => @intFromEnum(C.E.NOTTY),
+                UV_ETXTBSY => @intFromEnum(C.E.TXTBSY),
+                UV_EFBIG => @intFromEnum(C.E.FBIG),
+                UV_ENOSPC => @intFromEnum(C.E.NOSPC),
+                UV_ESPIPE => @intFromEnum(C.E.SPIPE),
+                UV_EROFS => @intFromEnum(C.E.ROFS),
+                UV_EMLINK => @intFromEnum(C.E.MLINK),
+                UV_EPIPE => @intFromEnum(C.E.PIPE),
+                UV_ERANGE => @intFromEnum(C.E.RANGE),
+                UV_ENAMETOOLONG => @intFromEnum(C.E.NAMETOOLONG),
+                UV_ENOSYS => @intFromEnum(C.E.NOSYS),
+                UV_ENOTEMPTY => @intFromEnum(C.E.NOTEMPTY),
+                UV_ELOOP => @intFromEnum(C.E.LOOP),
+                UV_EUNATCH => @intFromEnum(C.E.UNATCH),
+                UV_ENODATA => @intFromEnum(C.E.NODATA),
+                UV_ENONET => @intFromEnum(C.E.NONET),
+                UV_EPROTO => @intFromEnum(C.E.PROTO),
+                UV_EOVERFLOW => @intFromEnum(C.E.OVERFLOW),
+                UV_EILSEQ => @intFromEnum(C.E.ILSEQ),
+                UV_ENOTSOCK => @intFromEnum(C.E.NOTSOCK),
+                UV_EDESTADDRREQ => @intFromEnum(C.E.DESTADDRREQ),
+                UV_EMSGSIZE => @intFromEnum(C.E.MSGSIZE),
+                UV_EPROTOTYPE => @intFromEnum(C.E.PROTOTYPE),
+                UV_ENOPROTOOPT => @intFromEnum(C.E.NOPROTOOPT),
+                UV_EPROTONOSUPPORT => @intFromEnum(C.E.PROTONOSUPPORT),
+                UV_ESOCKTNOSUPPORT => @intFromEnum(C.E.SOCKTNOSUPPORT),
+                UV_ENOTSUP => @intFromEnum(C.E.NOTSUP),
+                UV_EAFNOSUPPORT => @intFromEnum(C.E.AFNOSUPPORT),
+                UV_EADDRINUSE => @intFromEnum(C.E.ADDRINUSE),
+                UV_EADDRNOTAVAIL => @intFromEnum(C.E.ADDRNOTAVAIL),
+                UV_ENETDOWN => @intFromEnum(C.E.NETDOWN),
+                UV_ENETUNREACH => @intFromEnum(C.E.NETUNREACH),
+                UV_ECONNABORTED => @intFromEnum(C.E.CONNABORTED),
+                UV_ECONNRESET => @intFromEnum(C.E.CONNRESET),
+                UV_ENOBUFS => @intFromEnum(C.E.NOBUFS),
+                UV_EISCONN => @intFromEnum(C.E.ISCONN),
+                UV_ENOTCONN => @intFromEnum(C.E.NOTCONN),
+                UV_ESHUTDOWN => @intFromEnum(C.E.SHUTDOWN),
+                UV_ETIMEDOUT => @intFromEnum(C.E.TIMEDOUT),
+                UV_ECONNREFUSED => @intFromEnum(C.E.CONNREFUSED),
+                UV_EHOSTDOWN => @intFromEnum(C.E.HOSTDOWN),
+                UV_EHOSTUNREACH => @intFromEnum(C.E.HOSTUNREACH),
+                UV_EALREADY => @intFromEnum(C.E.ALREADY),
+                UV_EREMOTEIO => @intFromEnum(C.E.REMOTEIO),
+                UV_ECANCELED => @intFromEnum(C.E.CANCELED),
+                UV_ECHARSET => @intFromEnum(C.E.CHARSET),
+                UV_EOF => @intFromEnum(C.E.EOF),
                 else => null,
             }
         else
             null;
     }
 
-    pub inline fn errEnum(this: ReturnCode) ?bun.C.E {
+    pub inline fn errEnum(this: ReturnCode) ?C.E {
         return if (this.int() < 0)
             (translateUVErrorToE(this.int()))
         else
@@ -2794,14 +2795,14 @@ pub const ReturnCodeI64 = enum(i64) {
         return null;
     }
 
-    pub inline fn errno(this: ReturnCodeI64) ?@TypeOf(@intFromEnum(bun.C.E.ACCES)) {
+    pub inline fn errno(this: ReturnCodeI64) ?@TypeOf(@intFromEnum(C.E.ACCES)) {
         return if (@intFromEnum(this) < 0)
             @as(u16, @intCast(-@intFromEnum(this)))
         else
             null;
     }
 
-    pub inline fn errEnum(this: ReturnCodeI64) ?bun.C.E {
+    pub inline fn errEnum(this: ReturnCodeI64) ?C.E {
         return if (@intFromEnum(this) < 0)
             (translateUVErrorToE(@intFromEnum(this)))
         else
@@ -2852,7 +2853,7 @@ fn StreamMixin(comptime Type: type) type {
             this: *Type,
             context: anytype,
             comptime alloc_cb: *const (fn (@TypeOf(context), suggested_size: usize) []u8),
-            comptime error_cb: *const (fn (@TypeOf(context), err: bun.C.E) void),
+            comptime error_cb: *const (fn (@TypeOf(context), err: C.E) void),
             comptime read_cb: *const (fn (@TypeOf(context), data: []const u8) void),
         ) Maybe(void) {
             const Context = @TypeOf(context);
@@ -2867,7 +2868,7 @@ fn StreamMixin(comptime Type: type) type {
                     if (nreads == 0) return; // EAGAIN or EWOULDBLOCK
                     if (nreads < 0) {
                         req.readStop();
-                        error_cb(context_data, ReturnCodeI64.init(nreads).errEnum() orelse bun.C.E.CANCELED);
+                        error_cb(context_data, ReturnCodeI64.init(nreads).errEnum() orelse C.E.CANCELED);
                     } else {
                         read_cb(context_data, buffer.slice());
                     }

@@ -9,7 +9,7 @@ const strings = bun.strings;
 const MutableString = bun.MutableString;
 const FeatureFlags = bun.FeatureFlags;
 const stringZ = bun.stringZ;
-const C = bun.C;
+const C = @import("root").C;
 const Loc = bun.logger.Loc;
 const Log = bun.logger.Log;
 const DotEnv = @import("./env_loader.zig");
@@ -177,7 +177,7 @@ pub const Sendfile = struct {
                 std.os.linux.sendfile(socket.fd().cast(), this.fd.cast(), &signed_offset, this.remain);
             this.offset = @as(u64, @intCast(signed_offset));
 
-            const errcode = bun.C.getErrno(val);
+            const errcode = C.getErrno(val);
 
             this.remain -|= @as(u64, @intCast(this.offset -| begin));
 
@@ -191,7 +191,7 @@ pub const Sendfile = struct {
         } else if (Environment.isPosix) {
             var sbytes: std.posix.off_t = adjusted_count;
             const signed_offset = @as(i64, @bitCast(@as(u64, this.offset)));
-            const errcode = bun.C.getErrno(std.c.sendfile(
+            const errcode = C.getErrno(std.c.sendfile(
                 this.fd.cast(),
                 socket.fd().cast(),
                 signed_offset,

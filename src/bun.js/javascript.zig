@@ -13,7 +13,7 @@ const default_allocator = bun.default_allocator;
 const StoredFileDescriptorType = bun.StoredFileDescriptorType;
 const ErrorableString = bun.JSC.ErrorableString;
 const Arena = @import("../allocators/mimalloc_arena.zig").Arena;
-const C = bun.C;
+const C = @import("root").C;
 
 const Exception = bun.JSC.Exception;
 const Allocator = std.mem.Allocator;
@@ -4638,7 +4638,7 @@ pub fn NewHotReloader(comptime Ctx: type, comptime EventLoopType: type, comptime
             _: *@This(),
             err: bun.sys.Error,
         ) void {
-            Output.err(@as(bun.C.E, @enumFromInt(err.errno)), "Watcher crashed", .{});
+            Output.err(@as(C.E, @enumFromInt(err.errno)), "Watcher crashed", .{});
             if (bun.Environment.isDebug) {
                 @panic("Watcher crash");
             }

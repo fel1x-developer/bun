@@ -1,6 +1,7 @@
 const std = @import("std");
 const Api = @import("../../api/schema.zig").Api;
 const bun = @import("root").bun;
+const C = @import("root").C;
 const MimeType = HTTPClient.MimeType;
 const ZigURL = @import("../../url.zig").URL;
 const HTTPClient = bun.http;
@@ -30,7 +31,7 @@ const JSInternalPromise = JSC.JSInternalPromise;
 const JSPromise = JSC.JSPromise;
 const JSValue = JSC.JSValue;
 const JSGlobalObject = JSC.JSGlobalObject;
-const E = bun.C.E;
+const E = C.E;
 const VirtualMachine = JSC.VirtualMachine;
 const Task = JSC.Task;
 const JSPrinter = bun.js_printer;
@@ -609,7 +610,7 @@ pub const StreamStart = union(Tag) {
                     if (!path.isString()) {
                         return .{
                             .err = Syscall.Error{
-                                .errno = @intFromEnum(bun.C.SystemErrno.EINVAL),
+                                .errno = @intFromEnum(C.SystemErrno.EINVAL),
                                 .syscall = .write,
                             },
                         };
@@ -627,7 +628,7 @@ pub const StreamStart = union(Tag) {
                     if (!fd_value.isAnyInt()) {
                         return .{
                             .err = Syscall.Error{
-                                .errno = @intFromEnum(bun.C.SystemErrno.EBADF),
+                                .errno = @intFromEnum(C.SystemErrno.EBADF),
                                 .syscall = .write,
                             },
                         };
@@ -645,7 +646,7 @@ pub const StreamStart = union(Tag) {
                     } else {
                         return .{
                             .err = Syscall.Error{
-                                .errno = @intFromEnum(bun.C.SystemErrno.EBADF),
+                                .errno = @intFromEnum(C.SystemErrno.EBADF),
                                 .syscall = .write,
                             },
                         };
@@ -3586,7 +3587,7 @@ pub const FileSink = struct {
             .fd => |fd_| brk: {
                 if (comptime Environment.isPosix and FeatureFlags.nonblocking_stdout_and_stderr_on_posix) {
                     if (bun.FDTag.get(fd_) != .none) {
-                        const rc = bun.C.open_as_nonblocking_tty(@intCast(fd_.cast()), bun.O.WRONLY);
+                        const rc = C.open_as_nonblocking_tty(@intCast(fd_.cast()), bun.O.WRONLY);
                         if (rc > -1) {
                             isatty = true;
                             is_nonblocking_tty = true;
@@ -3974,7 +3975,7 @@ pub const FileReader = struct {
             const fd = if (file.pathlike == .fd)
                 if (file.pathlike.fd.isStdio()) brk: {
                     if (comptime Environment.isPosix) {
-                        const rc = bun.C.open_as_nonblocking_tty(file.pathlike.fd.int(), bun.O.RDONLY);
+                        const rc = C.open_as_nonblocking_tty(file.pathlike.fd.int(), bun.O.RDONLY);
                         if (rc > -1) {
                             is_nonblocking_tty = true;
                             file.is_atty = true;
@@ -4017,7 +4018,7 @@ pub const FileReader = struct {
                 {
                     // var termios = std.mem.zeroes(std.posix.termios);
                     // _ = std.c.tcgetattr(fd.cast(), &termios);
-                    // bun.C.cfmakeraw(&termios);
+                    // C.cfmakeraw(&termios);
                     // _ = std.c.tcsetattr(fd.cast(), std.posix.TCSA.NOW, &termios);
                     file.is_atty = true;
                 }

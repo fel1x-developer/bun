@@ -43,6 +43,7 @@
 //
 const Transpiler = bun.Transpiler;
 const bun = @import("root").bun;
+const C = @import("root").C;
 const string = bun.string;
 const Output = bun.Output;
 const Global = bun.Global;
@@ -53,7 +54,6 @@ const stringZ = bun.stringZ;
 const default_allocator = bun.default_allocator;
 const StoredFileDescriptorType = bun.StoredFileDescriptorType;
 const FeatureFlags = bun.FeatureFlags;
-const C = bun.C;
 const std = @import("std");
 const lex = @import("../js_lexer.zig");
 const Logger = @import("../logger.zig");
@@ -4011,7 +4011,7 @@ pub const ParseTask = struct {
 
         result: ?*OnBeforeParseResult = null,
 
-        const headers = bun.C.translated;
+        const headers = C.translated;
 
         comptime {
             bun.assert(@sizeOf(OnBeforeParseArguments) == @sizeOf(headers.OnBeforeParseArguments));

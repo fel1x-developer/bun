@@ -1,5 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
+const C = @import("root").C;
 const windows = bun.windows;
 const uv = windows.libuv;
 const Path = @import("../../resolver/resolve_path.zig");
@@ -183,7 +184,7 @@ pub const PathWatcher = struct {
         var outbuf: bun.PathBuffer = undefined;
         const event_path = switch (bun.sys.readlink(path, &outbuf)) {
             .err => |err| brk: {
-                if (err.errno == @intFromEnum(bun.C.E.NOENT)) {
+                if (err.errno == @intFromEnum(C.E.NOENT)) {
                     return .{ .err = .{
                         .errno = err.errno,
                         .syscall = .open,

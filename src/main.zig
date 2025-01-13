@@ -1,6 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const bun = @import("root").bun;
+const C = @import("root").C;
 const Output = bun.Output;
 const Environment = bun.Environment;
 
@@ -59,7 +60,7 @@ pub const overrides = struct {
             }
 
             if (comptime T == u8 and sentinel == 0) {
-                return bun.C.strlen(p);
+                return C.strlen(p);
             }
 
             var i: usize = 0;

@@ -1,13 +1,13 @@
-const mem = @import("std").mem;
-const builtin = @import("std").builtin;
 const std = @import("std");
+const builtin = std.builtin;
+const mem = std.mem;
+const Allocator = mem.Allocator;
 const bun = @import("root").bun;
 const log = bun.Output.scoped(.mimalloc, true);
 const assert = bun.assert;
-const Allocator = mem.Allocator;
-const mimalloc = @import("./mimalloc.zig");
-const FeatureFlags = @import("../feature_flags.zig");
-const Environment = @import("../env.zig");
+const mimalloc = bun.allocators.Minimalloc;
+const FeatureFlags = bun.FeatureFlags;
+const Environment = bun.Environment;
 
 fn mimalloc_free(
     _: *anyopaque,

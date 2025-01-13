@@ -1,6 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const bun = @import("root").bun;
+const C = @import("root").C;
 const meta = bun.meta;
 const windows = bun.windows;
 const heap_allocator = bun.default_allocator;
@@ -12,7 +13,6 @@ const path_handler = bun.path;
 const strings = bun.strings;
 const string = bun.string;
 
-const C = bun.C;
 const L = strings.literal;
 const Environment = bun.Environment;
 const Fs = @import("../../fs.zig");
@@ -1692,7 +1692,7 @@ pub fn StatType(comptime Big: bool) type {
             return @truncate(this.mode);
         }
 
-        const S = if (Environment.isWindows) bun.C.S else posix.system.S;
+        const S = if (Environment.isWindows) C.S else posix.system.S;
 
         pub fn isBlockDevice(this: *This) JSC.JSValue {
             return JSC.JSValue.jsBoolean(S.ISBLK(@intCast(this.modeInternal())));

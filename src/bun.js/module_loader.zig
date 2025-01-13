@@ -12,7 +12,7 @@ const stringZ = bun.stringZ;
 const default_allocator = bun.default_allocator;
 const StoredFileDescriptorType = bun.StoredFileDescriptorType;
 const Arena = @import("../allocators/mimalloc_arena.zig").Arena;
-const C = bun.C;
+const C = @import("root").C;
 
 const Allocator = std.mem.Allocator;
 const IdentityContext = @import("../identity_context.zig").IdentityContext;
@@ -2051,7 +2051,7 @@ pub const ModuleLoader = struct {
             .sqlite_embedded, .sqlite => {
                 const sqlite_module_source_code_string = brk: {
                     if (jsc_vm.hot_reload == .hot) {
-                        break :brk 
+                        break :brk
                         \\// Generated code
                         \\import {Database} from 'bun:sqlite';
                         \\const {path} = import.meta;
@@ -2071,7 +2071,7 @@ pub const ModuleLoader = struct {
                         ;
                     }
 
-                    break :brk 
+                    break :brk
                     \\// Generated code
                     \\import {Database} from 'bun:sqlite';
                     \\export const db = new Database(import.meta.path);
@@ -2102,7 +2102,7 @@ pub const ModuleLoader = struct {
                                     if (comptime Environment.isMac) {
                                         switch (bun.sys.open(
                                             &(std.posix.toPosixPath(path.text) catch break :auto_watch),
-                                            bun.C.O_EVTONLY,
+                                            C.O_EVTONLY,
                                             0,
                                         )) {
                                             .err => break :auto_watch,

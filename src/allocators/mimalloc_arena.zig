@@ -1,13 +1,13 @@
-const mem = @import("std").mem;
-const builtin = @import("std").builtin;
 const std = @import("std");
+const mem = std.mem;
+const builtin = std.builtin;
 
-const mimalloc = @import("./mimalloc.zig");
-const Environment = @import("../env.zig");
-const FeatureFlags = @import("../feature_flags.zig");
+const bun = @import("root").bun;
+const mimalloc = bun.allocators.Minimalloc;
+const Environment = bun.Environment;
+const FeatureFlags = bun.FeatureFlags;
 const Allocator = mem.Allocator;
 const assert = bun.assert;
-const bun = @import("root").bun;
 const log = bun.Output.scoped(.mimalloc, true);
 
 pub const GlobalArena = struct {

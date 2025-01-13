@@ -3,13 +3,13 @@
 // The top-level functions assume the arguments are already validated
 const std = @import("std");
 const bun = @import("root").bun;
+const C = @import("root").C;
 const strings = bun.strings;
 const windows = bun.windows;
 const string = bun.string;
 const JSC = bun.JSC;
 const PathString = JSC.PathString;
 const Environment = bun.Environment;
-const C = bun.C;
 const Flavor = JSC.Node.Flavor;
 const system = std.posix.system;
 const Maybe = JSC.Maybe;
@@ -1865,7 +1865,7 @@ pub const Arguments = struct {
                 const stat = bun.sys.stat(old_path.sliceZ(&buf));
 
                 // if there's an error node defaults to file.
-                break :link_type if (stat == .result and bun.C.S.ISDIR(@intCast(stat.result.mode))) .dir else .file;
+                break :link_type if (stat == .result and C.S.ISDIR(@intCast(stat.result.mode))) .dir else .file;
             };
 
             return Symlink{
@@ -3465,7 +3465,7 @@ pub const NodeFS = struct {
 
             // https://manpages.debian.org/testing/manpages-dev/ioctl_ficlone.2.en.html
             if (args.mode.isForceClone()) {
-                if (ret.errnoSysP(bun.C.linux.ioctl_ficlone(dest_fd, src_fd), .ioctl_ficlone, dest)) |err| {
+                if (ret.errnoSysP(C.linux.ioctl_ficlone(dest_fd, src_fd), .ioctl_ficlone, dest)) |err| {
                     _ = Syscall.close(dest_fd);
                     // This is racey, but it's the best we can do
                     _ = bun.sys.unlink(dest);
@@ -3478,7 +3478,7 @@ pub const NodeFS = struct {
 
             // If we know it's a regular file and ioctl_ficlone is available, attempt to use it.
             if (posix.S.ISREG(stat_.mode) and bun.can_use_ioctl_ficlone()) {
-                const rc = bun.C.linux.ioctl_ficlone(dest_fd, src_fd);
+                const rc = C.linux.ioctl_ficlone(dest_fd, src_fd);
                 if (rc == 0) {
                     _ = C.fchmod(dest_fd.cast(), stat_.mode);
                     _ = Syscall.close(dest_fd);
@@ -3974,7 +3974,7 @@ pub const NodeFS = struct {
             };
         }
 
-        // bun.C.getErrno(rc) returns SUCCESS if rc is -1 so we call std.c._errno() directly
+        // C.getErrno(rc) returns SUCCESS if rc is -1 so we call std.c._errno() directly
         const errno = @as(std.c.E, @enumFromInt(std.c._errno().*));
         return .{
             .err = Syscall.Error{
@@ -5112,7 +5112,7 @@ pub const NodeFS = struct {
         if (Environment.isLinux) {
             preallocate: {
                 // Worthwhile after 6 MB at least on ext4 linux
-                if (buf.len >= bun.C.preallocate_length) {
+                if (buf.len >= C.preallocate_length) {
                     const offset: usize = if (args.file == .path)
                         // on mac, it's relatively positioned
                         0
@@ -5129,7 +5129,7 @@ pub const NodeFS = struct {
                         }
                     };
 
-                    bun.C.preallocate_file(
+                    C.preallocate_file(
                         fd.cast(),
                         @as(std.posix.off_t, @intCast(offset)),
                         @as(std.posix.off_t, @intCast(buf.len)),
@@ -5307,7 +5307,7 @@ pub const NodeFS = struct {
     pub fn rmdir(this: *NodeFS, args: Arguments.RmDir, comptime _: Flavor) Maybe(Return.Rmdir) {
         if (args.recursive) {
             std.fs.cwd().deleteTree(args.path.slice()) catch |err| {
-                const errno: bun.C.E = switch (err) {
+                const errno: C.E = switch (err) {
                     error.AccessDenied => .PERM,
                     error.FileTooBig => .FBIG,
                     error.SymLinkLoop => .LOOP,
@@ -6086,7 +6086,7 @@ pub const NodeFS = struct {
             var size: usize = @intCast(@max(stat_.size, 0));
 
             if (posix.S.ISREG(stat_.mode) and bun.can_use_ioctl_ficlone()) {
-                const rc = bun.C.linux.ioctl_ficlone(dest_fd, src_fd);
+                const rc = C.linux.ioctl_ficlone(dest_fd, src_fd);
                 if (rc == 0) {
                     _ = C.fchmod(dest_fd.cast(), stat_.mode);
                     _ = Syscall.close(dest_fd);

@@ -9,7 +9,7 @@ const strings = bun.strings;
 const MutableString = bun.MutableString;
 const stringZ = bun.stringZ;
 const default_allocator = bun.default_allocator;
-const C = bun.C;
+const C = @import("root").C;
 const clap = @import("../src/deps/zig-clap/clap.zig");
 
 const URL = @import("../src/url.zig").URL;

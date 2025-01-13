@@ -1,5 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
+const C = @import("root").C;
 const string = bun.string;
 const Output = bun.Output;
 const Global = bun.Global;
@@ -57,14 +58,14 @@ const INotify = struct {
             .result = std.posix.inotify_add_watchZ(this.inotify_fd, pathname, watch_file_mask) catch |err| return .{
                 .err = .{
                     .errno = @truncate(@intFromEnum(switch (err) {
-                        error.FileNotFound => bun.C.E.NOENT,
-                        error.AccessDenied => bun.C.E.ACCES,
-                        error.SystemResources => bun.C.E.NOMEM,
-                        error.Unexpected => bun.C.E.INVAL,
-                        error.NotDir => bun.C.E.NOTDIR,
-                        error.NameTooLong => bun.C.E.NAMETOOLONG,
-                        error.UserResourceLimitReached => bun.C.E.MFILE,
-                        error.WatchAlreadyExists => bun.C.E.EXIST,
+                        error.FileNotFound => C.E.NOENT,
+                        error.AccessDenied => C.E.ACCES,
+                        error.SystemResources => C.E.NOMEM,
+                        error.Unexpected => C.E.INVAL,
+                        error.NotDir => C.E.NOTDIR,
+                        error.NameTooLong => C.E.NAMETOOLONG,
+                        error.UserResourceLimitReached => C.E.MFILE,
+                        error.WatchAlreadyExists => C.E.EXIST,
                     })),
                     .syscall = .watch,
                 },
@@ -81,14 +82,14 @@ const INotify = struct {
             .result = std.posix.inotify_add_watchZ(this.inotify_fd, pathname, watch_dir_mask) catch |err| return .{
                 .err = .{
                     .errno = @truncate(@intFromEnum(switch (err) {
-                        error.FileNotFound => bun.C.E.NOENT,
-                        error.AccessDenied => bun.C.E.ACCES,
-                        error.SystemResources => bun.C.E.NOMEM,
-                        error.Unexpected => bun.C.E.INVAL,
-                        error.NotDir => bun.C.E.NOTDIR,
-                        error.NameTooLong => bun.C.E.NAMETOOLONG,
-                        error.UserResourceLimitReached => bun.C.E.MFILE,
-                        error.WatchAlreadyExists => bun.C.E.EXIST,
+                        error.FileNotFound => C.E.NOENT,
+                        error.AccessDenied => C.E.ACCES,
+                        error.SystemResources => C.E.NOMEM,
+                        error.Unexpected => C.E.INVAL,
+                        error.NotDir => C.E.NOTDIR,
+                        error.NameTooLong => C.E.NAMETOOLONG,
+                        error.UserResourceLimitReached => C.E.MFILE,
+                        error.WatchAlreadyExists => C.E.EXIST,
                     })),
                     .syscall = .watch,
                 },
@@ -275,7 +276,7 @@ const WindowsWatcher = struct {
                 const err = w.kernel32.GetLastError();
                 log("failed to start watching directory: {s}", .{@tagName(err)});
                 return .{ .err = .{
-                    .errno = @intFromEnum(bun.C.SystemErrno.init(err) orelse bun.C.SystemErrno.EINVAL),
+                    .errno = @intFromEnum(C.SystemErrno.init(err) orelse C.SystemErrno.EINVAL),
                     .syscall = .watch,
                 } };
             }
@@ -385,7 +386,7 @@ const WindowsWatcher = struct {
                 } else {
                     log("GetQueuedCompletionStatus failed: {s}", .{@tagName(err)});
                     return .{ .err = .{
-                        .errno = @intFromEnum(bun.C.SystemErrno.init(err) orelse bun.C.SystemErrno.EINVAL),
+                        .errno = @intFromEnum(C.SystemErrno.init(err) orelse C.SystemErrno.EINVAL),
                         .syscall = .watch,
                     } };
                 }
@@ -401,7 +402,7 @@ const WindowsWatcher = struct {
                     // TODO close handles?
                     log("shutdown notification in WindowsWatcher.next", .{});
                     return .{ .err = .{
-                        .errno = @intFromEnum(bun.C.SystemErrno.ESHUTDOWN),
+                        .errno = @intFromEnum(C.SystemErrno.ESHUTDOWN),
                         .syscall = .watch,
                     } };
                 }
@@ -409,7 +410,7 @@ const WindowsWatcher = struct {
             } else {
                 log("GetQueuedCompletionStatus returned no overlapped event", .{});
                 return .{ .err = .{
-                    .errno = @truncate(@intFromEnum(bun.C.E.INVAL)),
+                    .errno = @truncate(@intFromEnum(C.E.INVAL)),
                     .syscall = .watch,
                 } };
             }

@@ -1,4 +1,5 @@
 const std = @import("std");
+const C = @import("root").C;
 const expect = std.testing.expect;
 const Environment = @import("./env.zig");
 const string = bun.string;
@@ -469,7 +470,7 @@ pub inline fn lastIndexOfChar(self: []const u8, char: u8) ?usize {
         if (@inComptime()) {
             return lastIndexOfCharT(u8, self, char);
         }
-        const start = bun.C.memrchr(self.ptr, char, self.len) orelse return null;
+        const start = C.memrchr(self.ptr, char, self.len) orelse return null;
         const i = @intFromPtr(start) - @intFromPtr(self.ptr);
         return @intCast(i);
     }
@@ -505,7 +506,7 @@ pub inline fn indexOf(self: string, str: string) ?usize {
     if (str_len == 1)
         return indexOfCharUsize(self, str_ptr[0]);
 
-    const start = bun.C.memmem(self_ptr, self_len, str_ptr, str_len) orelse return null;
+    const start = C.memmem(self_ptr, self_len, str_ptr, str_len) orelse return null;
 
     const i = @intFromPtr(start) - @intFromPtr(self_ptr);
     bun.unsafeAssert(i < self_len);
@@ -1109,7 +1110,7 @@ pub fn eqlCaseInsensitiveASCII(a: string, b: string, comptime check_len: bool) b
     bun.unsafeAssert(b.len > 0);
     bun.unsafeAssert(a.len > 0);
 
-    return bun.C.strncasecmp(a.ptr, b.ptr, a.len) == 0;
+    return C.strncasecmp(a.ptr, b.ptr, a.len) == 0;
 }
 
 pub fn eqlCaseInsensitiveT(comptime T: type, a: []const T, b: []const u8) bool {
@@ -1248,7 +1249,7 @@ pub fn eqlUtf16(comptime self: string, other: []const u16) bool {
 
     if (self.len == 0) return true;
 
-    return bun.C.memcmp(bun.cast([*]const u8, self.ptr), bun.cast([*]const u8, other.ptr), self.len * @sizeOf(u16)) == 0;
+    return C.memcmp(bun.cast([*]const u8, self.ptr), bun.cast([*]const u8, other.ptr), self.len * @sizeOf(u16)) == 0;
 }
 
 pub fn toUTF8Alloc(allocator: std.mem.Allocator, js: []const u16) ![]u8 {
@@ -1482,7 +1483,7 @@ pub const BOM = enum {
     pub fn removeAndConvertToUTF8AndFree(bom: BOM, allocator: std.mem.Allocator, bytes: []u8) ![]u8 {
         switch (bom) {
             .utf8 => {
-                bun.C.memmove(bytes.ptr, bytes.ptr + utf8_bytes.len, bytes.len - utf8_bytes.len);
+                C.memmove(bytes.ptr, bytes.ptr + utf8_bytes.len, bytes.len - utf8_bytes.len);
                 return bytes[0 .. bytes.len - utf8_bytes.len];
             },
             .utf16_le => {
@@ -1495,7 +1496,7 @@ pub const BOM = enum {
             else => {
                 // TODO: this needs to re-encode, for now we just remove the BOM
                 const bom_bytes = bom.getHeader();
-                bun.C.memmove(bytes.ptr, bytes.ptr + bom_bytes.len, bytes.len - bom_bytes.len);
+                C.memmove(bytes.ptr, bytes.ptr + bom_bytes.len, bytes.len - bom_bytes.len);
                 return bytes[0 .. bytes.len - bom_bytes.len];
             },
         }
@@ -1509,7 +1510,7 @@ pub const BOM = enum {
         const bytes = list.items;
         switch (bom) {
             .utf8 => {
-                bun.C.memmove(bytes.ptr, bytes.ptr + utf8_bytes.len, bytes.len - utf8_bytes.len);
+                C.memmove(bytes.ptr, bytes.ptr + utf8_bytes.len, bytes.len - utf8_bytes.len);
                 return bytes[0 .. bytes.len - utf8_bytes.len];
             },
             .utf16_le => {
@@ -1526,7 +1527,7 @@ pub const BOM = enum {
             else => {
                 // TODO: this needs to re-encode, for now we just remove the BOM
                 const bom_bytes = bom.getHeader();
-                bun.C.memmove(bytes.ptr, bytes.ptr + bom_bytes.len, bytes.len - bom_bytes.len);
+                C.memmove(bytes.ptr, bytes.ptr + bom_bytes.len, bytes.len - bom_bytes.len);
                 return bytes[0 .. bytes.len - bom_bytes.len];
             },
         }
@@ -4247,7 +4248,7 @@ pub fn indexOfNeedsEscape(slice: []const u8, comptime quote_char: u8) ?u32 {
 }
 
 pub fn indexOfCharZ(sliceZ: [:0]const u8, char: u8) ?u63 {
-    const ptr = bun.C.strchr(sliceZ.ptr, char) orelse return null;
+    const ptr = C.strchr(sliceZ.ptr, char) orelse return null;
     const pos = @intFromPtr(ptr) - @intFromPtr(sliceZ.ptr);
 
     if (comptime Environment.isDebug)
@@ -4270,7 +4271,7 @@ pub fn indexOfCharUsize(slice: []const u8, char: u8) ?usize {
         return std.mem.indexOfScalar(u8, slice, char);
     }
 
-    const ptr = bun.C.memchr(slice.ptr, char, slice.len) orelse return null;
+    const ptr = C.memchr(slice.ptr, char, slice.len) orelse return null;
     const i = @intFromPtr(ptr) - @intFromPtr(slice.ptr);
     bun.assert(i < slice.len);
     bun.assert(slice[i] == char);
@@ -4285,7 +4286,7 @@ pub fn indexOfCharPos(slice: []const u8, char: u8, start_index: usize) ?usize {
 
     if (start_index >= slice.len) return null;
 
-    const ptr = bun.C.memchr(slice.ptr + start_index, char, slice.len - start_index) orelse
+    const ptr = C.memchr(slice.ptr + start_index, char, slice.len - start_index) orelse
         return null;
     const i = @intFromPtr(ptr) - @intFromPtr(slice.ptr);
     bun.assert(i < slice.len);
@@ -4921,7 +4922,7 @@ pub fn join(slices: []const string, delimiter: string, allocator: std.mem.Alloca
 pub fn order(a: []const u8, b: []const u8) std.math.Order {
     const len = @min(a.len, b.len);
 
-    const cmp = if (comptime Environment.isNative) bun.C.memcmp(a.ptr, b.ptr, len) else return std.mem.order(u8, a, b);
+    const cmp = if (comptime Environment.isNative) C.memcmp(a.ptr, b.ptr, len) else return std.mem.order(u8, a, b);
     return switch (std.math.sign(cmp)) {
         0 => std.math.order(a.len, b.len),
         1 => .gt,

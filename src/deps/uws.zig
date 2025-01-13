@@ -1,5 +1,6 @@
 pub const is_bindgen = false;
 const bun = @import("root").bun;
+const C = @import("root").C;
 const Api = bun.ApiSchema;
 const std = @import("std");
 const Environment = bun.Environment;
@@ -664,7 +665,7 @@ pub const WindowsNamedPipe = if (Environment.isWindows) struct {
         }
     }
 
-    fn onReadError(this: *WindowsNamedPipe, err: bun.C.E) void {
+    fn onReadError(this: *WindowsNamedPipe, err: C.E) void {
         log("onReadError", .{});
         if (err == .EOF) {
             // we received FIN but we dont allow half-closed connections right now
@@ -855,7 +856,7 @@ pub const WindowsNamedPipe = if (Environment.isWindows) struct {
             }) catch {
                 return .{
                     .err = .{
-                        .errno = @intFromEnum(bun.C.E.PIPE),
+                        .errno = @intFromEnum(C.E.PIPE),
                         .syscall = .connect,
                     },
                 };
@@ -903,7 +904,7 @@ pub const WindowsNamedPipe = if (Environment.isWindows) struct {
             }) catch {
                 return .{
                     .err = .{
-                        .errno = @intFromEnum(bun.C.E.PIPE),
+                        .errno = @intFromEnum(C.E.PIPE),
                         .syscall = .connect,
                     },
                 };
@@ -941,7 +942,7 @@ pub const WindowsNamedPipe = if (Environment.isWindows) struct {
             }) catch {
                 return .{
                     .err = .{
-                        .errno = @intFromEnum(bun.C.E.PIPE),
+                        .errno = @intFromEnum(C.E.PIPE),
                         .syscall = .connect,
                     },
                 };
@@ -984,7 +985,7 @@ pub const WindowsNamedPipe = if (Environment.isWindows) struct {
             return false;
         }
         const stream = this.writer.getStream() orelse {
-            this.onError(bun.sys.Error.fromCode(bun.C.E.PIPE, .read));
+            this.onError(bun.sys.Error.fromCode(C.E.PIPE, .read));
             return false;
         };
 

@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const C = @import("root").C;
 const std = @import("std");
 const Async = bun.Async;
 const JSC = bun.JSC;
@@ -82,7 +83,7 @@ pub fn PosixPipeWriter(
 
         fn writeToBlockingPipe(fd: bun.FileDescriptor, buf: []const u8) JSC.Maybe(usize) {
             if (comptime bun.Environment.isLinux) {
-                if (bun.C.linux.RWFFlagSupport.isMaybeSupported()) {
+                if (C.linux.RWFFlagSupport.isMaybeSupported()) {
                     return bun.sys.writeNonblocking(fd, buf);
                 }
             }
@@ -1273,7 +1274,7 @@ pub fn WindowsStreamingWriter(
             }
 
             var pipe = this.source orelse {
-                const err = bun.sys.Error.fromCode(bun.C.E.PIPE, .pipe);
+                const err = bun.sys.Error.fromCode(C.E.PIPE, .pipe);
                 this.last_write_result = .{ .err = err };
                 onError(this.parent, err);
                 this.closeWithoutReporting();

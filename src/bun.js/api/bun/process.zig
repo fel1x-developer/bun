@@ -1,5 +1,6 @@
 const bun = @import("root").bun;
 const std = @import("std");
+const C = @import("root").C;
 const PosixSpawn = bun.spawn;
 const Environment = bun.Environment;
 const JSC = bun.JSC;
@@ -496,7 +497,7 @@ pub const Process = struct {
                 .waiter_thread, .fd => {
                     const err = std.c.kill(this.pid, signal);
                     if (err != 0) {
-                        const errno_ = bun.C.getErrno(err);
+                        const errno_ = C.getErrno(err);
 
                         // if the process was already killed don't throw
                         if (errno_ != .SRCH)
@@ -510,7 +511,7 @@ pub const Process = struct {
                 .uv => |*handle| {
                     if (handle.kill(signal).toError(.kill)) |err| {
                         // if the process was already killed don't throw
-                        if (err.errno != @intFromEnum(bun.C.E.SRCH)) {
+                        if (err.errno != @intFromEnum(C.E.SRCH)) {
                             return .{ .err = err };
                         }
                     }
@@ -1135,7 +1136,7 @@ pub const PosixSpawnResult = struct {
             pidfd_flags,
         );
         while (true) {
-            switch (bun.C.getErrno(rc)) {
+            switch (C.getErrno(rc)) {
                 .SUCCESS => return JSC.Maybe(PidFDType){ .result = @intCast(rc) },
                 .INTR => {
                     rc = std.os.linux.pidfd_open(
@@ -1216,13 +1217,13 @@ pub fn spawnProcessPosix(
     var attr = try PosixSpawn.Attr.init();
     defer attr.deinit();
 
-    var flags: i32 = bun.C.POSIX_SPAWN_SETSIGDEF | bun.C.POSIX_SPAWN_SETSIGMASK;
+    var flags: i32 = C.POSIX_SPAWN_SETSIGDEF | C.POSIX_SPAWN_SETSIGMASK;
 
     if (comptime Environment.isMac) {
-        flags |= bun.C.POSIX_SPAWN_CLOEXEC_DEFAULT;
+        flags |= C.POSIX_SPAWN_CLOEXEC_DEFAULT;
 
         if (options.use_execve_on_macos) {
-            flags |= bun.C.POSIX_SPAWN_SETEXEC;
+            flags |= C.POSIX_SPAWN_SETEXEC;
 
             if (options.stdin == .buffer or options.stdout == .buffer or options.stderr == .buffer) {
                 Output.panic("Internal error: stdin, stdout, and stderr cannot be buffered when use_execve_on_macos is true", .{});
@@ -1231,7 +1232,7 @@ pub fn spawnProcessPosix(
     }
 
     if (options.detached) {
-        flags |= bun.C.POSIX_SPAWN_SETSID;
+        flags |= C.POSIX_SPAWN_SETSID;
     }
 
     if (options.cwd.len > 0) {
@@ -1825,9 +1826,9 @@ pub const sync = struct {
         chunks: std.ArrayList([]u8) = .{ .items = &.{}, .allocator = bun.default_allocator, .capacity = 0 },
         pipe: *uv.Pipe,
 
-        err: bun.C.E = .SUCCESS,
+        err: C.E = .SUCCESS,
         context: *SyncWindowsProcess,
-        onDoneCallback: *const fn (*SyncWindowsProcess, tag: bun.FDTag, chunks: []const []u8, err: bun.C.E) void = &SyncWindowsProcess.onReaderDone,
+        onDoneCallback: *const fn (*SyncWindowsProcess, tag: bun.FDTag, chunks: []const []u8, err: C.E) void = &SyncWindowsProcess.onReaderDone,
         tag: bun.FDTag = .none,
 
         pub usingnamespace bun.New(@This());
@@ -1840,7 +1841,7 @@ pub const sync = struct {
             this.chunks.append(@constCast(data)) catch bun.outOfMemory();
         }
 
-        fn onError(this: *SyncWindowsPipeReader, err: bun.C.E) void {
+        fn onError(this: *SyncWindowsPipeReader, err: C.E) void {
             this.err = err;
             this.pipe.close(onClose);
         }
@@ -1867,7 +1868,7 @@ pub const sync = struct {
     const SyncWindowsProcess = struct {
         stderr: []const []u8 = &.{},
         stdout: []const []u8 = &.{},
-        err: bun.C.E = .SUCCESS,
+        err: C.E = .SUCCESS,
         waiting_count: u8 = 1,
         process: *Process,
         status: ?Status = null,
@@ -1881,7 +1882,7 @@ pub const sync = struct {
             this.process.deref();
         }
 
-        pub fn onReaderDone(this: *SyncWindowsProcess, tag: bun.FDTag, chunks: []const []u8, err: bun.C.E) void {
+        pub fn onReaderDone(this: *SyncWindowsProcess, tag: bun.FDTag, chunks: []const []u8, err: C.E) void {
             switch (tag) {
                 .stderr => {
                     this.stderr = chunks;
@@ -2171,7 +2172,7 @@ pub const sync = struct {
             }
 
             const rc = std.c.poll(poll_fds.ptr, @intCast(poll_fds.len), -1);
-            switch (bun.C.getErrno(rc)) {
+            switch (C.getErrno(rc)) {
                 .SUCCESS => {},
                 .AGAIN, .INTR => continue,
                 else => |err| return .{ .err = bun.sys.Error.fromCode(err, .poll) },

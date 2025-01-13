@@ -1,4 +1,5 @@
 const std = @import("std");
+// const C = @import("root").C;
 const os = struct {
     pub usingnamespace std.posix;
     pub const EINTR = 4;
@@ -150,7 +151,7 @@ pub const Waker = struct {
 //         );
 
 //         if (errno < 0) {
-//             return asError(bun.C.getErrno(errno));
+//             return asError(C.getErrno(errno));
 //         }
 //     }
 
@@ -174,7 +175,7 @@ pub const Waker = struct {
 //             null,
 //         );
 //         if (errno < 0) {
-//             return asError(bun.C.getErrno(errno));
+//             return asError(C.getErrno(errno));
 //         }
 
 //         return @as(u64, @intCast(errno));

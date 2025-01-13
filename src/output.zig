@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const C = @import("root").C;
 const std = @import("std");
 const Environment = @import("./env.zig");
 const string = bun.string;
@@ -243,7 +244,7 @@ pub const Source = struct {
         }
 
         pub fn init() void {
-            bun.C.bun_initialize_process();
+            C.bun_initialize_process();
 
             if (Environment.isWindows) {
                 WindowsStdio.init();
@@ -264,7 +265,7 @@ pub const Source = struct {
             if (Environment.isWindows) {
                 WindowsStdio.restore();
             } else {
-                bun.C.bun_restore_stdio();
+                C.bun_restore_stdio();
             }
         }
     };
@@ -1108,7 +1109,7 @@ pub inline fn err(error_name: anytype, comptime fmt: []const u8, args: anytype) 
 
         // enums
         if (info == .Enum) {
-            const errno: bun.C.SystemErrno = @enumFromInt(@intFromEnum(info));
+            const errno: C.SystemErrno = @enumFromInt(@intFromEnum(info));
             break :display_name .{ @tagName(errno), false };
         }
 

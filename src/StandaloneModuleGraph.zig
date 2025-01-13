@@ -2,6 +2,7 @@
 //! But this incurred a fixed 350ms overhead on every build, which is unacceptable
 //! so we give up on codesigning support on macOS for now until we can find a better solution
 const bun = @import("root").bun;
+const C = @import("root").C;
 const std = @import("std");
 const Schema = bun.Schema.Api;
 const strings = bun.strings;
@@ -638,7 +639,7 @@ pub const StandaloneModuleGraph = struct {
         // the final 8 bytes in the file are the length of the module graph with padding, excluding the trailer and offsets
         _ = Syscall.write(cloned_executable_fd, std.mem.asBytes(&total_byte_count));
         if (comptime !Environment.isWindows) {
-            _ = bun.C.fchmod(cloned_executable_fd.int(), 0o777);
+            _ = C.fchmod(cloned_executable_fd.int(), 0o777);
         }
 
         if (Environment.isWindows and inject_options.windows_hide_console) {
@@ -709,14 +710,14 @@ pub const StandaloneModuleGraph = struct {
                 break :brk outfile_buf_u16[0..outfile_w.len :0];
             };
 
-            bun.C.moveOpenedFileAtLoose(fd, bun.toFD(root_dir.fd), outfile_slice, true).unwrap() catch |err| {
+            C.moveOpenedFileAtLoose(fd, bun.toFD(root_dir.fd), outfile_slice, true).unwrap() catch |err| {
                 if (err == error.EISDIR) {
                     Output.errGeneric("{} is a directory. Please choose a different --outfile or delete the directory", .{bun.fmt.utf16(outfile_slice)});
                 } else {
                     Output.err(err, "failed to move executable to result path", .{});
                 }
 
-                _ = bun.C.deleteOpenedFile(fd);
+                _ = C.deleteOpenedFile(fd);
 
                 Global.exit(1);
             };
@@ -761,7 +762,7 @@ pub const StandaloneModuleGraph = struct {
             }
         }
 
-        bun.C.moveFileZWithHandle(
+        C.moveFileZWithHandle(
             fd,
             bun.FD.cwd(),
             bun.sliceTo(&(try std.posix.toPosixPath(temp_location)), 0),

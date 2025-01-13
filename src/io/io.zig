@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const C = @import("root").C;
 const std = @import("std");
 const sys = bun.sys;
 const linux = std.os.linux;
@@ -39,7 +40,7 @@ pub const Loop = struct {
                 epoll.data.ptr = @intFromPtr(&loop);
                 const rc = std.os.linux.epoll_ctl(loop.epoll_fd.cast(), std.os.linux.EPOLL.CTL_ADD, loop.waker.getFd().cast(), &epoll);
 
-                switch (bun.C.getErrno(rc)) {
+                switch (C.getErrno(rc)) {
                     .SUCCESS => {},
                     else => |err| bun.Output.panic("Failed to wait on epoll {s}", .{@tagName(err)}),
                 }
@@ -149,7 +150,7 @@ pub const Loop = struct {
                 std.math.maxInt(i32),
             );
 
-            switch (bun.C.getErrno(rc)) {
+            switch (C.getErrno(rc)) {
                 .INTR => continue,
                 .SUCCESS => {},
                 else => |e| bun.Output.panic("epoll_wait: {s}", .{@tagName(e)}),
@@ -270,7 +271,7 @@ pub const Loop = struct {
                 null,
             );
 
-            switch (bun.C.getErrno(rc)) {
+            switch (C.getErrno(rc)) {
                 .INTR => continue,
                 .SUCCESS => {},
                 else => |e| bun.Output.panic("kevent64 failed: {s}", .{@tagName(e)}),
@@ -613,7 +614,7 @@ pub const Poll = struct {
             inline else => |t| {
                 var this: *Pollable.Tag.Type(t) = @alignCast(@fieldParentPtr("io_poll", poll));
                 if (event.events & linux.EPOLL.ERR != 0) {
-                    const errno = bun.C.getErrno(event.events);
+                    const errno = C.getErrno(event.events);
                     log("error() = {s}", .{@tagName(errno)});
                     this.onIOError(bun.sys.Error.fromCode(errno, .epoll_ctl));
                 } else {
@@ -682,7 +683,7 @@ pub const Poll = struct {
     }
 };
 
-pub const retry = bun.C.E.AGAIN;
+pub const retry = C.E.AGAIN;
 
 pub const ReadState = @import("./pipes.zig").ReadState;
 pub const PipeReader = @import("./PipeReader.zig").PipeReader;

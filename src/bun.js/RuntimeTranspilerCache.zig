@@ -13,6 +13,7 @@
 const expected_version = 13;
 
 const bun = @import("root").bun;
+const C = @import("root").C;
 const std = @import("std");
 const Output = bun.Output;
 const JSC = bun.JSC;
@@ -245,7 +246,7 @@ pub const RuntimeTranspilerCache = struct {
                 }
                 bun.assert(end_position == @as(i64, @intCast(sourcemap.len + output_bytes.len + Metadata.size)));
 
-                bun.C.preallocate_file(tmpfile.fd.cast(), 0, @intCast(end_position)) catch {};
+                C.preallocate_file(tmpfile.fd.cast(), 0, @intCast(end_position)) catch {};
                 while (position < end_position) {
                     const written = try bun.sys.pwritev(tmpfile.fd, vecs, position).unwrap();
                     if (written <= 0) {

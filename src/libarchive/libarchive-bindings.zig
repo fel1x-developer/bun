@@ -1,5 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
+const C = @import("root").C;
 const wchar_t = u16;
 const la_int64_t = i64;
 const la_ssize_t = isize;
@@ -956,7 +957,7 @@ pub const Archive = opaque {
                     .retry => continue,
                     .eof => Return.res(null),
                     .ok => {
-                        const kind = bun.C.kindFromMode(entry.filetype());
+                        const kind = C.kindFromMode(entry.filetype());
 
                         if (this.filter.contains(kind)) continue;
 

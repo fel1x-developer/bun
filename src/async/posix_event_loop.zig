@@ -3,6 +3,7 @@ const Output = bun.Output;
 const JSC = bun.JSC;
 const uws = bun.uws;
 const Environment = bun.Environment;
+const C = @import("root").C;
 const std = @import("std");
 
 pub const Loop = uws.Loop;
@@ -902,7 +903,7 @@ pub const FilePoll = struct {
                         &timeout,
                     );
 
-                    if (bun.C.getErrno(rc) == .INTR) continue;
+                    if (C.getErrno(rc) == .INTR) continue;
                     break :rc rc;
                 }
             };
@@ -919,7 +920,7 @@ pub const FilePoll = struct {
                 // indicate the error condition.
             }
 
-            const errno = bun.C.getErrno(rc);
+            const errno = C.getErrno(rc);
 
             if (errno != .SUCCESS) {
                 this.deactivate(loop);
@@ -1071,7 +1072,7 @@ pub const FilePoll = struct {
                 // indicate the error condition.
             }
 
-            const errno = bun.C.getErrno(rc);
+            const errno = C.getErrno(rc);
             switch (rc) {
                 std.math.minInt(@TypeOf(rc))...-1 => return JSC.Maybe(void).errnoSys(@intFromEnum(errno), .kevent).?,
                 else => {},

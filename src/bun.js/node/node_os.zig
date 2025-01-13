@@ -1,7 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const bun = @import("root").bun;
-const C = bun.C;
+const C = @import("root").C;
 const string = bun.string;
 const strings = bun.strings;
 const JSC = bun.JSC;
@@ -186,7 +186,7 @@ fn cpusImplLinux(globalThis: *JSC.JSGlobalObject) !JSC.JSValue {
 
 extern fn bun_sysconf__SC_CLK_TCK() isize;
 fn cpusImplDarwin(globalThis: *JSC.JSGlobalObject) !JSC.JSValue {
-    const local_bindings = @import("../../darwin_c.zig");
+    const local_bindings = C.darwin;
     const c = std.c;
 
     // Fetch the CPU info structure
@@ -333,23 +333,23 @@ pub fn homedir(global: *JSC.JSGlobalObject) !bun.String {
         defer if (string_bytes.ptr != &stack_string_bytes)
             bun.default_allocator.free(string_bytes);
 
-        var pw: bun.C.passwd = undefined;
-        var result: ?*bun.C.passwd = null;
+        var pw: C.passwd = undefined;
+        var result: ?*C.passwd = null;
 
         const ret = while (true) {
-            const ret = bun.C.getpwuid_r(
-                bun.C.geteuid(),
+            const ret = C.getpwuid_r(
+                C.geteuid(),
                 &pw,
                 string_bytes.ptr,
                 string_bytes.len,
                 &result,
             );
 
-            if (ret == @intFromEnum(bun.C.E.INTR))
+            if (ret == @intFromEnum(C.E.INTR))
                 continue;
 
             // If the system call wants more memory, double it.
-            if (ret == @intFromEnum(bun.C.E.RANGE)) {
+            if (ret == @intFromEnum(C.E.RANGE)) {
                 const len = string_bytes.len;
                 bun.default_allocator.free(string_bytes);
                 string_bytes = "";

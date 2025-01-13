@@ -2,6 +2,7 @@ const JSC = bun.JSC;
 const bun = @import("root").bun;
 const string = bun.string;
 const std = @import("std");
+const C = @import("root").C;
 const Output = bun.Output;
 
 fn _getSystem() type {
@@ -9,7 +10,7 @@ fn _getSystem() type {
     // the "usingnamespace" is evaluating in dead branches
     return brk: {
         if (comptime bun.Environment.isLinux) {
-            const Type = bun.C.linux;
+            const Type = C.linux;
             break :brk struct {
                 pub usingnamespace std.posix.system;
                 pub usingnamespace Type;
@@ -137,14 +138,14 @@ pub const BunSpawn = struct {
             var flags: c_int = 0;
 
             if (self.detached) {
-                flags |= bun.C.POSIX_SPAWN_SETSID;
+                flags |= C.POSIX_SPAWN_SETSID;
             }
 
             return @intCast(flags);
         }
 
         pub fn set(self: *Attr, flags: u16) !void {
-            self.detached = (flags & bun.C.POSIX_SPAWN_SETSID) != 0;
+            self.detached = (flags & C.POSIX_SPAWN_SETSID) != 0;
         }
 
         pub fn resetSignals(this: *Attr) !void {
@@ -388,7 +389,7 @@ pub const PosixSpawn = struct {
             });
 
         // Unlike most syscalls, posix_spawn returns 0 on success and an errno on failure.
-        // That is why bun.C.getErrno() is not used here, since that checks for -1.
+        // That is why C.getErrno() is not used here, since that checks for -1.
         if (rc == 0) {
             return Maybe(pid_t){ .result = pid };
         }

@@ -8,31 +8,33 @@
 const builtin = @import("builtin");
 const std = @import("std");
 const bun = @This();
+const C = @import("root").C;
 
 pub const Environment = @import("env.zig");
+pub const allocators = @import("allocators.zig");
 
 pub const use_mimalloc = true;
 
 pub const default_allocator: std.mem.Allocator = if (!use_mimalloc)
     std.heap.c_allocator
 else
-    @import("./allocators/memory_allocator.zig").c_allocator;
+    allocators.MemoryAllocator.c_allocator;
 
 /// Zeroing memory allocator
 pub const z_allocator: std.mem.Allocator = if (!use_mimalloc)
     std.heap.c_allocator
 else
-    @import("./allocators/memory_allocator.zig").z_allocator;
+    allocators.MemoryAllocator.z_allocator;
 
 pub const huge_allocator: std.mem.Allocator = if (!use_mimalloc)
     std.heap.c_allocator
 else
-    @import("./allocators/memory_allocator.zig").huge_allocator;
+    allocators.MemoryAllocator.huge_allocator;
 
 pub const auto_allocator: std.mem.Allocator = if (!use_mimalloc)
     std.heap.c_allocator
 else
-    @import("./allocators/memory_allocator.zig").auto_allocator;
+    allocators.MemoryAllocator.auto_allocator;
 
 pub const callmod_inline: std.builtin.CallModifier = if (builtin.mode == .Debug) .auto else .always_inline;
 pub const callconv_inline: std.builtin.CallingConvention = if (builtin.mode == .Debug) .Unspecified else .Inline;
@@ -102,7 +104,6 @@ pub const JSOOM = OOM || JSError;
 
 pub const detectCI = @import("./ci_info.zig").detectCI;
 
-pub const C = @import("root").C;
 pub const sha = @import("./sha.zig");
 pub const FeatureFlags = @import("feature_flags.zig");
 pub const meta = @import("./meta.zig");
@@ -112,7 +113,6 @@ pub const resolver = @import("./resolver/resolver.zig");
 pub const DirIterator = @import("./bun.js/node/dir_iterator.zig");
 pub const PackageJSON = @import("./resolver/package_json.zig").PackageJSON;
 pub const fmt = @import("./fmt.zig");
-pub const allocators = @import("./allocators.zig");
 pub const bun_js = @import("./bun_js.zig");
 
 /// All functions and interfaces provided from Bun's `bindgen` utility.

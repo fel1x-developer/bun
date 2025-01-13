@@ -1,5 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
+const C = @import("root").C;
 const uv = bun.windows.libuv;
 
 const log = bun.Output.scoped(.PipeSource, true);
@@ -214,7 +215,7 @@ pub const Source = union(enum) {
             },
             else => .{
                 .err = .{
-                    .errno = @intFromEnum(bun.C.E.NOTSUP),
+                    .errno = @intFromEnum(C.E.NOTSUP),
                     .syscall = .uv_tty_set_mode,
                     .fd = this.getFd(),
                 },

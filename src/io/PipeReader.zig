@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const C = @import("root").C;
 const std = @import("std");
 const uv = bun.windows.libuv;
 const Source = @import("./source.zig").Source;
@@ -156,7 +157,7 @@ pub fn PosixPipeReader(
                                 }
 
                                 if (comptime file_type == .pipe) {
-                                    if (bun.Environment.isMac or !bun.C.RWFFlagSupport.isMaybeSupported()) {
+                                    if (bun.Environment.isMac or !C.RWFFlagSupport.isMaybeSupported()) {
                                         switch (bun.isReadable(fd)) {
                                             .ready => {},
                                             .hup => {
@@ -251,7 +252,7 @@ pub fn PosixPipeReader(
                         }
 
                         if (comptime file_type == .pipe) {
-                            if (bun.Environment.isMac or !bun.C.RWFFlagSupport.isMaybeSupported()) {
+                            if (bun.Environment.isMac or !C.RWFFlagSupport.isMaybeSupported()) {
                                 switch (bun.isReadable(fd)) {
                                     .ready => {},
                                     .hup => {
@@ -445,7 +446,7 @@ pub fn WindowsPipeReader(
                     }
                     // ops we should not hit this lets fail with EPIPE
                     bun.assert(false);
-                    return this.onRead(.{ .err = bun.sys.Error.fromCode(bun.C.E.PIPE, .read) }, "", .progress);
+                    return this.onRead(.{ .err = bun.sys.Error.fromCode(C.E.PIPE, .read) }, "", .progress);
                 },
             }
         }
@@ -453,7 +454,7 @@ pub fn WindowsPipeReader(
         pub fn startReading(this: *This) bun.JSC.Maybe(void) {
             if (this.flags.is_done or !this.flags.is_paused) return .{ .result = {} };
             this.flags.is_paused = false;
-            const source: Source = this.source orelse return .{ .err = bun.sys.Error.fromCode(bun.C.E.BADF, .read) };
+            const source: Source = this.source orelse return .{ .err = bun.sys.Error.fromCode(C.E.BADF, .read) };
             bun.assert(!source.isClosed());
 
             switch (source) {
@@ -1166,7 +1167,7 @@ pub const WindowsBufferedReader = struct {
     pub fn setRawMode(this: *WindowsBufferedReader, value: bool) bun.JSC.Maybe(void) {
         const source = this.source orelse return .{
             .err = .{
-                .errno = @intFromEnum(bun.C.E.BADF),
+                .errno = @intFromEnum(C.E.BADF),
                 .syscall = .uv_tty_set_mode,
             },
         };

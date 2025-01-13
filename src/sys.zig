@@ -2,8 +2,8 @@
 // The differences are in error handling
 const std = @import("std");
 const builtin = @import("builtin");
-
 const bun = @import("root").bun;
+const C = @import("root").C;
 const posix = std.posix;
 
 const assertIsValidWindowsPath = bun.strings.assertIsValidWindowsPath;
@@ -15,7 +15,6 @@ const libc = std.posix.system;
 
 const windows = bun.windows;
 
-const C = bun.C;
 const Environment = bun.Environment;
 const JSC = bun.JSC;
 const MAX_PATH_BYTES = bun.MAX_PATH_BYTES;
@@ -275,7 +274,7 @@ pub const Tag = enum(u8) {
 };
 
 pub const Error = struct {
-    const E = bun.C.E;
+    const E = C.E;
 
     const retry_errno = if (Environment.isLinux)
         @as(Int, @intCast(@intFromEnum(E.AGAIN)))
@@ -374,12 +373,12 @@ pub const Error = struct {
 
                 break :brk @as(C.SystemErrno, @enumFromInt(this.errno));
             };
-            if (bun.tagName(bun.C.SystemErrno, system_errno)) |errname| {
+            if (bun.tagName(C.SystemErrno, system_errno)) |errname| {
                 return errname;
             }
         } else if (this.errno > 0 and this.errno < C.SystemErrno.max) {
             const system_errno = @as(C.SystemErrno, @enumFromInt(this.errno));
-            if (bun.tagName(bun.C.SystemErrno, system_errno)) |errname| {
+            if (bun.tagName(C.SystemErrno, system_errno)) |errname| {
                 return errname;
             }
         }
@@ -416,7 +415,7 @@ pub const Error = struct {
 
                 break :brk @as(C.SystemErrno, @enumFromInt(this.errno));
             };
-            if (bun.tagName(bun.C.SystemErrno, system_errno)) |errname| {
+            if (bun.tagName(C.SystemErrno, system_errno)) |errname| {
                 err.code = bun.String.static(errname);
                 if (C.SystemErrno.labels.get(system_errno)) |label| {
                     err.message = bun.String.static(label);
@@ -540,11 +539,11 @@ pub fn chdir(path: anytype, destination: anytype) Maybe(void) {
         if (comptime Type == []u8 or Type == []const u8) {
             return chdirOSPath(
                 &(std.posix.toPosixPath(path) catch return .{ .err = .{
-                    .errno = @intFromEnum(bun.C.SystemErrno.EINVAL),
+                    .errno = @intFromEnum(C.SystemErrno.EINVAL),
                     .syscall = .chdir,
                 } }),
                 &(std.posix.toPosixPath(destination) catch return .{ .err = .{
-                    .errno = @intFromEnum(bun.C.SystemErrno.EINVAL),
+                    .errno = @intFromEnum(C.SystemErrno.EINVAL),
                     .syscall = .chdir,
                 } }),
             );
@@ -716,7 +715,7 @@ pub fn mkdirA(file_path: []const u8, flags: bun.Mode) Maybe(void) {
     if (comptime Environment.isMac) {
         return Maybe(void).errnoSysP(syscall.mkdir(&(std.posix.toPosixPath(file_path) catch return Maybe(void){
             .err = .{
-                .errno = @intFromEnum(bun.C.E.NOMEM),
+                .errno = @intFromEnum(C.E.NOMEM),
                 .syscall = .open,
             },
         }), flags), .mkdir, file_path) orelse Maybe(void).success;
@@ -725,7 +724,7 @@ pub fn mkdirA(file_path: []const u8, flags: bun.Mode) Maybe(void) {
     if (comptime Environment.isLinux) {
         return Maybe(void).errnoSysP(linux.mkdir(&(std.posix.toPosixPath(file_path) catch return Maybe(void){
             .err = .{
-                .errno = @intFromEnum(bun.C.E.NOMEM),
+                .errno = @intFromEnum(C.E.NOMEM),
                 .syscall = .open,
             },
         }), flags), .mkdir, file_path) orelse Maybe(void).success;
@@ -778,7 +777,7 @@ pub fn fcntl(fd: bun.FileDescriptor, cmd: i32, arg: fnctl_int) Maybe(fnctl_int) 
     unreachable;
 }
 
-pub fn getErrno(rc: anytype) bun.C.E {
+pub fn getErrno(rc: anytype) C.E {
     if (comptime Environment.isWindows) {
         if (comptime @TypeOf(rc) == bun.windows.NTSTATUS) {
             return bun.windows.translateNTStatusToErrno(rc);
@@ -788,10 +787,10 @@ pub fn getErrno(rc: anytype) bun.C.E {
             return e.toE();
         }
 
-        return bun.C.E.UNKNOWN;
+        return C.E.UNKNOWN;
     }
 
-    return bun.C.getErrno(rc);
+    return C.getErrno(rc);
 }
 
 const w = std.os.windows;
@@ -829,7 +828,7 @@ pub fn normalizePathWindows(
         if (buf.len < path.len) {
             return .{
                 .err = .{
-                    .errno = @intFromEnum(bun.C.E.NOMEM),
+                    .errno = @intFromEnum(C.E.NOMEM),
                     .syscall = .open,
                 },
             };
@@ -850,7 +849,7 @@ pub fn normalizePathWindows(
 
     const base_path = bun.windows.GetFinalPathNameByHandle(base_fd, w.GetFinalPathNameByHandleFormat{}, buf) catch {
         return .{ .err = .{
-            .errno = @intFromEnum(bun.C.E.BADFD),
+            .errno = @intFromEnum(C.E.BADFD),
             .syscall = .open,
         } };
     };
@@ -957,7 +956,7 @@ fn openDirAtWindowsNtPath(
 
             return .{
                 .err = .{
-                    .errno = @intFromEnum(bun.C.E.UNKNOWN),
+                    .errno = @intFromEnum(C.E.UNKNOWN),
                     .syscall = .open,
                 },
             };
@@ -1043,7 +1042,7 @@ pub fn openFileAtWindowsNtPath(
 
     const path_len_bytes = std.math.cast(u16, path.len * 2) orelse return .{
         .err = .{
-            .errno = @intFromEnum(bun.C.E.NOMEM),
+            .errno = @intFromEnum(C.E.NOMEM),
             .syscall = .open,
         },
     };
@@ -1134,7 +1133,7 @@ pub fn openFileAtWindowsNtPath(
                     if (kernel32.SetFilePointerEx(result, 0, null, FILE_END) == 0) {
                         return .{
                             .err = .{
-                                .errno = @intFromEnum(bun.C.E.UNKNOWN),
+                                .errno = @intFromEnum(C.E.UNKNOWN),
                                 .syscall = .SetFilePointerEx,
                             },
                         };
@@ -1156,7 +1155,7 @@ pub fn openFileAtWindowsNtPath(
 
                 return .{
                     .err = .{
-                        .errno = @intFromEnum(bun.C.E.UNKNOWN),
+                        .errno = @intFromEnum(C.E.UNKNOWN),
                         .syscall = .open,
                     },
                 };
@@ -1331,7 +1330,7 @@ pub fn openatA(dirfd: bun.FileDescriptor, file_path: []const u8, flags: bun.Mode
 
     const pathZ = std.posix.toPosixPath(file_path) catch return Maybe(bun.FileDescriptor){
         .err = .{
-            .errno = @intFromEnum(bun.C.E.NAMETOOLONG),
+            .errno = @intFromEnum(C.E.NAMETOOLONG),
             .syscall = .open,
         },
     };
@@ -1724,7 +1723,7 @@ pub fn read(fd: bun.FileDescriptor, buf: []u8) Maybe(usize) {
     };
 }
 
-const socket_flags_nonblock = bun.C.MSG_DONTWAIT | bun.C.MSG_NOSIGNAL;
+const socket_flags_nonblock = C.MSG_DONTWAIT | C.MSG_NOSIGNAL;
 
 pub fn recvNonBlock(fd: bun.FileDescriptor, buf: []u8) Maybe(usize) {
     return recv(fd, buf, socket_flags_nonblock);
@@ -1876,12 +1875,12 @@ pub const RenameAt2Flags = packed struct {
         var flags: u32 = 0;
 
         if (comptime Environment.isMac) {
-            if (self.exchange) flags |= bun.C.RENAME_SWAP;
-            if (self.exclude) flags |= bun.C.RENAME_EXCL;
-            if (self.nofollow) flags |= bun.C.RENAME_NOFOLLOW_ANY;
+            if (self.exchange) flags |= C.RENAME_SWAP;
+            if (self.exclude) flags |= C.RENAME_EXCL;
+            if (self.nofollow) flags |= C.RENAME_NOFOLLOW_ANY;
         } else {
-            if (self.exchange) flags |= bun.C.RENAME_EXCHANGE;
-            if (self.exclude) flags |= bun.C.RENAME_NOREPLACE;
+            if (self.exchange) flags |= C.RENAME_EXCHANGE;
+            if (self.exclude) flags |= C.RENAME_NOREPLACE;
         }
 
         return flags;
@@ -1898,9 +1897,9 @@ pub fn renameatConcurrently(
     switch (renameatConcurrentlyWithoutFallback(from_dir_fd, from, to_dir_fd, to)) {
         .result => return Maybe(void).success,
         .err => |e| {
-            if (opts.move_fallback and e.getErrno() == bun.C.E.XDEV) {
+            if (opts.move_fallback and e.getErrno() == C.E.XDEV) {
                 bun.Output.debugWarn("renameatConcurrently() failed with E.XDEV, falling back to moveFileZSlowMaybe()", .{});
-                return bun.C.moveFileZSlowMaybe(from_dir_fd, from, to_dir_fd, to);
+                return C.moveFileZSlowMaybe(from_dir_fd, from, to_dir_fd, to);
             }
             return .{ .err = e };
         },
@@ -1973,7 +1972,7 @@ pub fn renameat2(from_dir: bun.FileDescriptor, from: [:0]const u8, to_dir: bun.F
     while (true) {
         const rc = switch (comptime Environment.os) {
             .linux => std.os.linux.renameat2(@intCast(from_dir.cast()), from.ptr, @intCast(to_dir.cast()), to.ptr, flags.int()),
-            .mac => bun.C.renameatx_np(@intCast(from_dir.cast()), from.ptr, @intCast(to_dir.cast()), to.ptr, flags.int()),
+            .mac => C.renameatx_np(@intCast(from_dir.cast()), from.ptr, @intCast(to_dir.cast()), to.ptr, flags.int()),
             else => @compileError("renameat2() is not implemented on this platform"),
         };
 
@@ -1998,7 +1997,7 @@ pub fn renameat(from_dir: bun.FileDescriptor, from: [:0]const u8, to_dir: bun.Fi
             bun.WPathBufferPool.put(w_buf_to);
         }
 
-        const rc = bun.C.renameAtW(
+        const rc = C.renameAtW(
             from_dir,
             bun.strings.toNTPath(w_buf_from, from),
             to_dir,
@@ -2258,7 +2257,7 @@ pub fn getFdPath(fd: bun.FileDescriptor, out_buffer: *[MAX_PATH_BYTES]u8) Maybe(
         .windows => {
             var wide_buf: [windows.PATH_MAX_WIDE]u16 = undefined;
             const wide_slice = bun.windows.GetFinalPathNameByHandle(fd.cast(), .{}, wide_buf[0..]) catch {
-                return Maybe([]u8){ .err = .{ .errno = @intFromEnum(bun.C.SystemErrno.EBADF), .syscall = .GetFinalPathNameByHandle } };
+                return Maybe([]u8){ .err = .{ .errno = @intFromEnum(C.SystemErrno.EBADF), .syscall = .GetFinalPathNameByHandle } };
             };
 
             // Trust that Windows gives us valid UTF-16LE.
@@ -2303,7 +2302,7 @@ pub fn mmap(
     const fail = std.c.MAP_FAILED;
     if (rc == fail) {
         return Maybe([]align(mem.page_size) u8){
-            .err = .{ .errno = @as(Syscall.Error.Int, @truncate(@intFromEnum(bun.C.getErrno(@as(i64, @bitCast(@intFromPtr(fail))))))), .syscall = .mmap },
+            .err = .{ .errno = @as(Syscall.Error.Int, @truncate(@intFromEnum(C.getErrno(@as(i64, @bitCast(@intFromPtr(fail))))))), .syscall = .mmap },
         };
     }
 
@@ -2685,7 +2684,7 @@ pub fn faccessat(dir_: anytype, subpath: anytype) JSC.Maybe(bool) {
     if (comptime Environment.isLinux) {
         // avoid loading the libc symbol for this to reduce chances of GLIBC minimum version requirements
         const rc = linux.faccessat(dir_fd.cast(), subpath, linux.F_OK, 0);
-        syslog("faccessat({}, {}, O_RDONLY, 0) = {d}", .{ dir_fd, bun.fmt.fmtOSPath(subpath, .{}), if (rc == 0) 0 else @intFromEnum(bun.C.getErrno(rc)) });
+        syslog("faccessat({}, {}, O_RDONLY, 0) = {d}", .{ dir_fd, bun.fmt.fmtOSPath(subpath, .{}), if (rc == 0) 0 else @intFromEnum(C.getErrno(rc)) });
         if (rc == 0) {
             return JSC.Maybe(bool){ .result = true };
         }
@@ -2695,7 +2694,7 @@ pub fn faccessat(dir_: anytype, subpath: anytype) JSC.Maybe(bool) {
 
     // on other platforms use faccessat from libc
     const rc = std.c.faccessat(dir_fd.cast(), subpath, std.posix.F_OK, 0);
-    syslog("faccessat({}, {}, O_RDONLY, 0) = {d}", .{ dir_fd, bun.fmt.fmtOSPath(subpath, .{}), if (rc == 0) 0 else @intFromEnum(bun.C.getErrno(rc)) });
+    syslog("faccessat({}, {}, O_RDONLY, 0) = {d}", .{ dir_fd, bun.fmt.fmtOSPath(subpath, .{}), if (rc == 0) 0 else @intFromEnum(C.getErrno(rc)) });
     if (rc == 0) {
         return JSC.Maybe(bool){ .result = true };
     }
@@ -2971,7 +2970,7 @@ pub fn dupWithFlags(fd: bun.FileDescriptor, flags: i32) Maybe(bun.FileDescriptor
     }
 
     const ArgType = if (comptime Environment.isLinux) usize else c_int;
-    const out = syscall.fcntl(fd.cast(), @as(i32, bun.C.F.DUPFD_CLOEXEC), @as(ArgType, 0));
+    const out = syscall.fcntl(fd.cast(), @as(i32, C.F.DUPFD_CLOEXEC), @as(ArgType, 0));
     log("dup({d}) = {d}", .{ fd.cast(), out });
     if (Maybe(bun.FileDescriptor).errnoSysFd(out, .dup, fd)) |err| {
         return err;
@@ -2997,14 +2996,14 @@ pub fn linkat(dir_fd: bun.FileDescriptor, basename: []const u8, dest_dir_fd: bun
             @intCast(dir_fd),
             &(std.posix.toPosixPath(basename) catch return .{
                 .err = .{
-                    .errno = @intFromEnum(bun.C.E.NOMEM),
+                    .errno = @intFromEnum(C.E.NOMEM),
                     .syscall = .open,
                 },
             }),
             @intCast(dest_dir_fd),
             &(std.posix.toPosixPath(dest_name) catch return .{
                 .err = .{
-                    .errno = @intFromEnum(bun.C.E.NOMEM),
+                    .errno = @intFromEnum(C.E.NOMEM),
                     .syscall = .open,
                 },
             }),
@@ -3081,7 +3080,7 @@ pub fn linkatTmpfile(tmpfd: bun.FileDescriptor, dirfd: bun.FileDescriptor, name:
 /// On other platforms, this is just a wrapper around `read(2)`.
 pub fn readNonblocking(fd: bun.FileDescriptor, buf: []u8) Maybe(usize) {
     if (Environment.isLinux) {
-        while (bun.C.linux.RWFFlagSupport.isMaybeSupported()) {
+        while (C.linux.RWFFlagSupport.isMaybeSupported()) {
             const iovec = [1]std.posix.iovec{.{
                 .base = buf.ptr,
                 .len = buf.len,
@@ -3102,7 +3101,7 @@ pub fn readNonblocking(fd: bun.FileDescriptor, buf: []u8) Maybe(usize) {
             if (Maybe(usize).errnoSysFd(rc, .read, fd)) |err| {
                 switch (err.getErrno()) {
                     .OPNOTSUPP, .NOSYS => {
-                        bun.C.linux.RWFFlagSupport.disable();
+                        C.linux.RWFFlagSupport.disable();
                         switch (bun.isReadable(fd)) {
                             .hup, .ready => return read(fd, buf),
                             else => return .{ .err = Error.retry },
@@ -3125,7 +3124,7 @@ pub fn readNonblocking(fd: bun.FileDescriptor, buf: []u8) Maybe(usize) {
 /// On other platforms, this is just a wrapper around `read(2)`.
 pub fn writeNonblocking(fd: bun.FileDescriptor, buf: []const u8) Maybe(usize) {
     if (Environment.isLinux) {
-        while (bun.C.linux.RWFFlagSupport.isMaybeSupported()) {
+        while (C.linux.RWFFlagSupport.isMaybeSupported()) {
             const iovec = [1]std.posix.iovec_const{.{
                 .base = buf.ptr,
                 .len = buf.len,
@@ -3146,7 +3145,7 @@ pub fn writeNonblocking(fd: bun.FileDescriptor, buf: []const u8) Maybe(usize) {
             if (Maybe(usize).errnoSysFd(rc, .write, fd)) |err| {
                 switch (err.getErrno()) {
                     .OPNOTSUPP, .NOSYS => {
-                        bun.C.linux.RWFFlagSupport.disable();
+                        C.linux.RWFFlagSupport.disable();
                         switch (bun.isWritable(fd)) {
                             .hup, .ready => return write(fd, buf),
                             else => return .{ .err = Error.retry },
@@ -3302,7 +3301,7 @@ pub const File = struct {
         defer if (Environment.isPosix) this.close();
         // On Windows, close the file before moving it.
         if (Environment.isWindows) this.close();
-        try bun.C.moveFileZWithHandle(this.handle, bun.toFD(std.fs.cwd()), src, bun.toFD(std.fs.cwd()), dest);
+        try C.moveFileZWithHandle(this.handle, bun.toFD(std.fs.cwd()), src, bun.toFD(std.fs.cwd()), dest);
     }
 
     fn stdIoRead(this: File, buf: []u8) ReadError!usize {
@@ -3368,7 +3367,7 @@ pub const File = struct {
                 switch (bun.windows.GetLastError()) {
                     .SUCCESS => {},
                     else => |err| {
-                        return .{ .err = Error.fromCode((bun.C.SystemErrno.init(err) orelse bun.C.SystemErrno.EUNKNOWN).toE(), .fstat) };
+                        return .{ .err = Error.fromCode((C.SystemErrno.init(err) orelse C.SystemErrno.EUNKNOWN).toE(), .fstat) };
                     },
                 }
             }
@@ -3604,7 +3603,7 @@ pub inline fn toLibUVOwnedFD(
                 }
                 return .{
                     .err = .{
-                        .errno = @intFromEnum(bun.C.E.MFILE),
+                        .errno = @intFromEnum(C.E.MFILE),
                         .syscall = syscall_tag,
                     },
                 };

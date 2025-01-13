@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const C = @import("root").C;
 const JSC = bun.JSC;
 const std = @import("std");
 const Blob = JSC.WebCore.Blob;
@@ -711,8 +712,8 @@ pub const ReadFileUV = struct {
         }
         // Out of memory we can't read more than 4GB at a time (ULONG) on Windows
         if (this.size > @as(usize, std.math.maxInt(bun.windows.ULONG))) {
-            this.errno = bun.errnoToZigErr(bun.C.E.NOMEM);
-            this.system_error = bun.sys.Error.fromCode(bun.C.E.NOMEM, .read).toSystemError();
+            this.errno = bun.errnoToZigErr(C.E.NOMEM);
+            this.system_error = bun.sys.Error.fromCode(C.E.NOMEM, .read).toSystemError();
             this.onFinish();
             return;
         }

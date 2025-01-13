@@ -2,6 +2,7 @@
 
 pub const lib = @import("./libarchive-bindings.zig");
 const bun = @import("root").bun;
+const C = @import("root").C;
 const string = bun.string;
 const Output = bun.Output;
 const Global = bun.Global;
@@ -11,7 +12,6 @@ const MutableString = bun.MutableString;
 const FileDescriptorType = bun.FileDescriptor;
 const stringZ = bun.stringZ;
 const default_allocator = bun.default_allocator;
-const C = bun.C;
 const std = @import("std");
 const Archive = lib.Archive;
 const JSC = bun.JSC;
@@ -476,7 +476,7 @@ pub const Archiver = struct {
                                     switch (bun.sys.openatWindows(bun.toFD(dir_fd), path, flags)) {
                                         .result => |fd| break :brk fd,
                                         .err => |e| switch (e.errno) {
-                                            @intFromEnum(bun.C.E.PERM), @intFromEnum(bun.C.E.NOENT) => {
+                                            @intFromEnum(C.E.PERM), @intFromEnum(C.E.NOENT) => {
                                                 bun.MakePath.makePath(u16, dir, bun.Dirname.dirname(u16, path_slice) orelse return bun.errnoToZigErr(e.errno)) catch {};
                                                 break :brk try bun.sys.openatWindows(bun.toFD(dir_fd), path, flags).unwrap();
                                             },

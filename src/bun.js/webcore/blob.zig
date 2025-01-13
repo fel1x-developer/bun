@@ -1,6 +1,7 @@
 const std = @import("std");
 const Api = @import("../../api/schema.zig").Api;
 const bun = @import("root").bun;
+const C = @import("root").C;
 const MimeType = http.MimeType;
 const ZigURL = @import("../../url.zig").URL;
 const http = bun.http;
@@ -877,7 +878,7 @@ pub const Blob = struct {
                     // it might return EPERM when the parent directory doesn't exist
                     // #6336
                     if (result.err.getErrno() == .PERM) {
-                        result.err.errno = @intCast(@intFromEnum(bun.C.E.NOENT));
+                        result.err.errno = @intCast(@intFromEnum(C.E.NOENT));
                     }
 
                     result.err = result.err.withPathLike(destination_blob.store.?.data.file.pathlike);
@@ -2206,7 +2207,7 @@ pub const Blob = struct {
                             .result => |fd| fd,
                             .err => |err| {
                                 if (comptime @hasField(This, "mkdirp_if_not_exists")) {
-                                    if (err.errno == @intFromEnum(bun.C.E.NOENT)) {
+                                    if (err.errno == @intFromEnum(C.E.NOENT)) {
                                         switch (mkdirIfNotExists(this, err, path, path_string.slice())) {
                                             .@"continue" => continue,
                                             .fail => {
@@ -2583,7 +2584,7 @@ pub const Blob = struct {
                             _ = bun.sys.close(result);
                             return .{
                                 .err = .{
-                                    .errno = @as(c_int, @intCast(@intFromEnum(bun.C.SystemErrno.EMFILE))),
+                                    .errno = @as(c_int, @intCast(@intFromEnum(C.SystemErrno.EMFILE))),
                                     .syscall = .open,
                                     .path = pathlike.path.slice(),
                                 },
@@ -2742,8 +2743,8 @@ pub const Blob = struct {
                 if (rc.errno()) |errno| {
                     this.throw(.{
                         // #6336
-                        .errno = if (errno == @intFromEnum(bun.C.SystemErrno.EPERM))
-                            @as(c_int, @intCast(@intFromEnum(bun.C.SystemErrno.ENOENT)))
+                        .errno = if (errno == @intFromEnum(C.SystemErrno.EPERM))
+                            @as(c_int, @intCast(@intFromEnum(C.SystemErrno.ENOENT)))
                         else
                             errno,
                         .syscall = .copyfile,
@@ -2850,7 +2851,7 @@ pub const Blob = struct {
                 var destination = &this.destination_file_store.data.file;
                 if (destination.pathlike != .path) {
                     this.throw(.{
-                        .errno = @as(c_int, @intCast(@intFromEnum(bun.C.SystemErrno.EINVAL))),
+                        .errno = @as(c_int, @intCast(@intFromEnum(C.SystemErrno.EINVAL))),
                         .syscall = .mkdir,
                     });
                     return;
@@ -2887,12 +2888,12 @@ pub const Blob = struct {
         };
 
         const unsupported_directory_error = SystemError{
-            .errno = @as(c_int, @intCast(@intFromEnum(bun.C.SystemErrno.EISDIR))),
+            .errno = @as(c_int, @intCast(@intFromEnum(C.SystemErrno.EISDIR))),
             .message = bun.String.static("That doesn't work on folders"),
             .syscall = bun.String.static("fstat"),
         };
         const unsupported_non_regular_file_error = SystemError{
-            .errno = @as(c_int, @intCast(@intFromEnum(bun.C.SystemErrno.ENOTSUP))),
+            .errno = @as(c_int, @intCast(@intFromEnum(C.SystemErrno.ENOTSUP))),
             .message = bun.String.static("Non-regular files aren't supported yet"),
             .syscall = bun.String.static("fstat"),
         };
@@ -3152,10 +3153,10 @@ pub const Blob = struct {
                     const written = switch (comptime use) {
                         .copy_file_range => linux.copy_file_range(src_fd.cast(), null, dest_fd.cast(), null, remain, 0),
                         .sendfile => linux.sendfile(dest_fd.cast(), src_fd.cast(), null, remain),
-                        .splice => bun.C.splice(src_fd.cast(), null, dest_fd.cast(), null, remain, 0),
+                        .splice => C.splice(src_fd.cast(), null, dest_fd.cast(), null, remain, 0),
                     };
 
-                    switch (bun.C.getErrno(written)) {
+                    switch (C.getErrno(written)) {
                         .SUCCESS => {},
 
                         .NOSYS, .XDEV => {
@@ -3333,7 +3334,7 @@ pub const Blob = struct {
                                 if (this.doClonefile()) {
                                     if (this.max_length != Blob.max_size and this.max_length < @as(SizeType, @intCast(stat_.?.size))) {
                                         // If this fails...well, there's not much we can do about it.
-                                        _ = bun.C.truncate(
+                                        _ = C.truncate(
                                             this.destination_file_store.pathlike.path.sliceZ(&path_buf),
                                             @as(std.posix.off_t, @intCast(this.max_length)),
                                         );
@@ -3399,10 +3400,10 @@ pub const Blob = struct {
                     }
 
                     if (posix.S.ISREG(stat.mode) and
-                        this.max_length > bun.C.preallocate_length and
+                        this.max_length > C.preallocate_length and
                         this.max_length != Blob.max_size)
                     {
-                        bun.C.preallocate_file(this.destination_fd.cast(), 0, this.max_length) catch {};
+                        C.preallocate_file(this.destination_fd.cast(), 0, this.max_length) catch {};
                     }
                 }
 
@@ -3868,7 +3869,7 @@ pub const Blob = struct {
 
         // We say regular files and pipes exist.
         // This is mostly meant for "Can we use this in new Response(file)?"
-        return JSValue.jsBoolean(bun.isRegularFile(store.data.file.mode) or bun.C.S.ISFIFO(store.data.file.mode));
+        return JSValue.jsBoolean(bun.isRegularFile(store.data.file.mode) or C.S.ISFIFO(store.data.file.mode));
     }
 
     pub fn isS3(this: *const Blob) bool {
