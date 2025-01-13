@@ -1,5 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const C = @import("root").C;
 const Environment = bun.Environment;
 const Mutex = bun.Mutex;
@@ -11,7 +12,7 @@ const string = bun.string;
 
 const PathWatcher = @import("./path_watcher.zig").PathWatcher;
 const EventType = PathWatcher.EventType;
-const Event = bun.JSC.Node.FSWatcher.Event;
+const Event = JSC.Node.FSWatcher.Event;
 
 pub const CFAbsoluteTime = f64;
 pub const CFTimeInterval = f64;

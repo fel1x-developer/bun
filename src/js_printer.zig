@@ -1,4 +1,5 @@
 const std = @import("std");
+const JSC = @import("root").JavaScriptCore;
 const logger = bun.logger;
 const js_lexer = bun.js_lexer;
 const importRecord = @import("import_record.zig");
@@ -450,7 +451,7 @@ pub const Options = struct {
     css_import_behavior: Api.CssInJsBehavior = Api.CssInJsBehavior.facade,
     target: options.Target = .browser,
 
-    runtime_transpiler_cache: ?*bun.JSC.RuntimeTranspilerCache = null,
+    runtime_transpiler_cache: ?*JSC.RuntimeTranspilerCache = null,
     input_files_for_dev_server: ?[]logger.Source = null,
 
     commonjs_named_exports: js_ast.Ast.CommonJSNamedExports = .{},

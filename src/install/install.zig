@@ -19,7 +19,7 @@ const default_allocator = bun.default_allocator;
 const C = @import("root").C;
 const std = @import("std");
 const uws = @import("../deps/uws.zig");
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const DirInfo = @import("../resolver/dir_info.zig");
 const File = bun.sys.File;
 const JSLexer = bun.js_lexer;
@@ -345,7 +345,7 @@ const NetworkTask = struct {
                 encoded_name = try std.mem.replaceOwned(u8, stack_fallback_allocator.get(), name, "/", "%2f");
             }
 
-            const tmp = bun.JSC.URL.join(
+            const tmp = JSC.URL.join(
                 bun.String.fromUTF8(scope.url.href),
                 bun.String.fromUTF8(encoded_name),
             );
@@ -1508,7 +1508,7 @@ pub fn NewPackageInstall(comptime kind: PkgInstallKind) type {
             }
         };
 
-        threadlocal var node_fs_for_package_installer: bun.JSC.Node.NodeFS = .{};
+        threadlocal var node_fs_for_package_installer: JSC.Node.NodeFS = .{};
 
         fn initInstallDir(this: *@This(), state: *InstallDirState, destination_dir: std.fs.Dir, method: Method) Result {
             const destbase = destination_dir;
@@ -1758,7 +1758,7 @@ pub fn NewPackageInstall(comptime kind: PkgInstallKind) type {
             src: [:0]bun.OSPathChar,
             dest: [:0]bun.OSPathChar,
             basename: u16,
-            task: bun.JSC.WorkPoolTask = .{ .callback = &runFromThreadPool },
+            task: JSC.WorkPoolTask = .{ .callback = &runFromThreadPool },
             err: ?anyerror = null,
 
             pub const Queue = NewTaskQueue(@This());
@@ -1794,7 +1794,7 @@ pub fn NewPackageInstall(comptime kind: PkgInstallKind) type {
                 });
             }
 
-            pub fn runFromThreadPool(task: *bun.JSC.WorkPoolTask) void {
+            pub fn runFromThreadPool(task: *JSC.WorkPoolTask) void {
                 var iter: *@This() = @fieldParentPtr("task", task);
                 defer queue.completeOne();
                 if (iter.run()) |err| {
@@ -8964,7 +8964,7 @@ pub const PackageManager = struct {
             .workspace_name_hash = workspace_name_hash,
             .subcommand = subcommand,
         };
-        manager.event_loop.loop().internal_loop_data.setParentEventLoop(bun.JSC.EventLoopHandle.init(&manager.event_loop));
+        manager.event_loop.loop().internal_loop_data.setParentEventLoop(JSC.EventLoopHandle.init(&manager.event_loop));
         manager.lockfile = try ctx.allocator.create(Lockfile);
         JSC.MiniEventLoop.global = &manager.event_loop.mini;
         if (!manager.options.enable.cache) {
@@ -12131,8 +12131,8 @@ pub const PackageManager = struct {
             .posix,
         );
 
-        var nodefs = bun.JSC.Node.NodeFS{};
-        const args = bun.JSC.Node.Arguments.Mkdir{
+        var nodefs = JSC.Node.NodeFS{};
+        const args = JSC.Node.Arguments.Mkdir{
             .path = .{ .string = bun.PathString.init(manager.options.patch_features.commit.patches_dir) },
         };
         if (nodefs.mkdirRecursive(args, .sync).asErr()) |e| {

@@ -1,6 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const picohttp = JSC.WebCore.picohttp;
 const S3Error = @import("./error.zig").S3Error;
 const S3Credentials = @import("./credentials.zig").S3Credentials;

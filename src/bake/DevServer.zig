@@ -40,8 +40,8 @@ const Response = App.Response;
 
 const MimeType = bun.http.MimeType;
 
-const JSC = bun.JSC;
-const Watcher = bun.JSC.Watcher;
+const JSC = @import("root").JavaScriptCore;
+const Watcher = JSC.Watcher;
 const JSValue = JSC.JSValue;
 const VirtualMachine = JSC.VirtualMachine;
 const JSModuleLoader = JSC.JSModuleLoader;
@@ -89,7 +89,7 @@ configuration_hash_key: [16]u8,
 /// The virtual machine (global object) to execute code in.
 vm: *VirtualMachine,
 /// May be `null` if not attached to an HTTP server yet.
-server: ?bun.JSC.API.AnyServer,
+server: ?JSC.API.AnyServer,
 /// Contains the tree of routes. This structure contains FileIndex
 router: FrameworkRouter,
 /// Every navigatable route has bundling state here.
@@ -535,7 +535,7 @@ fn scanInitialRoutes(dev: *DevServer) !void {
 }
 
 pub fn attachRoutes(dev: *DevServer, server: anytype) !void {
-    dev.server = bun.JSC.API.AnyServer.from(server);
+    dev.server = JSC.API.AnyServer.from(server);
     const app = server.app.?;
 
     // For this to work, the route handlers need to be augmented to use the comptime
@@ -789,7 +789,7 @@ fn appendRouteEntryPointsIfNotStale(dev: *DevServer, entry_points: *EntryPointLi
 fn onRequestWithBundle(
     dev: *DevServer,
     route_bundle_index: RouteBundle.Index,
-    req: bun.JSC.API.SavedRequest.Union,
+    req: JSC.API.SavedRequest.Union,
     resp: *Response,
 ) void {
     const server_request_callback = dev.server_fetch_function_callback.get() orelse
@@ -911,7 +911,7 @@ const DeferredRequest = struct {
     data: Data,
 
     const Data = union(enum) {
-        server_handler: bun.JSC.API.SavedRequest,
+        server_handler: JSC.API.SavedRequest,
         js_payload: *Response,
 
         const Tag = @typeInfo(Data).Union.tag_type.?;
@@ -3200,7 +3200,7 @@ const DirectoryWatchStore = struct {
         const specifier_cloned = try dev.allocator.dupe(u8, specifier);
         errdefer dev.allocator.free(specifier_cloned);
 
-        const watch_index = switch (dev.bun_watcher.addDirectory(fd, dir_name, bun.JSC.GenericWatcher.getHash(dir_name), false)) {
+        const watch_index = switch (dev.bun_watcher.addDirectory(fd, dir_name, JSC.GenericWatcher.getHash(dir_name), false)) {
             .err => return error.Ignore,
             .result => |id| id,
         };

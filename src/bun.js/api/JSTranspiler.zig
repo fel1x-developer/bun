@@ -5,7 +5,7 @@ const QueryStringMap = @import("../../url.zig").QueryStringMap;
 const CombinedScanner = @import("../../url.zig").CombinedScanner;
 const bun = @import("root").bun;
 const string = bun.string;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const js = JSC.C;
 const WebCore = @import("../webcore/response.zig");
 const Transpiler = bun.transpiler;
@@ -18,7 +18,7 @@ const Base = @import("../base.zig");
 const getAllocator = Base.getAllocator;
 const JSObject = JSC.JSObject;
 const JSError = Base.JSError;
-const JSValue = bun.JSC.JSValue;
+const JSValue = JSC.JSValue;
 const JSGlobalObject = JSC.JSGlobalObject;
 const strings = bun.strings;
 
@@ -100,7 +100,7 @@ pub const TransformTask = struct {
     pub const AsyncTransformTask = JSC.ConcurrentPromiseTask(TransformTask);
     pub const AsyncTransformEventLoopTask = AsyncTransformTask.EventLoopTask;
 
-    pub fn create(transpiler: *JSTranspiler, input_code: bun.JSC.Node.StringOrBuffer, globalThis: *JSGlobalObject, loader: Loader) !*AsyncTransformTask {
+    pub fn create(transpiler: *JSTranspiler, input_code: JSC.Node.StringOrBuffer, globalThis: *JSGlobalObject, loader: Loader) !*AsyncTransformTask {
         var transform_task = TransformTask.new(.{
             .input_code = input_code,
             .transpiler = undefined,

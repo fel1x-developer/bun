@@ -1,6 +1,7 @@
 const std = @import("std");
 const bun = @import("root").bun;
 const C = @import("root").C;
+const JSC = @import("root").JavaScriptCore;
 const builtin = @import("builtin");
 const win32 = std.os.windows;
 const posix = std.posix;
@@ -1363,7 +1364,7 @@ pub fn getErrno(_: anytype) E {
     return .SUCCESS;
 }
 
-const Maybe = bun.JSC.Maybe;
+const Maybe = JSC.Maybe;
 
 const w = std.os.windows;
 

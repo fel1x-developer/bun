@@ -1,5 +1,5 @@
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const Output = bun.Output;
 const log = Output.scoped(.Worker, true);
 const std = @import("std");
@@ -350,7 +350,7 @@ pub const WebWorker = struct {
         const Writer = @TypeOf(writer);
         // we buffer this because it'll almost always be < 4096
         // when it's under 4096, we want to avoid the dynamic allocation
-        bun.JSC.ConsoleObject.format2(
+        JSC.ConsoleObject.format2(
             .Debug,
             globalObject,
             &[_]JSC.JSValue{error_instance},

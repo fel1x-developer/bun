@@ -33,7 +33,7 @@ const gen = bun.gen.math; // "math" being this file's basename
 
 const std = @import("std");
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 ```
 
 Then describe the API schema using a `.bind.ts` function. The binding file goes next to the Zig file.

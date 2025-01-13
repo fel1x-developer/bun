@@ -16,7 +16,7 @@ const bun = @import("root").bun;
 const C = @import("root").C;
 const std = @import("std");
 const Output = bun.Output;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 
 const debug = Output.scoped(.cache, false);
 const MINIMUM_CACHE_SIZE = 50 * 1024;

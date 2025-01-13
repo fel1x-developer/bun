@@ -1,6 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const logger = bun.logger;
 const Log = logger.Log;
 
@@ -92,7 +93,7 @@ const context = @import("./context.zig");
 pub const PropertyHandlerContext = context.PropertyHandlerContext;
 pub const DeclarationHandler = declaration.DeclarationHandler;
 
-pub const Maybe = bun.JSC.Node.Maybe;
+pub const Maybe = JSC.Node.Maybe;
 // TODO: Remove existing Error defined here and replace it with these
 const errors_ = @import("./error.zig");
 pub const Err = errors_.Err;

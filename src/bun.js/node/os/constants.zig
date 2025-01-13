@@ -2,7 +2,7 @@ const std = @import("std");
 const bun = @import("root").bun;
 const string = bun.string;
 const Environment = bun.Environment;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 
 const ConstantType = enum { ERRNO, ERRNO_WIN, SIG, DLOPEN, OTHER };
 

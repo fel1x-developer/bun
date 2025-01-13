@@ -1,6 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
-const postgres = bun.JSC.Postgres;
+const postgres = JSC.Postgres;
 const Data = postgres.Data;
 const protocol = @This();
 const PostgresInt32 = postgres.PostgresInt32;
@@ -9,7 +9,7 @@ const String = bun.String;
 const debug = postgres.debug;
 const Crypto = JSC.API.Bun.Crypto;
 const JSValue = JSC.JSValue;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const short = postgres.short;
 const int4 = postgres.int4;
 const int8 = postgres.int8;

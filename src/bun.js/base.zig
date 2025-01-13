@@ -1,6 +1,7 @@
-pub const js = bun.JSC.C;
 const std = @import("std");
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
+pub const js = JSC.C;
 const string = bun.string;
 const Output = bun.Output;
 const Global = bun.Global;
@@ -11,7 +12,6 @@ const stringZ = bun.stringZ;
 const default_allocator = bun.default_allocator;
 const C = @import("root").C;
 const JavaScript = @import("./javascript.zig");
-const JSC = bun.JSC;
 const WebCore = @import("./webcore.zig");
 const Test = @import("./test/jest.zig");
 const Fetch = WebCore.Fetch;
@@ -1428,13 +1428,13 @@ pub const AsyncTaskTracker = struct {
     pub fn didSchedule(this: AsyncTaskTracker, globalObject: *JSC.JSGlobalObject) void {
         if (this.id == 0) return;
 
-        bun.JSC.Debugger.didScheduleAsyncCall(globalObject, bun.JSC.Debugger.AsyncCallType.EventListener, this.id, true);
+        JSC.Debugger.didScheduleAsyncCall(globalObject, JSC.Debugger.AsyncCallType.EventListener, this.id, true);
     }
 
     pub fn didCancel(this: AsyncTaskTracker, globalObject: *JSC.JSGlobalObject) void {
         if (this.id == 0) return;
 
-        bun.JSC.Debugger.didCancelAsyncCall(globalObject, bun.JSC.Debugger.AsyncCallType.EventListener, this.id);
+        JSC.Debugger.didCancelAsyncCall(globalObject, JSC.Debugger.AsyncCallType.EventListener, this.id);
     }
 
     pub fn willDispatch(this: AsyncTaskTracker, globalObject: *JSC.JSGlobalObject) void {
@@ -1442,7 +1442,7 @@ pub const AsyncTaskTracker = struct {
             return;
         }
 
-        bun.JSC.Debugger.willDispatchAsyncCall(globalObject, bun.JSC.Debugger.AsyncCallType.EventListener, this.id);
+        JSC.Debugger.willDispatchAsyncCall(globalObject, JSC.Debugger.AsyncCallType.EventListener, this.id);
     }
 
     pub fn didDispatch(this: AsyncTaskTracker, globalObject: *JSC.JSGlobalObject) void {
@@ -1450,7 +1450,7 @@ pub const AsyncTaskTracker = struct {
             return;
         }
 
-        bun.JSC.Debugger.didDispatchAsyncCall(globalObject, bun.JSC.Debugger.AsyncCallType.EventListener, this.id);
+        JSC.Debugger.didDispatchAsyncCall(globalObject, JSC.Debugger.AsyncCallType.EventListener, this.id);
     }
 };
 

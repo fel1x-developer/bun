@@ -4,10 +4,10 @@ const builtin = @import("builtin");
 const Arena = @import("../allocators/mimalloc_arena.zig").Arena;
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
-const JSC = bun.JSC;
-const JSValue = bun.JSC.JSValue;
-const JSPromise = bun.JSC.JSPromise;
-const JSGlobalObject = bun.JSC.JSGlobalObject;
+const JSC = @import("root").JavaScriptCore;
+const JSValue = JSC.JSValue;
+const JSPromise = JSC.JSPromise;
+const JSGlobalObject = JSC.JSGlobalObject;
 
 threadlocal var arena_: ?Arena = null;
 

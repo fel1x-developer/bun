@@ -1,5 +1,5 @@
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 
 const StrongImpl = opaque {
     pub fn init(globalThis: *JSC.JSGlobalObject, value: JSC.JSValue) *StrongImpl {

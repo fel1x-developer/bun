@@ -9,7 +9,7 @@ const HSL = color.HSL;
 const HWB = color.HWB;
 const SRGBLinear = color.SRGBLinear;
 const P3 = color.P3;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const css = bun.css;
 
 const OutputColorFormat = enum {

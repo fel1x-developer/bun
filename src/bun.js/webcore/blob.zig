@@ -5,7 +5,7 @@ const C = @import("root").C;
 const MimeType = http.MimeType;
 const ZigURL = @import("../../url.zig").URL;
 const http = bun.http;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const js = JSC.C;
 const io = bun.io;
 const Method = @import("../../http/method.zig").Method;
@@ -2280,7 +2280,7 @@ pub const Blob = struct {
                 fn onIORequestClosed(this: *This) void {
                     this.io_poll.flags.remove(.was_ever_registered);
                     this.task = .{ .callback = &onCloseIORequest };
-                    bun.JSC.WorkPool.schedule(&this.task);
+                    JSC.WorkPool.schedule(&this.task);
                 }
 
                 fn onCloseIORequest(task: *JSC.WorkPoolTask) void {

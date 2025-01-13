@@ -1,7 +1,7 @@
 const std = @import("std");
 const bun = @import("root").bun;
-const JSC = bun.JSC;
-const JSValue = bun.JSC.JSValue;
+const JSC = @import("root").JavaScriptCore;
+const JSValue = JSC.JSValue;
 const Parent = @This();
 const OOM = bun.OOM;
 
@@ -295,7 +295,7 @@ pub const Tag = enum(u8) {
     Empty = 4,
 };
 
-const ZigString = bun.JSC.ZigString;
+const ZigString = JSC.ZigString;
 
 pub const StringImpl = extern union {
     ZigString: ZigString,
@@ -705,7 +705,7 @@ pub const String = extern struct {
     }
 
     /// Deprecated: use `fromJS2` to handle errors explicitly
-    pub fn fromJS(value: bun.JSC.JSValue, globalObject: *JSC.JSGlobalObject) String {
+    pub fn fromJS(value: JSC.JSValue, globalObject: *JSC.JSGlobalObject) String {
         JSC.markBinding(@src());
 
         var out: String = String.dead;
@@ -716,7 +716,7 @@ pub const String = extern struct {
         }
     }
 
-    pub fn fromJS2(value: bun.JSC.JSValue, globalObject: *JSC.JSGlobalObject) bun.JSError!String {
+    pub fn fromJS2(value: JSC.JSValue, globalObject: *JSC.JSGlobalObject) bun.JSError!String {
         var out: String = String.dead;
         if (BunString__fromJS(globalObject, value, &out)) {
             if (comptime bun.Environment.isDebug) {
@@ -731,7 +731,7 @@ pub const String = extern struct {
         }
     }
 
-    pub fn fromJSRef(value: bun.JSC.JSValue, globalObject: *JSC.JSGlobalObject) bun.JSError!String {
+    pub fn fromJSRef(value: JSC.JSValue, globalObject: *JSC.JSGlobalObject) bun.JSError!String {
         JSC.markBinding(@src());
 
         var out: String = String.dead;
@@ -745,7 +745,7 @@ pub const String = extern struct {
         }
     }
 
-    pub fn tryFromJS(value: bun.JSC.JSValue, globalObject: *JSC.JSGlobalObject) ?String {
+    pub fn tryFromJS(value: JSC.JSValue, globalObject: *JSC.JSGlobalObject) ?String {
         JSC.markBinding(@src());
 
         var out: String = String.dead;
@@ -756,26 +756,26 @@ pub const String = extern struct {
         }
     }
 
-    pub fn toJS(this: *const String, globalObject: *bun.JSC.JSGlobalObject) JSC.JSValue {
+    pub fn toJS(this: *const String, globalObject: *JSC.JSGlobalObject) JSC.JSValue {
         JSC.markBinding(@src());
 
         return BunString__toJS(globalObject, this);
     }
 
-    pub fn toJSDOMURL(this: *String, globalObject: *bun.JSC.JSGlobalObject) JSC.JSValue {
+    pub fn toJSDOMURL(this: *String, globalObject: *JSC.JSGlobalObject) JSC.JSValue {
         JSC.markBinding(@src());
 
         return BunString__toJSDOMURL(globalObject, this);
     }
 
     extern fn BunString__createArray(
-        globalObject: *bun.JSC.JSGlobalObject,
+        globalObject: *JSC.JSGlobalObject,
         ptr: [*]const String,
         len: usize,
     ) JSC.JSValue;
 
     /// calls toJS on all elements of `array`.
-    pub fn toJSArray(globalObject: *bun.JSC.JSGlobalObject, array: []const bun.String) JSC.JSValue {
+    pub fn toJSArray(globalObject: *JSC.JSGlobalObject, array: []const bun.String) JSC.JSValue {
         JSC.markBinding(@src());
 
         return BunString__createArray(globalObject, array.ptr, array.len);
@@ -892,7 +892,7 @@ pub const String = extern struct {
     }
 
     extern fn BunString__toJSON(
-        globalObject: *bun.JSC.JSGlobalObject,
+        globalObject: *JSC.JSGlobalObject,
         this: *String,
     ) JSC.JSValue;
 
@@ -1062,12 +1062,12 @@ pub const String = extern struct {
         return this.toSlice(allocator);
     }
 
-    extern fn BunString__fromJS(globalObject: *JSC.JSGlobalObject, value: bun.JSC.JSValue, out: *String) bool;
+    extern fn BunString__fromJS(globalObject: *JSC.JSGlobalObject, value: JSC.JSValue, out: *String) bool;
     extern fn BunString__toJS(globalObject: *JSC.JSGlobalObject, in: *const String) JSC.JSValue;
     extern fn BunString__toJSWithLength(globalObject: *JSC.JSGlobalObject, in: *const String, usize) JSC.JSValue;
     extern fn BunString__toJSDOMURL(globalObject: *JSC.JSGlobalObject, in: *String) JSC.JSValue;
     extern fn Bun__parseDate(*JSC.JSGlobalObject, *String) f64;
-    extern fn BunString__fromJSRef(globalObject: *JSC.JSGlobalObject, value: bun.JSC.JSValue, out: *String) bool;
+    extern fn BunString__fromJSRef(globalObject: *JSC.JSGlobalObject, value: JSC.JSValue, out: *String) bool;
     extern fn BunString__toWTFString(this: *String) void;
 
     pub fn parseDate(this: *String, globalObject: *JSC.JSGlobalObject) f64 {

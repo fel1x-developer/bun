@@ -1126,7 +1126,7 @@ const cppInternal = new CodeWriter();
 const headers = new Set<string>();
 
 zig.line('const bun = @import("root").bun;');
-zig.line("const JSC = bun.JSC;");
+zig.line('const JSC = @import("root").JavaScriptCore;');
 zig.line("const JSHostFunctionType = JSC.JSHostFunctionType;\n");
 
 zigInternal.line("const binding_internals = struct {");

@@ -49,7 +49,7 @@ const URL = @import("./url.zig").URL;
 const Linker = linker.Linker;
 const Resolver = _resolver.Resolver;
 const TOML = @import("./toml/toml_parser.zig").TOML;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const PackageManager = @import("./install/install.zig").PackageManager;
 const DataURL = @import("./resolver/data_url.zig").DataURL;
 
@@ -76,7 +76,7 @@ pub const ParseResult = struct {
     empty: bool = false,
     pending_imports: _resolver.PendingResolution.List = .{},
 
-    runtime_transpiler_cache: ?*bun.JSC.RuntimeTranspilerCache = null,
+    runtime_transpiler_cache: ?*JSC.RuntimeTranspilerCache = null,
 
     pub const AlreadyBundled = union(enum) {
         none: void,
@@ -1067,7 +1067,7 @@ pub const Transpiler = struct {
         comptime format: js_printer.Format,
         comptime enable_source_map: bool,
         source_map_context: ?js_printer.SourceMapHandler,
-        runtime_transpiler_cache: ?*bun.JSC.RuntimeTranspilerCache,
+        runtime_transpiler_cache: ?*JSC.RuntimeTranspilerCache,
     ) !usize {
         const tracer = bun.tracy.traceNamed(@src(), if (enable_source_map) "JSPrinter.printWithSourceMap" else "JSPrinter.print");
         defer tracer.end();
@@ -1235,7 +1235,7 @@ pub const Transpiler = struct {
         dont_bundle_twice: bool = false,
         allow_commonjs: bool = false,
 
-        runtime_transpiler_cache: ?*bun.JSC.RuntimeTranspilerCache = null,
+        runtime_transpiler_cache: ?*JSC.RuntimeTranspilerCache = null,
 
         keep_json_and_toml_as_one_statement: bool = false,
         allow_bytecode_cache: bool = false,

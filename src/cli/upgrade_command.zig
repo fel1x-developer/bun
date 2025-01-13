@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const string = bun.string;
 const Output = bun.Output;
 const Global = bun.Global;
@@ -685,7 +686,7 @@ pub const UpgradeCommand = struct {
                         .stdin = .inherit,
 
                         .windows = if (Environment.isWindows) .{
-                            .loop = bun.JSC.EventLoopHandle.init(bun.JSC.MiniEventLoop.initGlobal(null)),
+                            .loop = JSC.EventLoopHandle.init(JSC.MiniEventLoop.initGlobal(null)),
                         } else {},
                     }) catch |err| {
                         Output.prettyErrorln("<r><red>error:<r> Failed to spawn Expand-Archive on {s} due to error {s}", .{ tmpname, @errorName(err) });
@@ -972,7 +973,6 @@ pub const UpgradeCommand = struct {
 };
 
 pub const upgrade_js_bindings = struct {
-    const JSC = bun.JSC;
     const JSValue = JSC.JSValue;
     const ZigString = JSC.ZigString;
 
@@ -989,7 +989,7 @@ pub const upgrade_js_bindings = struct {
 
     /// For testing upgrades when the temp directory has an open handle without FILE_SHARE_DELETE.
     /// Windows only
-    pub fn jsOpenTempDirWithoutSharingDelete(_: *JSC.JSGlobalObject, _: *JSC.CallFrame) bun.JSError!bun.JSC.JSValue {
+    pub fn jsOpenTempDirWithoutSharingDelete(_: *JSC.JSGlobalObject, _: *JSC.CallFrame) bun.JSError!JSC.JSValue {
         if (comptime !Environment.isWindows) return .undefined;
         const w = std.os.windows;
 

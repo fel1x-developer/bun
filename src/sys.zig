@@ -16,7 +16,7 @@ const libc = std.posix.system;
 const windows = bun.windows;
 
 const Environment = bun.Environment;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const MAX_PATH_BYTES = bun.MAX_PATH_BYTES;
 const PathString = bun.PathString;
 const Syscall = @This();

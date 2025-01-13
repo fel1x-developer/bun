@@ -1,4 +1,4 @@
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const Fs = @import("../../fs.zig");
 const CAPI = JSC.C;
 const JS = @import("../javascript.zig");

@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const string = bun.string;
 const Output = bun.Output;
 const Global = bun.Global;
@@ -79,7 +80,7 @@ pub fn isCI() bool {
 
 /// This answers, "What parts of bun are people actually using?"
 pub const Features = struct {
-    pub var builtin_modules = std.enums.EnumSet(bun.JSC.HardcodedModule).initEmpty();
+    pub var builtin_modules = std.enums.EnumSet(JSC.HardcodedModule).initEmpty();
 
     pub var @"Bun.stderr": usize = 0;
     pub var @"Bun.stdin": usize = 0;

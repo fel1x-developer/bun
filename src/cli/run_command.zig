@@ -11,7 +11,7 @@ const default_allocator = bun.default_allocator;
 const C = @import("root").C;
 const std = @import("std");
 const uws = bun.uws;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const WaiterThread = JSC.Subprocess.WaiterThread;
 const OOM = bun.OOM;
 
@@ -300,7 +300,7 @@ pub const RunCommand = struct {
         }
 
         if (!use_system_shell) {
-            const mini = bun.JSC.MiniEventLoop.initGlobal(env);
+            const mini = JSC.MiniEventLoop.initGlobal(env);
             const code = bun.shell.Interpreter.initAndRunFromSource(ctx, mini, name, copy_script.items) catch |err| {
                 if (!silent) {
                     Output.prettyErrorln("<r><red>error<r>: Failed to run script <b>{s}<r> due to error <b>{s}<r>", .{ name, @errorName(err) });

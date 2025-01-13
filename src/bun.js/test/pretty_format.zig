@@ -1,7 +1,7 @@
 const std = @import("std");
 const bun = @import("root").bun;
 const Output = bun.Output;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const JSGlobalObject = JSC.JSGlobalObject;
 const JSValue = JSC.JSValue;
 const is_bindgen: bool = false;

@@ -4,7 +4,7 @@ const posix = std.posix;
 const bun = @import("root").bun;
 const C = @import("root").C;
 const env = bun.Environment;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const JSValue = JSC.JSValue;
 const libuv = bun.windows.libuv;
 

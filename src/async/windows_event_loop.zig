@@ -1,6 +1,6 @@
 const bun = @import("root").bun;
 const Output = bun.Output;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const uws = bun.uws;
 const Environment = bun.Environment;
 const std = @import("std");

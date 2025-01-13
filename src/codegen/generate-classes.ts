@@ -2207,7 +2207,7 @@ const ZIG_GENERATED_CLASSES_HEADER = `
 ///  5. bun run build
 ///
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const Classes = JSC.GeneratedClassesList;
 const Environment = bun.Environment;
 const std = @import("std");

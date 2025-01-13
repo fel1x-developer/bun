@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const string = bun.string;
 const Output = bun.Output;
 const Global = bun.Global;
@@ -27,7 +28,6 @@ const Command = @import("cli.zig").Command;
 const transpiler = bun.transpiler;
 const DotEnv = @import("env_loader.zig");
 const which = @import("which.zig").which;
-const JSC = bun.JSC;
 const AsyncHTTP = bun.http.AsyncHTTP;
 const Arena = @import("./allocators/mimalloc_arena.zig").Arena;
 const DNSResolver = @import("bun.js/api/bun/dns_resolver.zig").DNSResolver;
@@ -45,7 +45,7 @@ pub const Run = struct {
 
     pub fn bootStandalone(ctx: Command.Context, entry_path: string, graph: bun.StandaloneModuleGraph) !void {
         JSC.markBinding(@src());
-        bun.JSC.initialize(false);
+        JSC.initialize(false);
         bun.Analytics.Features.standalone_executable += 1;
 
         const graph_ptr = try bun.default_allocator.create(bun.StandaloneModuleGraph);
@@ -184,7 +184,7 @@ pub const Run = struct {
             return;
         }
 
-        bun.JSC.initialize(ctx.runtime_options.eval.eval_and_print);
+        JSC.initialize(ctx.runtime_options.eval.eval_and_print);
 
         js_ast.Expr.Data.Store.create();
         js_ast.Stmt.Data.Store.create();
@@ -315,7 +315,7 @@ pub const Run = struct {
                     vm.onExit();
 
                     if (run.any_unhandled) {
-                        bun.JSC.SavedSourceMap.MissingSourceMapNoteInfo.print();
+                        JSC.SavedSourceMap.MissingSourceMapNoteInfo.print();
 
                         Output.prettyErrorln(
                             "<r>\n<d>{s}<r>",
@@ -345,7 +345,7 @@ pub const Run = struct {
             vm.exit_handler.exit_code = 1;
             vm.onExit();
             if (run.any_unhandled) {
-                bun.JSC.SavedSourceMap.MissingSourceMapNoteInfo.print();
+                JSC.SavedSourceMap.MissingSourceMapNoteInfo.print();
 
                 Output.prettyErrorln(
                     "<r>\n<d>{s}<r>",
@@ -435,7 +435,7 @@ pub const Run = struct {
         if (this.any_unhandled and this.vm.exit_handler.exit_code == 0) {
             this.vm.exit_handler.exit_code = 1;
 
-            bun.JSC.SavedSourceMap.MissingSourceMapNoteInfo.print();
+            JSC.SavedSourceMap.MissingSourceMapNoteInfo.print();
 
             Output.prettyErrorln(
                 "<r>\n<d>{s}<r>",

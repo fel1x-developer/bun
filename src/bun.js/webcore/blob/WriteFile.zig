@@ -1,6 +1,6 @@
 const bun = @import("root").bun;
 const C = @import("root").C;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const std = @import("std");
 const Blob = JSC.WebCore.Blob;
 const invalid_fd = bun.invalid_fd;
@@ -373,7 +373,7 @@ pub const WriteFileWindows = struct {
     pub fn createWithCtx(
         file_blob: Blob,
         bytes_blob: Blob,
-        event_loop: *bun.JSC.EventLoop,
+        event_loop: *JSC.EventLoop,
         onWriteFileContext: *anyopaque,
         onCompleteCallback: OnWriteFileCallback,
         mkdirp_if_not_exists: bool,

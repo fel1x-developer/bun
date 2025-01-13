@@ -4,6 +4,7 @@ const strings = @import("../string_immutable.zig");
 const FeatureFlags = @import("../feature_flags.zig");
 const default_allocator = @import("../allocators/memory_allocator.zig").c_allocator;
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const Fs = @import("../fs.zig");
 
 threadlocal var parser_join_input_buffer: [4096]u8 = undefined;
@@ -2048,7 +2049,7 @@ pub const PosixToWinNormalizer = struct {
 /// Used in PathInlines.h
 /// gets cwd off of the global object
 export fn ResolvePath__joinAbsStringBufCurrentPlatformBunString(
-    globalObject: *bun.JSC.JSGlobalObject,
+    globalObject: *JSC.JSGlobalObject,
     in: bun.String,
 ) bun.String {
     const str = in.toUTF8WithoutRef(bun.default_allocator);

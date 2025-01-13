@@ -7,7 +7,7 @@ pub usingnamespace @import("./webcore/S3Client.zig");
 pub usingnamespace @import("./webcore/request.zig");
 pub usingnamespace @import("./webcore/body.zig");
 pub const ObjectURLRegistry = @import("./webcore/ObjectURLRegistry.zig");
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const std = @import("std");
 const bun = @import("root").bun;
 const string = bun.string;

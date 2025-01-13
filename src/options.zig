@@ -22,7 +22,7 @@ const stringZ = bun.stringZ;
 const default_allocator = bun.default_allocator;
 const C = @import("root").C;
 const StoredFileDescriptorType = bun.StoredFileDescriptorType;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const Runtime = @import("./runtime.zig").Runtime;
 const Analytics = @import("./analytics/analytics_thread.zig");
 const MacroRemap = @import("./resolver/package_json.zig").MacroMap;
@@ -89,7 +89,7 @@ pub const ExternalModules = struct {
     };
 
     pub fn isNodeBuiltin(str: string) bool {
-        return bun.JSC.HardcodedModule.Aliases.has(str, .node);
+        return JSC.HardcodedModule.Aliases.has(str, .node);
     }
 
     const default_wildcard_patterns = &[_]WildcardPattern{
@@ -2230,7 +2230,7 @@ pub const OutputFile = struct {
         this: *OutputFile,
         owned_pathname: ?[]const u8,
         globalObject: *JSC.JSGlobalObject,
-    ) bun.JSC.JSValue {
+    ) JSC.JSValue {
         return switch (this.value) {
             .move, .pending => @panic("Unexpected pending output file"),
             .noop => JSC.JSValue.undefined,

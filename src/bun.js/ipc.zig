@@ -9,7 +9,7 @@ const MutableString = bun.MutableString;
 const C = @import("root").C;
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const JSValue = JSC.JSValue;
 const JSGlobalObject = JSC.JSGlobalObject;
 

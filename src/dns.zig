@@ -1,6 +1,6 @@
 const bun = @import("root").bun;
 const std = @import("std");
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const JSValue = JSC.JSValue;
 
 const netdb = if (bun.Environment.isWindows) .{
@@ -446,4 +446,4 @@ pub fn addrInfoToJSArray(
     return array;
 }
 
-pub const internal = bun.JSC.DNS.InternalDNS;
+pub const internal = JSC.DNS.InternalDNS;

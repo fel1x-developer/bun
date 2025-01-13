@@ -4,7 +4,7 @@ const bun = @import("root").bun;
 const MimeType = bun.http.MimeType;
 const ZigURL = @import("../../url.zig").URL;
 const HTTPClient = bun.http;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const js = JSC.C;
 
 const Method = @import("../../http/method.zig").Method;
@@ -451,7 +451,7 @@ pub const Request = struct {
                             bun.assert(this.sizeOfURL() == url.len);
                         }
 
-                        var href = bun.JSC.URL.hrefFromString(bun.String.fromBytes(url));
+                        var href = JSC.URL.hrefFromString(bun.String.fromBytes(url));
                         if (!href.isEmpty()) {
                             if (href.byteSlice().ptr == url.ptr) {
                                 this.url = bun.String.createLatin1(url[0..href.length()]);
@@ -487,7 +487,7 @@ pub const Request = struct {
                         this.url = bun.String.createUTF8(temp_url);
                     }
 
-                    const href = bun.JSC.URL.hrefFromString(this.url);
+                    const href = JSC.URL.hrefFromString(this.url);
                     // TODO: what is the right thing to do for invalid URLS?
                     if (!href.isEmpty()) {
                         this.url = href;

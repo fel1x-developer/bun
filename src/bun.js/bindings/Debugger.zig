@@ -1,5 +1,5 @@
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 
 pub const Debugger = struct {
     pub const AsyncCallType = enum(u8) {

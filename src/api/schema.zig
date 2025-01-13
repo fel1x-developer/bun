@@ -1,5 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const js_ast = bun.JSAst;
 const OOM = bun.OOM;
 
@@ -426,7 +427,7 @@ pub const Api = struct {
         }
     };
 
-    pub const StackFramePosition = bun.JSC.ZigStackFramePosition;
+    pub const StackFramePosition = JSC.ZigStackFramePosition;
 
     pub const SourceLine = struct {
         /// line

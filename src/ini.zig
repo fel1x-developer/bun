@@ -507,7 +507,7 @@ pub const Parser = struct {
 
 /// Used in JS tests, see `internal-for-testing.ts` and shell tests.
 pub const IniTestingAPIs = struct {
-    const JSC = bun.JSC;
+    const JSC = @import("root").JavaScriptCore;
 
     pub fn loadNpmrcFromJS(
         globalThis: *JSC.JSGlobalObject,

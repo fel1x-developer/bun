@@ -1,5 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const C = @import("root").C;
 const Environment = bun.Environment;
 const O = bun.O;
@@ -18,7 +19,7 @@ pub const Tmpfile = struct {
     pub fn create(
         destination_dir: bun.FileDescriptor,
         tmpfilename: [:0]const u8,
-    ) bun.JSC.Maybe(Tmpfile) {
+    ) JSC.Maybe(Tmpfile) {
         const perm = 0o644;
         var tmpfile = Tmpfile{
             .destination_dir = destination_dir,

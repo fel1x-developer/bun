@@ -38,7 +38,7 @@ const PathString = bun.PathString;
 const is_bindgen = false;
 const HTTPThread = bun.http.HTTPThread;
 
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const jest = JSC.Jest;
 const TestRunner = JSC.Jest.TestRunner;
 const Snapshots = JSC.Snapshot.Snapshots;
@@ -812,10 +812,10 @@ pub const CommandLineReporter = struct {
             if (comptime !reporters.lcov) break :brk .{ {}, {}, {}, {} };
 
             // Ensure the directory exists
-            var fs = bun.JSC.Node.NodeFS{};
+            var fs = JSC.Node.NodeFS{};
             _ = fs.mkdirRecursive(
                 .{
-                    .path = bun.JSC.Node.PathLike{
+                    .path = JSC.Node.PathLike{
                         .encoded_slice = JSC.ZigString.Slice.fromUTF8NeverFree(opts.reports_directory),
                     },
                     .always_return_none = true,
@@ -1035,7 +1035,7 @@ const Scanner = struct {
     };
 
     export fn BunTest__shouldGenerateCodeCoverage(test_name_str: bun.String) callconv(.C) bool {
-        var zig_slice: bun.JSC.ZigString.Slice = .{};
+        var zig_slice: JSC.ZigString.Slice = .{};
         defer zig_slice.deinit();
 
         // In this particular case, we don't actually care about non-ascii latin1 characters.
@@ -1194,7 +1194,7 @@ pub const TestCommand = struct {
             loader.* = DotEnv.Loader.init(map, ctx.allocator);
             break :brk loader;
         };
-        bun.JSC.initialize(false);
+        JSC.initialize(false);
         HTTPThread.init(&.{});
 
         var snapshot_file_buf = std.ArrayList(u8).init(ctx.allocator);

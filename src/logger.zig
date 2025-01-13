@@ -1,6 +1,6 @@
 const std = @import("std");
 const Api = @import("./api/schema.zig").Api;
-const js = bun.JSC;
+const js = @import("root").JavaScriptCore;
 const ImportKind = @import("./import_record.zig").ImportKind;
 const bun = @import("root").bun;
 const string = bun.string;
@@ -12,7 +12,7 @@ const MutableString = bun.MutableString;
 const stringZ = bun.stringZ;
 const default_allocator = bun.default_allocator;
 const C = @import("root").C;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const fs = @import("fs.zig");
 const unicode = std.unicode;
 const Ref = @import("./ast/base.zig").Ref;
@@ -399,8 +399,8 @@ pub const Msg = struct {
     notes: []Data = &.{},
     redact_sensitive_information: bool = false,
 
-    pub fn fromJS(allocator: std.mem.Allocator, globalObject: *bun.JSC.JSGlobalObject, file: string, err: bun.JSC.JSValue) OOM!Msg {
-        var zig_exception_holder: bun.JSC.ZigException.Holder = bun.JSC.ZigException.Holder.init();
+    pub fn fromJS(allocator: std.mem.Allocator, globalObject: *JSC.JSGlobalObject, file: string, err: JSC.JSValue) OOM!Msg {
+        var zig_exception_holder: JSC.ZigException.Holder = JSC.ZigException.Holder.init();
         if (err.toError()) |value| {
             value.toZigException(globalObject, zig_exception_holder.zigException());
         } else {
@@ -419,7 +419,7 @@ pub const Msg = struct {
         };
     }
 
-    pub fn toJS(this: Msg, globalObject: *bun.JSC.JSGlobalObject, allocator: std.mem.Allocator) JSC.JSValue {
+    pub fn toJS(this: Msg, globalObject: *JSC.JSGlobalObject, allocator: std.mem.Allocator) JSC.JSValue {
         return switch (this.metadata) {
             .build => JSC.BuildMessage.create(globalObject, allocator, this),
             .resolve => JSC.ResolveMessage.create(globalObject, allocator, this, ""),

@@ -1,5 +1,5 @@
 const std = @import("std");
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const bun = @import("root").bun;
 const C = @import("root").C;
 const Fs = @import("../../fs.zig");
@@ -651,7 +651,7 @@ pub const FSWatcher = struct {
         this.deinit();
     }
 
-    pub fn init(args: Arguments) bun.JSC.Maybe(*FSWatcher) {
+    pub fn init(args: Arguments) JSC.Maybe(*FSWatcher) {
         var buf: bun.PathBuffer = undefined;
         var slice = args.path.slice();
         if (bun.strings.startsWith(slice, "file://")) {

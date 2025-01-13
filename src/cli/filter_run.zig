@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const Output = bun.Output;
 const Global = bun.Global;
 const Environment = bun.Environment;
@@ -140,7 +141,7 @@ pub const ProcessHandle = struct {
         this.state.processExit(this) catch {};
     }
 
-    pub fn eventLoop(this: *This) *bun.JSC.MiniEventLoop {
+    pub fn eventLoop(this: *This) *JSC.MiniEventLoop {
         return this.state.event_loop;
     }
 
@@ -157,7 +158,7 @@ const State = struct {
     const This = @This();
 
     handles: []ProcessHandle,
-    event_loop: *bun.JSC.MiniEventLoop,
+    event_loop: *JSC.MiniEventLoop,
     remaining_scripts: usize = 0,
     // buffer for batched output
     draw_buf: std.ArrayList(u8) = std.ArrayList(u8).init(bun.default_allocator),
@@ -526,7 +527,7 @@ pub fn runScriptsWithFilter(ctx: Command.Context) !noreturn {
         Global.exit(1);
     }
 
-    const event_loop = bun.JSC.MiniEventLoop.initGlobal(this_transpiler.env);
+    const event_loop = JSC.MiniEventLoop.initGlobal(this_transpiler.env);
     const shell_bin: [:0]const u8 = if (Environment.isPosix)
         RunCommand.findShell(this_transpiler.env.get("PATH") orelse "", fsinstance.top_level_dir) orelse return error.MissingShell
     else
@@ -557,7 +558,7 @@ pub fn runScriptsWithFilter(ctx: Command.Context) !noreturn {
                 .stdout = if (Environment.isPosix) .buffer else .{ .buffer = try bun.default_allocator.create(bun.windows.libuv.Pipe) },
                 .stderr = if (Environment.isPosix) .buffer else .{ .buffer = try bun.default_allocator.create(bun.windows.libuv.Pipe) },
                 .cwd = std.fs.path.dirname(script.package_json_path) orelse "",
-                .windows = if (Environment.isWindows) .{ .loop = bun.JSC.EventLoopHandle.init(event_loop) } else {},
+                .windows = if (Environment.isWindows) .{ .loop = JSC.EventLoopHandle.init(event_loop) } else {},
                 .stream = true,
             },
         };

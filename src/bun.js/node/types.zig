@@ -17,7 +17,7 @@ const L = strings.literal;
 const Environment = bun.Environment;
 const Fs = @import("../../fs.zig");
 const IdentityContext = @import("../../identity_context.zig").IdentityContext;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const Mode = bun.Mode;
 const Shimmer = @import("../bindings/shimmer.zig").Shimmer;
 const Syscall = bun.sys;
@@ -1316,7 +1316,7 @@ pub fn modeFromJS(ctx: JSC.C.JSContextRef, value: JSC.JSValue) bun.JSError!?Mode
         }
 
         break :brk std.fmt.parseInt(Mode, slice, 8) catch {
-            var formatter = bun.JSC.ConsoleObject.Formatter{ .globalThis = ctx };
+            var formatter = JSC.ConsoleObject.Formatter{ .globalThis = ctx };
             return ctx.throwValue(ctx.ERR_INVALID_ARG_VALUE("The argument 'mode' must be a 32-bit unsigned integer or an octal string. Received {}", .{value.toFmt(&formatter)}).toJS());
         };
     };

@@ -5,7 +5,7 @@ const sys = bun.sys;
 const linux = std.os.linux;
 const Environment = bun.Environment;
 pub const heap = @import("./heap.zig");
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 
 const log = bun.Output.scoped(.loop, false);
 
@@ -344,8 +344,8 @@ pub const Action = union(enum) {
     };
 };
 
-const ReadFile = bun.JSC.WebCore.Blob.ReadFile;
-const WriteFile = bun.JSC.WebCore.Blob.WriteFile;
+const ReadFile = JSC.WebCore.Blob.ReadFile;
+const WriteFile = JSC.WebCore.Blob.WriteFile;
 
 const Pollable = struct {
     const Tag = enum(bun.TaggedPointer.Tag) {

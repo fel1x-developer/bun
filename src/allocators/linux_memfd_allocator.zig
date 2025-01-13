@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const std = @import("std");
 
 /// When cloning large amounts of data potentially multiple times, we can
@@ -91,7 +92,7 @@ pub const LinuxMemFdAllocator = struct {
         };
     };
 
-    pub fn alloc(this: *LinuxMemFdAllocator, len: usize, offset: usize, flags: std.posix.MAP) bun.JSC.Maybe(bun.JSC.WebCore.Blob.ByteStore) {
+    pub fn alloc(this: *LinuxMemFdAllocator, len: usize, offset: usize, flags: std.posix.MAP) JSC.Maybe(JSC.WebCore.Blob.ByteStore) {
         var size = len;
 
         // size rounded up to nearest page
@@ -110,7 +111,7 @@ pub const LinuxMemFdAllocator = struct {
         )) {
             .result => |slice| {
                 return .{
-                    .result = bun.JSC.WebCore.Blob.ByteStore{
+                    .result = JSC.WebCore.Blob.ByteStore{
                         .cap = @truncate(slice.len),
                         .ptr = slice.ptr,
                         .len = @truncate(len),
@@ -129,7 +130,7 @@ pub const LinuxMemFdAllocator = struct {
             return false;
         }
 
-        if (bun.JSC.VirtualMachine.is_smol_mode) {
+        if (JSC.VirtualMachine.is_smol_mode) {
             return bytes.len >= 1024 * 1024 * 1;
         }
 
@@ -138,7 +139,7 @@ pub const LinuxMemFdAllocator = struct {
         return bytes.len >= 1024 * 1024 * 8;
     }
 
-    pub fn create(bytes: []const u8) bun.JSC.Maybe(bun.JSC.WebCore.Blob.ByteStore) {
+    pub fn create(bytes: []const u8) JSC.Maybe(JSC.WebCore.Blob.ByteStore) {
         if (comptime !bun.Environment.isLinux) {
             unreachable;
         }

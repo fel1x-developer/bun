@@ -1,6 +1,6 @@
 const bun = @import("root").bun;
 const picohttp = bun.picohttp;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const string = bun.string;
 const Output = bun.Output;
 const Global = bun.Global;
@@ -1223,7 +1223,7 @@ pub const HTTPThread = struct {
         default_arena = Arena.init() catch unreachable;
         default_allocator = default_arena.allocator();
 
-        const loop = bun.JSC.MiniEventLoop.initGlobal(null);
+        const loop = JSC.MiniEventLoop.initGlobal(null);
 
         if (Environment.isWindows) {
             _ = std.process.getenvW(comptime bun.strings.w("SystemRoot")) orelse {
@@ -4488,7 +4488,7 @@ pub fn handleResponseMetadata(
                         } else {
                             const original_url = this.url;
 
-                            const new_url_ = bun.JSC.URL.join(
+                            const new_url_ = JSC.URL.join(
                                 bun.String.fromBytes(original_url.href),
                                 bun.String.fromBytes(location),
                             );

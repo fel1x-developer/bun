@@ -3,7 +3,7 @@ const default_allocator = bun.default_allocator;
 const bun = @import("root").bun;
 const C = @import("root").C;
 const Environment = bun.Environment;
-const AnyBlob = bun.JSC.WebCore.AnyBlob;
+const AnyBlob = JSC.WebCore.AnyBlob;
 const Global = bun.Global;
 const strings = bun.strings;
 const string = bun.string;
@@ -29,43 +29,43 @@ const js_ast = bun.JSAst;
 const NodeFallbackModules = @import("../../node_fallbacks.zig");
 const ImportKind = ast.ImportKind;
 const Analytics = @import("../../analytics/analytics_thread.zig");
-const ZigString = bun.JSC.ZigString;
+const ZigString = JSC.ZigString;
 const Runtime = @import("../../runtime.zig");
 const ImportRecord = ast.ImportRecord;
 const DotEnv = @import("../../env_loader.zig");
 const ParseResult = bun.transpiler.ParseResult;
 const PackageJSON = @import("../../resolver/package_json.zig").PackageJSON;
 const MacroRemap = @import("../../resolver/package_json.zig").MacroMap;
-const WebCore = bun.JSC.WebCore;
+const WebCore = JSC.WebCore;
 const Request = WebCore.Request;
 const Response = WebCore.Response;
 const Headers = WebCore.Headers;
 const Fetch = WebCore.Fetch;
 const HTTP = bun.http;
 const FetchEvent = WebCore.FetchEvent;
-const js = bun.JSC.C;
-const JSC = bun.JSC;
+const js = JSC.C;
+const JSC = @import("root").JavaScriptCore;
 const MarkedArrayBuffer = @import("../base.zig").MarkedArrayBuffer;
 const getAllocator = @import("../base.zig").getAllocator;
-const JSValue = bun.JSC.JSValue;
+const JSValue = JSC.JSValue;
 
-const JSGlobalObject = bun.JSC.JSGlobalObject;
-const ExceptionValueRef = bun.JSC.ExceptionValueRef;
-const JSPrivateDataPtr = bun.JSC.JSPrivateDataPtr;
-const ConsoleObject = bun.JSC.ConsoleObject;
-const Node = bun.JSC.Node;
-const ZigException = bun.JSC.ZigException;
-const ZigStackTrace = bun.JSC.ZigStackTrace;
-const ErrorableResolvedSource = bun.JSC.ErrorableResolvedSource;
-const ResolvedSource = bun.JSC.ResolvedSource;
-const JSPromise = bun.JSC.JSPromise;
-const JSInternalPromise = bun.JSC.JSInternalPromise;
-const JSModuleLoader = bun.JSC.JSModuleLoader;
-const JSPromiseRejectionOperation = bun.JSC.JSPromiseRejectionOperation;
-const ErrorableZigString = bun.JSC.ErrorableZigString;
-const ZigGlobalObject = bun.JSC.ZigGlobalObject;
-const VM = bun.JSC.VM;
-const JSFunction = bun.JSC.JSFunction;
+const JSGlobalObject = JSC.JSGlobalObject;
+const ExceptionValueRef = JSC.ExceptionValueRef;
+const JSPrivateDataPtr = JSC.JSPrivateDataPtr;
+const ConsoleObject = JSC.ConsoleObject;
+const Node = JSC.Node;
+const ZigException = JSC.ZigException;
+const ZigStackTrace = JSC.ZigStackTrace;
+const ErrorableResolvedSource = JSC.ErrorableResolvedSource;
+const ResolvedSource = JSC.ResolvedSource;
+const JSPromise = JSC.JSPromise;
+const JSInternalPromise = JSC.JSInternalPromise;
+const JSModuleLoader = JSC.JSModuleLoader;
+const JSPromiseRejectionOperation = JSC.JSPromiseRejectionOperation;
+const ErrorableZigString = JSC.ErrorableZigString;
+const ZigGlobalObject = JSC.ZigGlobalObject;
+const VM = JSC.VM;
+const JSFunction = JSC.JSFunction;
 const Config = @import("../config.zig");
 const URL = @import("../../url.zig").URL;
 const VirtualMachine = JSC.VirtualMachine;
@@ -7474,7 +7474,7 @@ pub const SavedRequest = struct {
 
     pub const Union = union(enum) {
         stack: *uws.Request,
-        saved: bun.JSC.API.SavedRequest,
+        saved: JSC.API.SavedRequest,
     };
 };
 

@@ -3,6 +3,7 @@
 //! so we give up on codesigning support on macOS for now until we can find a better solution
 const bun = @import("root").bun;
 const C = @import("root").C;
+const JSC = @import("root").JavaScriptCore;
 const std = @import("std");
 const Schema = bun.Schema.Api;
 const strings = bun.strings;
@@ -102,7 +103,7 @@ pub const StandaloneModuleGraph = struct {
         loader: bun.options.Loader,
         contents: [:0]const u8 = "",
         sourcemap: LazySourceMap,
-        cached_blob: ?*bun.JSC.WebCore.Blob = null,
+        cached_blob: ?*JSC.WebCore.Blob = null,
         encoding: Encoding = .binary,
         wtf_string: bun.String = bun.String.empty,
         bytecode: []u8 = "",
@@ -130,13 +131,13 @@ pub const StandaloneModuleGraph = struct {
             return this.wtf_string.dupeRef();
         }
 
-        pub fn blob(this: *File, globalObject: *bun.JSC.JSGlobalObject) *bun.JSC.WebCore.Blob {
+        pub fn blob(this: *File, globalObject: *JSC.JSGlobalObject) *JSC.WebCore.Blob {
             if (this.cached_blob == null) {
-                const store = bun.JSC.WebCore.Blob.Store.init(@constCast(this.contents), bun.default_allocator);
+                const store = JSC.WebCore.Blob.Store.init(@constCast(this.contents), bun.default_allocator);
                 // make it never free
                 store.ref();
 
-                const b = bun.JSC.WebCore.Blob.initWithStore(store, globalObject).new();
+                const b = JSC.WebCore.Blob.initWithStore(store, globalObject).new();
                 b.allocator = bun.default_allocator;
 
                 if (bun.http.MimeType.byExtensionNoDefault(bun.strings.trimLeadingChar(std.fs.path.extension(this.name), '.'))) |mime| {

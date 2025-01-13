@@ -1,5 +1,5 @@
 const std = @import("std");
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const strings = bun.strings;
 const bun = @import("root").bun;
 const Lock = bun.Mutex;

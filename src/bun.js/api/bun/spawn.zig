@@ -1,4 +1,4 @@
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const bun = @import("root").bun;
 const string = bun.string;
 const std = @import("std");

@@ -18,7 +18,7 @@ const RefHashCtx = @import("ast/base.zig").RefHashCtx;
 const ObjectPool = @import("./pool.zig").ObjectPool;
 const ImportRecord = @import("import_record.zig").ImportRecord;
 const allocators = @import("allocators.zig");
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const RefCtx = @import("./ast/base.zig").RefCtx;
 const JSONParser = bun.JSON;
 const is_bindgen = false;
@@ -7894,7 +7894,7 @@ pub fn printmem(comptime format: string, args: anytype) void {
 }
 
 pub const Macro = struct {
-    const JavaScript = bun.JSC;
+    const JavaScript = @import("root").JavaScriptCore;
     const JSCBase = @import("./bun.js/base.zig");
     const Resolver = @import("./resolver/resolver.zig").Resolver;
     const isPackagePath = @import("./resolver/resolver.zig").isPackagePath;

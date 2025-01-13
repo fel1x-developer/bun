@@ -1,6 +1,7 @@
 const bun = @import("root").bun;
 const C = @import("root").C;
-const Maybe = bun.JSC.Maybe;
+const JSC = @import("root").JavaScriptCore;
+const Maybe = JSC.Maybe;
 
 const WORD = c_ushort;
 const LARGE_INTEGER = i64;

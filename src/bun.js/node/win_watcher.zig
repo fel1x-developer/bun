@@ -7,13 +7,13 @@ const Path = @import("../../resolver/resolve_path.zig");
 const Fs = @import("../../fs.zig");
 const Mutex = bun.Mutex;
 const string = bun.string;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const VirtualMachine = JSC.VirtualMachine;
 const StoredFileDescriptorType = bun.StoredFileDescriptorType;
 const Output = bun.Output;
 const Watcher = @import("../../watcher.zig");
 
-const FSWatcher = bun.JSC.Node.FSWatcher;
+const FSWatcher = JSC.Node.FSWatcher;
 const EventType = @import("./path_watcher.zig").PathWatcher.EventType;
 const Event = FSWatcher.Event;
 
@@ -180,7 +180,7 @@ pub const PathWatcher = struct {
         this.maybeDeinit();
     }
 
-    pub fn init(manager: *PathWatcherManager, path: [:0]const u8, recursive: bool) bun.JSC.Maybe(*PathWatcher) {
+    pub fn init(manager: *PathWatcherManager, path: [:0]const u8, recursive: bool) JSC.Maybe(*PathWatcher) {
         var outbuf: bun.PathBuffer = undefined;
         const event_path = switch (bun.sys.readlink(path, &outbuf)) {
             .err => |err| brk: {
@@ -282,7 +282,7 @@ pub fn watch(
     comptime callback: PathWatcher.Callback,
     comptime updateEnd: PathWatcher.UpdateEndCallback,
     ctx: *anyopaque,
-) bun.JSC.Maybe(*PathWatcher) {
+) JSC.Maybe(*PathWatcher) {
     comptime {
         if (callback != onPathUpdateFn) {
             @compileError("callback must be onPathUpdateFn");

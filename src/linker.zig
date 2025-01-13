@@ -39,7 +39,7 @@ const ResolverType = Resolver.Resolver;
 const ESModule = @import("./resolver/package_json.zig").ESModule;
 const Runtime = @import("./runtime.zig").Runtime;
 const URL = @import("url.zig").URL;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const PluginRunner = bun.transpiler.PluginRunner;
 pub const CSSResolveError = error{ResolveMessage};
 

@@ -1,7 +1,7 @@
 const std = @import("std");
 const bun = @import("root").bun;
 const Environment = bun.Environment;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const string = bun.string;
 const Output = bun.Output;
 const ZigString = JSC.ZigString;
@@ -175,7 +175,7 @@ pub fn sendHelperPrimary(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFr
     log("sendHelperPrimary", .{});
 
     const arguments = callframe.arguments_old(4).ptr;
-    const subprocess = arguments[0].as(bun.JSC.Subprocess).?;
+    const subprocess = arguments[0].as(JSC.Subprocess).?;
     const message = arguments[1];
     const handle = arguments[2];
     const callback = arguments[3];
@@ -196,7 +196,7 @@ pub fn sendHelperPrimary(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFr
     message.put(globalThis, ZigString.static("seq"), JSC.JSValue.jsNumber(ipc_data.internal_msg_queue.seq));
     ipc_data.internal_msg_queue.seq +%= 1;
 
-    // similar code as bun.JSC.Subprocess.doSend
+    // similar code as JSC.Subprocess.doSend
     var formatter = JSC.ConsoleObject.Formatter{ .globalThis = globalThis };
     if (Environment.isDebug) log("primary: {}", .{message.toFmt(&formatter)});
 
@@ -209,7 +209,7 @@ pub fn sendHelperPrimary(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFr
 
 pub fn onInternalMessagePrimary(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
     const arguments = callframe.arguments_old(3).ptr;
-    const subprocess = arguments[0].as(bun.JSC.Subprocess).?;
+    const subprocess = arguments[0].as(JSC.Subprocess).?;
     const ipc_data = subprocess.ipc() orelse return .undefined;
     ipc_data.internal_msg_queue.worker = JSC.Strong.create(arguments[1], globalThis);
     ipc_data.internal_msg_queue.cb = JSC.Strong.create(arguments[2], globalThis);

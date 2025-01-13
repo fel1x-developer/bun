@@ -1,5 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const StaticExport = @import("./static_export.zig");
 const Sizes = @import("./sizes.zig");
 pub const is_bindgen: bool = false;
@@ -120,11 +121,11 @@ pub fn Shimmer(comptime _namespace: []const u8, comptime _name: []const u8, comp
                         @compileError("Expected " ++ @typeName(Parent) ++ "." ++ @typeName(Function) ++ " to be a function but received " ++ @tagName(@typeInfo(Function)));
                     }
                     const Fn: std.builtin.Type.Fn = @typeInfo(Function).Fn;
-                    if (Function == bun.JSC.JSHostFunctionTypeWithCCallConvForAssertions and bun.JSC.conv != .C) {
+                    if (Function == JSC.JSHostFunctionTypeWithCCallConvForAssertions and JSC.conv != .C) {
                         @compileError("Expected " ++ bun.meta.typeName(Function) ++ " to have a JSC.conv Calling Convention.");
-                    } else if (Function == bun.JSC.JSHostFunctionType) {
+                    } else if (Function == JSC.JSHostFunctionType) {
                         //
-                    } else if (Function == bun.JSC.JSHostZigFunction) {
+                    } else if (Function == JSC.JSHostZigFunction) {
                         //
                     } else if (Fn.calling_convention != .C) {
                         @compileError("Expected " ++ @typeName(Parent) ++ "." ++ @typeName(Function) ++ " to have a C Calling Convention.");

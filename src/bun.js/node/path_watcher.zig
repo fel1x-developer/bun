@@ -12,7 +12,7 @@ const Output = bun.Output;
 const Environment = bun.Environment;
 const StoredFileDescriptorType = bun.StoredFileDescriptorType;
 const string = bun.string;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const VirtualMachine = JSC.VirtualMachine;
 const GenericWatcher = @import("../../watcher.zig");
 
@@ -22,7 +22,7 @@ const Semaphore = sync.Semaphore;
 var default_manager_mutex: Mutex = .{};
 var default_manager: ?*PathWatcherManager = null;
 
-const FSWatcher = bun.JSC.Node.FSWatcher;
+const FSWatcher = JSC.Node.FSWatcher;
 const Event = FSWatcher.Event;
 const StringOrBytesToDecode = FSWatcher.FSWatchTaskWindows.StringOrBytesToDecode;
 
@@ -81,7 +81,7 @@ pub const PathWatcherManager = struct {
     fn _fdFromAbsolutePathZ(
         this: *PathWatcherManager,
         path: [:0]const u8,
-    ) bun.JSC.Maybe(PathInfo) {
+    ) JSC.Maybe(PathInfo) {
         this.mutex.lock();
         defer this.mutex.unlock();
 
@@ -436,7 +436,7 @@ pub const PathWatcherManager = struct {
             this: *DirectoryRegisterTask,
             watcher: *PathWatcher,
             buf: *bun.PathBuffer,
-        ) bun.JSC.Maybe(void) {
+        ) JSC.Maybe(void) {
             if (Environment.isWindows) @compileError("use win_watcher.zig");
 
             const manager = this.manager;
@@ -544,7 +544,7 @@ pub const PathWatcherManager = struct {
     };
 
     // this should only be called if thread pool is not null
-    fn _addDirectory(this: *PathWatcherManager, watcher: *PathWatcher, path: PathInfo) bun.JSC.Maybe(void) {
+    fn _addDirectory(this: *PathWatcherManager, watcher: *PathWatcher, path: PathInfo) JSC.Maybe(void) {
         const fd = path.fd;
         switch (this.main_watcher.addDirectory(fd, path.path, path.hash, false)) {
             .err => |err| return .{ .err = err },
@@ -947,7 +947,7 @@ pub fn watch(
     comptime callback: PathWatcher.Callback,
     comptime updateEnd: PathWatcher.UpdateEndCallback,
     ctx: ?*anyopaque,
-) bun.JSC.Maybe(*PathWatcher) {
+) JSC.Maybe(*PathWatcher) {
     const manager = default_manager orelse brk: {
         default_manager_mutex.lock();
         defer default_manager_mutex.unlock();

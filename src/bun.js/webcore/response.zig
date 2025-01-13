@@ -5,7 +5,7 @@ const MimeType = bun.http.MimeType;
 const ZigURL = @import("../../url.zig").URL;
 const http = bun.http;
 const FetchRedirect = http.FetchRedirect;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const js = JSC.C;
 
 const Method = @import("../../http/method.zig").Method;

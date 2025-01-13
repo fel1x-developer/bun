@@ -5,6 +5,7 @@
 /// Otherwise, use `JSC.JSValue`.
 /// ************************************
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const std = @import("std");
 const cpp = @import("./bindings/bindings.zig");
 const generic = opaque {
@@ -12,7 +13,7 @@ const generic = opaque {
         return @as(cpp.JSValue, @enumFromInt(@as(cpp.JSValueReprInt, @bitCast(@intFromPtr(this)))));
     }
 
-    pub inline fn bunVM(this: *@This()) *bun.JSC.VirtualMachine {
+    pub inline fn bunVM(this: *@This()) *JSC.VirtualMachine {
         return this.ptr().bunVM();
     }
 };

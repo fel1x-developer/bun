@@ -7,7 +7,7 @@ const C = @import("root").C;
 const strings = bun.strings;
 const windows = bun.windows;
 const string = bun.string;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const PathString = JSC.PathString;
 const Environment = bun.Environment;
 const Flavor = JSC.Node.Flavor;
@@ -2558,7 +2558,7 @@ pub const Arguments = struct {
             }
 
             if (defined_length and args.length > 0 and buffer.slice().len == 0) {
-                var formatter = bun.JSC.ConsoleObject.Formatter{ .globalThis = ctx };
+                var formatter = JSC.ConsoleObject.Formatter{ .globalThis = ctx };
                 return ctx.ERR_INVALID_ARG_VALUE("The argument 'buffer' is empty and cannot be written. Received {}", .{buffer_value.?.toFmt(&formatter)}).throw();
             }
 

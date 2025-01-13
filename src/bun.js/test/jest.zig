@@ -15,7 +15,7 @@ const Expect = expect.Expect;
 
 const DiffFormatter = @import("./diff_format.zig").DiffFormatter;
 
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const js = JSC.C;
 
 const logger = bun.logger;

@@ -5,7 +5,7 @@ const default_allocator = bun.default_allocator;
 const bun = @import("root").bun;
 const Environment = bun.Environment;
 const Async = bun.Async;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const JSValue = JSC.JSValue;
 const JSGlobalObject = JSC.JSGlobalObject;
 const posix = std.posix;
@@ -20,8 +20,8 @@ pub const Stdio = union(enum) {
     ignore: void,
     fd: bun.FileDescriptor,
     dup2: struct {
-        out: bun.JSC.Subprocess.StdioKind,
-        to: bun.JSC.Subprocess.StdioKind,
+        out: JSC.Subprocess.StdioKind,
+        to: JSC.Subprocess.StdioKind,
     },
     path: JSC.Node.PathLike,
     blob: JSC.WebCore.AnyBlob,

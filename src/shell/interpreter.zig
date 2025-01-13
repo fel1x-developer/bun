@@ -25,10 +25,10 @@ const posix = std.posix;
 const Arena = std.heap.ArenaAllocator;
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
-const JSC = bun.JSC;
-const JSValue = bun.JSC.JSValue;
-const JSPromise = bun.JSC.JSPromise;
-const JSGlobalObject = bun.JSC.JSGlobalObject;
+const JSC = @import("root").JavaScriptCore;
+const JSValue = JSC.JSValue;
+const JSPromise = JSC.JSPromise;
+const JSGlobalObject = JSC.JSGlobalObject;
 const which = @import("../which.zig").which;
 const Braces = @import("./braces.zig");
 const Syscall = @import("../sys.zig");
@@ -1160,7 +1160,7 @@ pub const Interpreter = struct {
         fn toJSC(this: ShellErrorCtx, globalThis: *JSGlobalObject) JSValue {
             return switch (this) {
                 .syscall => |err| err.toJSC(globalThis),
-                .other => |err| bun.JSC.ZigString.fromBytes(@errorName(err)).toJS(globalThis),
+                .other => |err| JSC.ZigString.fromBytes(@errorName(err)).toJS(globalThis),
             };
         }
     };
@@ -1195,7 +1195,7 @@ pub const Interpreter = struct {
             &export_env,
         );
 
-        const cwd_string: ?bun.JSC.ZigString.Slice = if (cwd) |c| brk: {
+        const cwd_string: ?JSC.ZigString.Slice = if (cwd) |c| brk: {
             break :brk c.toUTF8(bun.default_allocator);
         } else null;
         defer if (cwd_string) |c| c.deinit();
@@ -5393,7 +5393,7 @@ pub const Interpreter = struct {
 
             const Blob = struct {
                 ref_count: usize = 1,
-                blob: bun.JSC.WebCore.Blob,
+                blob: JSC.WebCore.Blob,
                 pub usingnamespace bun.NewRefCounted(Blob, Blob.deinit);
 
                 pub fn deinit(this: *Blob) void {

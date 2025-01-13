@@ -1,5 +1,5 @@
 const std = @import("std");
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const bun = @import("root").bun;
 const Fs = @import("../../fs.zig");
 const Path = @import("../../resolver/resolve_path.zig");
@@ -19,8 +19,8 @@ const string = bun.string;
 const StoredFileDescriptorType = bun.StoredFileDescriptorType;
 const Environment = bun.Environment;
 
-const StatsSmall = bun.JSC.Node.StatsSmall;
-const StatsBig = bun.JSC.Node.StatsBig;
+const StatsSmall = JSC.Node.StatsSmall;
+const StatsBig = JSC.Node.StatsBig;
 
 const log = bun.Output.scoped(.StatWatcher, false);
 
@@ -37,7 +37,7 @@ pub const StatWatcherScheduler = struct {
     current_interval: std.atomic.Value(i32) = .{ .raw = 0 },
     task: JSC.WorkPoolTask = .{ .callback = &workPoolCallback },
     main_thread: std.Thread.Id,
-    vm: *bun.JSC.VirtualMachine,
+    vm: *JSC.VirtualMachine,
     watchers: WatcherQueue = WatcherQueue{},
 
     event_loop_timer: EventLoopTimer = .{
@@ -47,7 +47,7 @@ pub const StatWatcherScheduler = struct {
 
     const WatcherQueue = UnboundedQueue(StatWatcher, .next);
 
-    pub fn init(allocator: std.mem.Allocator, vm: *bun.JSC.VirtualMachine) *StatWatcherScheduler {
+    pub fn init(allocator: std.mem.Allocator, vm: *JSC.VirtualMachine) *StatWatcherScheduler {
         const this = allocator.create(StatWatcherScheduler) catch bun.outOfMemory();
         this.* = .{ .main_thread = std.Thread.getCurrentId(), .vm = vm };
         return this;

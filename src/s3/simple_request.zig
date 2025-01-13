@@ -1,6 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const strings = bun.strings;
 const SignResult = @import("./credentials.zig").S3Credentials.SignResult;
 const S3Error = @import("./error.zig").S3Error;

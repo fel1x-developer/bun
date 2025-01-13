@@ -4,7 +4,7 @@ const assert = @import("./node_assert.zig");
 const DiffList = @import("./assert/myers_diff.zig").DiffList;
 const Allocator = std.mem.Allocator;
 
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const JSValue = JSC.JSValue;
 
 /// ```ts

@@ -16,7 +16,7 @@ pub const PathString = packed struct {
     ptr: PointerIntType = 0,
     len: PathInt = 0,
 
-    const JSC = bun.JSC;
+    const JSC = @import("root").JavaScriptCore;
 
     pub fn estimatedSize(this: *const PathString) usize {
         return @as(usize, this.len);

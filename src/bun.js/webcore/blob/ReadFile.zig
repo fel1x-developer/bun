@@ -1,6 +1,6 @@
 const bun = @import("root").bun;
 const C = @import("root").C;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const std = @import("std");
 const Blob = JSC.WebCore.Blob;
 const invalid_fd = bun.invalid_fd;

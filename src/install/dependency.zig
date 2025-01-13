@@ -15,7 +15,7 @@ const std = @import("std");
 const string = @import("../string_types.zig").string;
 const strings = @import("../string_immutable.zig");
 const Dependency = @This();
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 
 const URI = union(Tag) {
     local: String,

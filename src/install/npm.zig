@@ -726,7 +726,7 @@ pub const OperatingSystem = enum(u16) {
         return .{ .added = this, .removed = .none };
     }
 
-    const JSC = bun.JSC;
+    const JSC = @import("root").JavaScriptCore;
     pub fn jsFunctionOperatingSystemIsMatch(globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
         const args = callframe.arguments_old(1);
         var operating_system = negatable(.none);
@@ -768,7 +768,7 @@ pub const Libc = enum(u8) {
     // TODO:
     pub const current: Libc = @intFromEnum(glibc);
 
-    const JSC = bun.JSC;
+    const JSC = @import("root").JavaScriptCore;
     pub fn jsFunctionLibcIsMatch(globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
         const args = callframe.arguments_old(1);
         var libc = negatable(.none);
@@ -843,7 +843,7 @@ pub const Architecture = enum(u16) {
         return .{ .added = this, .removed = .none };
     }
 
-    const JSC = bun.JSC;
+    const JSC = @import("root").JavaScriptCore;
     pub fn jsFunctionArchitectureIsMatch(globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
         const args = callframe.arguments_old(1);
         var architecture = negatable(.none);
@@ -1350,7 +1350,7 @@ pub const PackageManifest = struct {
     };
 
     pub const bindings = struct {
-        const JSC = bun.JSC;
+        const JSC = @import("root").JavaScriptCore;
         const JSValue = JSC.JSValue;
         const JSGlobalObject = JSC.JSGlobalObject;
         const CallFrame = JSC.CallFrame;

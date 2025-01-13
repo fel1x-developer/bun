@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const string = bun.string;
 const Output = bun.Output;
 const Global = bun.Global;
@@ -153,7 +154,7 @@ fn execTask(allocator: std.mem.Allocator, task_: string, cwd: string, _: string,
         .stdin = .inherit,
 
         .windows = if (Environment.isWindows) .{
-            .loop = bun.JSC.EventLoopHandle.init(bun.JSC.MiniEventLoop.initGlobal(null)),
+            .loop = JSC.EventLoopHandle.init(JSC.MiniEventLoop.initGlobal(null)),
         } else {},
     }) catch return;
 }
@@ -1516,7 +1517,7 @@ pub const CreateCommand = struct {
                 .stdin = .inherit,
 
                 .windows = if (Environment.isWindows) .{
-                    .loop = bun.JSC.EventLoopHandle.init(bun.JSC.MiniEventLoop.initGlobal(null)),
+                    .loop = JSC.EventLoopHandle.init(JSC.MiniEventLoop.initGlobal(null)),
                 } else {},
             });
             _ = try process.unwrap();

@@ -1,6 +1,7 @@
 pub const is_bindgen = false;
 const bun = @import("root").bun;
 const C = @import("root").C;
+const JSC = @import("root").JavaScriptCore;
 const Api = bun.ApiSchema;
 const std = @import("std");
 const Environment = bun.Environment;
@@ -27,7 +28,6 @@ const debug = bun.Output.scoped(.uws, false);
 const uws = @This();
 const SSLWrapper = @import("../bun.js/api/bun/ssl_wrapper.zig").SSLWrapper;
 const TextEncoder = @import("../bun.js/webcore/encoding.zig").Encoder;
-const JSC = bun.JSC;
 const EventLoopTimer = @import("../bun.js//api//Timer.zig").EventLoopTimer;
 
 pub const CloseCode = enum(i32) {
@@ -567,7 +567,7 @@ pub const WindowsNamedPipe = if (Environment.isWindows) struct {
     const uv = bun.windows.libuv;
     wrapper: ?WrapperType,
     pipe: if (Environment.isWindows) ?*uv.Pipe else void, // any duplex
-    vm: *bun.JSC.VirtualMachine, //TODO: create a timeout version that dont need the JSC VM
+    vm: *JSC.VirtualMachine, //TODO: create a timeout version that dont need the JSC VM
 
     writer: bun.io.StreamingWriter(WindowsNamedPipe, onWrite, onError, onWritable, onPipeClose) = .{},
 

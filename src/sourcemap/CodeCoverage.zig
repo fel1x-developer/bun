@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const std = @import("std");
 const LineOffsetTable = bun.sourcemap.LineOffsetTable;
 const SourceMap = bun.sourcemap;
@@ -22,7 +23,7 @@ const prettyFmt = Output.prettyFmt;
 /// bitsets are simple and bitsets are relatively fast to construct and query
 ///
 pub const CodeCoverageReport = struct {
-    source_url: bun.JSC.ZigString.Slice,
+    source_url: JSC.ZigString.Slice,
     executable_lines: Bitset,
     lines_which_have_executed: Bitset,
     line_hits: LinesHits = .{},
@@ -279,7 +280,7 @@ pub const CodeCoverageReport = struct {
     }
 
     extern fn CodeCoverage__withBlocksAndFunctions(
-        *bun.JSC.VM,
+        *JSC.VM,
         i32,
         *anyopaque,
         bool,
@@ -325,12 +326,12 @@ pub const CodeCoverageReport = struct {
     };
 
     pub fn generate(
-        globalThis: *bun.JSC.JSGlobalObject,
+        globalThis: *JSC.JSGlobalObject,
         allocator: std.mem.Allocator,
         byte_range_mapping: *ByteRangeMapping,
         ignore_sourcemap_: bool,
     ) ?CodeCoverageReport {
-        bun.JSC.markBinding(@src());
+        JSC.markBinding(@src());
         const vm = globalThis.vm();
 
         var result: ?CodeCoverageReport = null;
@@ -365,7 +366,7 @@ const BasicBlockRange = extern struct {
 pub const ByteRangeMapping = struct {
     line_offset_table: LineOffsetTable.List = .{},
     source_id: i32,
-    source_url: bun.JSC.ZigString.Slice,
+    source_url: JSC.ZigString.Slice,
 
     pub fn isLessThan(_: void, a: ByteRangeMapping, b: ByteRangeMapping) bool {
         return bun.strings.order(a.source_url.slice(), b.source_url.slice()) == .lt;
@@ -380,8 +381,8 @@ pub const ByteRangeMapping = struct {
     pub threadlocal var map: ?*HashMap = null;
     pub fn generate(str: bun.String, source_contents_str: bun.String, source_id: i32) callconv(.C) void {
         var _map = map orelse brk: {
-            map = bun.JSC.VirtualMachine.get().allocator.create(HashMap) catch bun.outOfMemory();
-            map.?.* = HashMap.init(bun.JSC.VirtualMachine.get().allocator);
+            map = JSC.VirtualMachine.get().allocator.create(HashMap) catch bun.outOfMemory();
+            map.?.* = HashMap.init(JSC.VirtualMachine.get().allocator);
             break :brk map.?;
         };
         var slice = str.toUTF8(bun.default_allocator);
@@ -414,7 +415,7 @@ pub const ByteRangeMapping = struct {
     pub fn generateReportFromBlocks(
         this: *ByteRangeMapping,
         allocator: std.mem.Allocator,
-        source_url: bun.JSC.ZigString.Slice,
+        source_url: JSC.ZigString.Slice,
         blocks: []const BasicBlockRange,
         function_blocks: []const BasicBlockRange,
         ignore_sourcemap: bool,
@@ -423,7 +424,7 @@ pub const ByteRangeMapping = struct {
 
         var executable_lines: Bitset = Bitset{};
         var lines_which_have_executed: Bitset = Bitset{};
-        const parsed_mappings_ = bun.JSC.VirtualMachine.get().source_mappings.get(source_url.slice());
+        const parsed_mappings_ = JSC.VirtualMachine.get().source_mappings.get(source_url.slice());
         var line_hits = LinesHits{};
 
         var functions = std.ArrayListUnmanaged(Block){};
@@ -656,14 +657,14 @@ pub const ByteRangeMapping = struct {
     }
 
     pub fn findExecutedLines(
-        globalThis: *bun.JSC.JSGlobalObject,
+        globalThis: *JSC.JSGlobalObject,
         source_url: bun.String,
         blocks_ptr: [*]const BasicBlockRange,
         blocks_len: usize,
         function_start_offset: usize,
         ignore_sourcemap: bool,
-    ) callconv(.C) bun.JSC.JSValue {
-        var this = ByteRangeMapping.find(source_url) orelse return bun.JSC.JSValue.null;
+    ) callconv(.C) JSC.JSValue {
+        var this = ByteRangeMapping.find(source_url) orelse return JSC.JSValue.null;
 
         const blocks: []const BasicBlockRange = blocks_ptr[0..function_start_offset];
         var function_blocks: []const BasicBlockRange = blocks_ptr[function_start_offset..blocks_len];
@@ -696,9 +697,9 @@ pub const ByteRangeMapping = struct {
         return str.transferToJS(globalThis);
     }
 
-    pub fn compute(source_contents: []const u8, source_id: i32, source_url: bun.JSC.ZigString.Slice) ByteRangeMapping {
+    pub fn compute(source_contents: []const u8, source_id: i32, source_url: JSC.ZigString.Slice) ByteRangeMapping {
         return ByteRangeMapping{
-            .line_offset_table = LineOffsetTable.generate(bun.JSC.VirtualMachine.get().allocator, source_contents, 0),
+            .line_offset_table = LineOffsetTable.generate(JSC.VirtualMachine.get().allocator, source_contents, 0),
             .source_id = source_id,
             .source_url = source_url,
         };

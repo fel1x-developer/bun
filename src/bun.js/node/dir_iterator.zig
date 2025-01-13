@@ -10,7 +10,7 @@ const std = @import("std");
 const posix = std.posix;
 
 const Dir = std.fs.Dir;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const PathString = JSC.PathString;
 const bun = @import("root").bun;
 const C = @import("root").C;

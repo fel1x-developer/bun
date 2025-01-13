@@ -2281,7 +2281,7 @@ pub const PackCommand = struct {
 };
 
 pub const bindings = struct {
-    const JSC = bun.JSC;
+    const JSC = @import("root").JavaScriptCore;
     const JSValue = JSC.JSValue;
     const JSGlobalObject = JSC.JSGlobalObject;
     const CallFrame = JSC.CallFrame;

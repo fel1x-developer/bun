@@ -11,7 +11,7 @@ const Output = bun.Output;
 const MutableString = bun.MutableString;
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const JSValue = JSC.JSValue;
 const JSGlobalObject = JSC.JSGlobalObject;
 const c_ares = bun.c_ares;
@@ -693,7 +693,7 @@ pub const GetAddrInfoRequest = struct {
         return request;
     }
 
-    pub const Task = bun.JSC.WorkTask(GetAddrInfoRequest);
+    pub const Task = JSC.WorkTask(GetAddrInfoRequest);
 
     pub const CacheConfig = packed struct(u16) {
         pending_cache: bool = false,
@@ -810,7 +810,7 @@ pub const GetAddrInfoRequest = struct {
             pub fn onMachportChange(this: *GetAddrInfoRequest) void {
                 if (comptime !Environment.isMac)
                     unreachable;
-                bun.JSC.markBinding(@src());
+                JSC.markBinding(@src());
 
                 if (!getaddrinfo_send_reply(this.backend.libinfo.machport.?, JSC.DNS.LibInfo.getaddrinfo_async_handle_reply().?)) {
                     log("onMachportChange: getaddrinfo_send_reply failed", .{});
@@ -1675,7 +1675,7 @@ pub const InternalDNS = struct {
 
         log("getaddrinfo({s}) = cache miss (libc)", .{host orelse ""});
         // schedule the request to be executed on the work pool
-        bun.JSC.WorkPool.go(bun.default_allocator, *Request, req, workPoolCallback) catch bun.outOfMemory();
+        JSC.WorkPool.go(bun.default_allocator, *Request, req, workPoolCallback) catch bun.outOfMemory();
         return req;
     }
 

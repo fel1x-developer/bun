@@ -1,6 +1,7 @@
 pub const Error = error{Fail};
 const std = @import("std");
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 pub const MemorySettings = extern struct {
     preallocated_parsing_buffer_size: usize,
     max_allowed_memory_usage: usize,
@@ -596,7 +597,7 @@ pub const HTMLString = extern struct {
         return bun.String.createUTF8(bytes);
     }
 
-    pub fn toJS(this: HTMLString, globalThis: *bun.JSC.JSGlobalObject) bun.JSC.JSValue {
+    pub fn toJS(this: HTMLString, globalThis: *JSC.JSGlobalObject) JSC.JSValue {
         var str = this.toString();
         defer str.deref();
         return str.toJS(globalThis);

@@ -1,5 +1,6 @@
 const bun = @import("root").bun;
 const C = @import("root").C;
+const JSC = @import("root").JavaScriptCore;
 const std = @import("std");
 const uv = bun.windows.libuv;
 const Source = @import("./source.zig").Source;
@@ -451,7 +452,7 @@ pub fn WindowsPipeReader(
             }
         }
 
-        pub fn startReading(this: *This) bun.JSC.Maybe(void) {
+        pub fn startReading(this: *This) JSC.Maybe(void) {
             if (this.flags.is_done or !this.flags.is_paused) return .{ .result = {} };
             this.flags.is_paused = false;
             const source: Source = this.source orelse return .{ .err = bun.sys.Error.fromCode(C.E.BADF, .read) };
@@ -478,7 +479,7 @@ pub fn WindowsPipeReader(
             return .{ .result = {} };
         }
 
-        pub fn stopReading(this: *This) bun.JSC.Maybe(void) {
+        pub fn stopReading(this: *This) JSC.Maybe(void) {
             if (this.flags.is_done or this.flags.is_paused) return .{ .result = {} };
             this.flags.is_paused = true;
             const source = this.source orelse return .{ .result = {} };
@@ -553,7 +554,7 @@ pub fn WindowsPipeReader(
             bun.default_allocator.destroy(this);
         }
 
-        pub fn onRead(this: *This, amount: bun.JSC.Maybe(usize), slice: []u8, hasMore: ReadState) void {
+        pub fn onRead(this: *This, amount: JSC.Maybe(usize), slice: []u8, hasMore: ReadState) void {
             if (amount == .err) {
                 onError(this, amount.err);
                 return;
@@ -892,7 +893,7 @@ const PosixBufferedReader = struct {
         }
     }
 
-    pub fn start(this: *PosixBufferedReader, fd: bun.FileDescriptor, is_pollable: bool) bun.JSC.Maybe(void) {
+    pub fn start(this: *PosixBufferedReader, fd: bun.FileDescriptor, is_pollable: bool) JSC.Maybe(void) {
         if (!is_pollable) {
             this.buffer().clearRetainingCapacity();
             this.flags.is_done = false;
@@ -911,7 +912,7 @@ const PosixBufferedReader = struct {
         };
     }
 
-    pub fn startFileOffset(this: *PosixBufferedReader, fd: bun.FileDescriptor, poll: bool, offset: usize) bun.JSC.Maybe(void) {
+    pub fn startFileOffset(this: *PosixBufferedReader, fd: bun.FileDescriptor, poll: bool, offset: usize) JSC.Maybe(void) {
         this._offset = offset;
         this.flags.use_pread = true;
         return this.start(fd, poll);
@@ -948,8 +949,6 @@ const PosixBufferedReader = struct {
         bun.meta.banFieldType(@This(), bool); // put them in flags instead.
     }
 };
-
-const JSC = bun.JSC;
 
 const WindowsOutputReaderVTable = struct {
     onReaderDone: *const fn (*anyopaque) void,
@@ -1124,7 +1123,7 @@ pub const WindowsBufferedReader = struct {
         return res;
     }
 
-    pub fn startWithCurrentPipe(this: *WindowsOutputReader) bun.JSC.Maybe(void) {
+    pub fn startWithCurrentPipe(this: *WindowsOutputReader) JSC.Maybe(void) {
         bun.assert(!this.source.?.isClosed());
         this.source.?.setData(this);
         this.buffer().clearRetainingCapacity();
@@ -1132,12 +1131,12 @@ pub const WindowsBufferedReader = struct {
         return this.startReading();
     }
 
-    pub fn startWithPipe(this: *WindowsOutputReader, pipe: *uv.Pipe) bun.JSC.Maybe(void) {
+    pub fn startWithPipe(this: *WindowsOutputReader, pipe: *uv.Pipe) JSC.Maybe(void) {
         this.source = .{ .pipe = pipe };
         return this.startWithCurrentPipe();
     }
 
-    pub fn start(this: *WindowsOutputReader, fd: bun.FileDescriptor, _: bool) bun.JSC.Maybe(void) {
+    pub fn start(this: *WindowsOutputReader, fd: bun.FileDescriptor, _: bool) JSC.Maybe(void) {
         bun.assert(this.source == null);
         const source = switch (Source.open(uv.Loop.get(), fd)) {
             .err => |err| return .{ .err = err },
@@ -1148,7 +1147,7 @@ pub const WindowsBufferedReader = struct {
         return this.startWithCurrentPipe();
     }
 
-    pub fn startFileOffset(this: *WindowsOutputReader, fd: bun.FileDescriptor, poll: bool, offset: usize) bun.JSC.Maybe(void) {
+    pub fn startFileOffset(this: *WindowsOutputReader, fd: bun.FileDescriptor, poll: bool, offset: usize) JSC.Maybe(void) {
         this._offset = offset;
         this.flags.use_pread = true;
         return this.start(fd, poll);
@@ -1164,7 +1163,7 @@ pub const WindowsBufferedReader = struct {
         this.source = null;
     }
 
-    pub fn setRawMode(this: *WindowsBufferedReader, value: bool) bun.JSC.Maybe(void) {
+    pub fn setRawMode(this: *WindowsBufferedReader, value: bool) JSC.Maybe(void) {
         const source = this.source orelse return .{
             .err = .{
                 .errno = @intFromEnum(C.E.BADF),

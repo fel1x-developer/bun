@@ -1,4 +1,5 @@
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const string = bun.string;
 const Output = bun.Output;
 const Global = bun.Global;
@@ -23,7 +24,7 @@ pub const ExecCommand = struct {
             null,
         );
         try bundle.runEnvLoader(false);
-        const mini = bun.JSC.MiniEventLoop.initGlobal(bundle.env);
+        const mini = JSC.MiniEventLoop.initGlobal(bundle.env);
         var buf: bun.PathBuffer = undefined;
 
         const cwd = switch (bun.sys.getcwd(&buf)) {

@@ -9,6 +9,7 @@ const builtin = @import("builtin");
 const std = @import("std");
 const bun = @This();
 const C = @import("root").C;
+const JSC = @import("root").JavaScriptCore;
 
 pub const Environment = @import("env.zig");
 pub const allocators = @import("allocators.zig");
@@ -788,8 +789,6 @@ pub fn rangeOfSliceInBuffer(slice: []const u8, buffer: []const u8) ?[2]u32 {
 pub const invalid_fd: FileDescriptor = FDImpl.invalid.encode();
 
 pub const simdutf = @import("./bun.js/bindings/bun-simdutf.zig");
-
-pub const JSC = @import("root").JavaScriptCore;
 pub const AsyncIO = @import("async_io");
 
 pub const logger = @import("./logger.zig");
@@ -3244,7 +3243,7 @@ pub fn deleteAllPoolsForThreadExit() void {
         JSC.WebCore.ByteListPool,
         bun.WPathBufferPool,
         bun.PathBufferPool,
-        bun.JSC.ConsoleObject.Formatter.Visited.Pool,
+        JSC.ConsoleObject.Formatter.Visited.Pool,
         bun.js_parser.StringVoidMap.Pool,
     };
     inline for (pools_to_delete) |pool| {

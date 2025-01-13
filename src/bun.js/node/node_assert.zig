@@ -5,7 +5,7 @@ const MyersDiff = @import("./assert/myers_diff.zig");
 const Allocator = std.mem.Allocator;
 const BunString = bun.String;
 
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const JSValue = JSC.JSValue;
 
 const StringDiffList = MyersDiff.DiffList([]const u8);

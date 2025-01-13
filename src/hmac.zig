@@ -1,9 +1,10 @@
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 
 const std = @import("std");
 const boring = bun.BoringSSL;
 
-pub fn generate(key: []const u8, data: []const u8, algorithm: bun.JSC.API.Bun.Crypto.EVP.Algorithm, out: *[boring.EVP_MAX_MD_SIZE]u8) ?[]const u8 {
+pub fn generate(key: []const u8, data: []const u8, algorithm: JSC.API.Bun.Crypto.EVP.Algorithm, out: *[boring.EVP_MAX_MD_SIZE]u8) ?[]const u8 {
     var outlen: c_uint = boring.EVP_MAX_MD_SIZE;
     if (boring.HMAC(
         algorithm.md() orelse bun.Output.panic("Expected BoringSSL algorithm for HMAC", .{}),

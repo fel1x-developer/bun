@@ -1,6 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const VirtualMachine = JSC.VirtualMachine;
 const JSValue = JSC.JSValue;
 const JSGlobalObject = JSC.JSGlobalObject;

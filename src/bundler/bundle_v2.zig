@@ -108,7 +108,7 @@ const Loader = options.Loader;
 pub const Index = @import("../ast/base.zig").Index;
 const Batcher = bun.Batcher;
 const Symbol = js_ast.Symbol;
-const EventLoop = bun.JSC.AnyEventLoop;
+const EventLoop = JSC.AnyEventLoop;
 const MultiArrayList = bun.MultiArrayList;
 const Stmt = js_ast.Stmt;
 const Expr = js_ast.Expr;
@@ -122,7 +122,7 @@ const renamer = bun.renamer;
 const StableSymbolCount = renamer.StableSymbolCount;
 const MinifyRenamer = renamer.MinifyRenamer;
 const Scope = js_ast.Scope;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const debugTreeShake = Output.scoped(.TreeShake, true);
 const debugPartRanges = Output.scoped(.PartRanges, true);
 const BitSet = bun.bit_set.DynamicBitSetUnmanaged;
@@ -319,7 +319,7 @@ pub const ThreadPool = struct {
     };
 };
 
-const Watcher = bun.JSC.NewHotReloader(BundleV2, EventLoop, true);
+const Watcher = JSC.NewHotReloader(BundleV2, EventLoop, true);
 
 /// This assigns a concise, predictable, and unique `.pretty` attribute to a Path.
 /// DevServer relies on pretty paths for identifying modules, so they must be unique.
@@ -383,7 +383,7 @@ pub const BundleV2 = struct {
     framework: ?bake.Framework,
     graph: Graph,
     linker: LinkerContext,
-    bun_watcher: ?*bun.JSC.Watcher,
+    bun_watcher: ?*JSC.Watcher,
     plugins: ?*JSC.API.JSBundler.Plugin,
     completion: ?*JSBundleCompletionTask,
     source_code_length: usize,
@@ -639,7 +639,7 @@ pub const BundleV2 = struct {
     /// This runs on the Bundle Thread.
     pub fn runResolver(
         this: *BundleV2,
-        import_record: bun.JSC.API.JSBundler.Resolve.MiniImportRecord,
+        import_record: JSC.API.JSBundler.Resolve.MiniImportRecord,
         target: options.Target,
     ) void {
         const transpiler = this.bundlerForTarget(target);
@@ -1584,12 +1584,12 @@ pub const BundleV2 = struct {
     pub const JSBundleThread = BundleThread(JSBundleCompletionTask);
 
     pub fn generateFromJavaScript(
-        config: bun.JSC.API.JSBundler.Config,
-        plugins: ?*bun.JSC.API.JSBundler.Plugin,
+        config: JSC.API.JSBundler.Config,
+        plugins: ?*JSC.API.JSBundler.Plugin,
         globalThis: *JSC.JSGlobalObject,
-        event_loop: *bun.JSC.EventLoop,
+        event_loop: *JSC.EventLoop,
         allocator: std.mem.Allocator,
-    ) OOM!bun.JSC.JSValue {
+    ) OOM!JSC.JSValue {
         var completion = try allocator.create(JSBundleCompletionTask);
         completion.* = JSBundleCompletionTask{
             .config = config,
@@ -1629,9 +1629,9 @@ pub const BundleV2 = struct {
     };
 
     pub const JSBundleCompletionTask = struct {
-        config: bun.JSC.API.JSBundler.Config,
-        jsc_event_loop: *bun.JSC.EventLoop,
-        task: bun.JSC.AnyTask,
+        config: JSC.API.JSBundler.Config,
+        jsc_event_loop: *JSC.EventLoop,
+        task: JSC.AnyTask,
         globalThis: *JSC.JSGlobalObject,
         promise: JSC.JSPromise.Strong,
         poll_ref: Async.KeepAlive = Async.KeepAlive.init(),
@@ -1642,7 +1642,7 @@ pub const BundleV2 = struct {
 
         next: ?*JSBundleCompletionTask = null,
         transpiler: *BundleV2 = undefined,
-        plugins: ?*bun.JSC.API.JSBundler.Plugin = null,
+        plugins: ?*JSC.API.JSBundler.Plugin = null,
         ref_count: std.atomic.Value(u32) = std.atomic.Value(u32).init(1),
 
         pub fn configureBundler(
@@ -1721,7 +1721,7 @@ pub const BundleV2 = struct {
             completion.jsc_event_loop.enqueueTaskConcurrent(JSC.ConcurrentTask.create(completion.task.task()));
         }
 
-        pub const TaskCompletion = bun.JSC.AnyTask.New(JSBundleCompletionTask, onComplete);
+        pub const TaskCompletion = JSC.AnyTask.New(JSBundleCompletionTask, onComplete);
 
         pub fn deref(this: *JSBundleCompletionTask) void {
             if (this.ref_count.fetchSub(1, .monotonic) == 1) {
@@ -1840,14 +1840,14 @@ pub const BundleV2 = struct {
         }
     };
 
-    pub fn onLoadAsync(this: *BundleV2, load: *bun.JSC.API.JSBundler.Load) void {
+    pub fn onLoadAsync(this: *BundleV2, load: *JSC.API.JSBundler.Load) void {
         switch (this.loop().*) {
             .js => |jsc_event_loop| {
                 jsc_event_loop.enqueueTaskConcurrent(JSC.ConcurrentTask.fromCallback(load, onLoadFromJsLoop));
             },
             .mini => |*mini| {
                 mini.enqueueTaskConcurrentWithExtraCtx(
-                    bun.JSC.API.JSBundler.Load,
+                    JSC.API.JSBundler.Load,
                     BundleV2,
                     load,
                     BundleV2.onLoad,
@@ -1857,14 +1857,14 @@ pub const BundleV2 = struct {
         }
     }
 
-    pub fn onResolveAsync(this: *BundleV2, resolve: *bun.JSC.API.JSBundler.Resolve) void {
+    pub fn onResolveAsync(this: *BundleV2, resolve: *JSC.API.JSBundler.Resolve) void {
         switch (this.loop().*) {
             .js => |jsc_event_loop| {
                 jsc_event_loop.enqueueTaskConcurrent(JSC.ConcurrentTask.fromCallback(resolve, onResolveFromJsLoop));
             },
             .mini => |*mini| {
                 mini.enqueueTaskConcurrentWithExtraCtx(
-                    bun.JSC.API.JSBundler.Resolve,
+                    JSC.API.JSBundler.Resolve,
                     BundleV2,
                     resolve,
                     BundleV2.onResolve,
@@ -1874,11 +1874,11 @@ pub const BundleV2 = struct {
         }
     }
 
-    pub fn onLoadFromJsLoop(load: *bun.JSC.API.JSBundler.Load) void {
+    pub fn onLoadFromJsLoop(load: *JSC.API.JSBundler.Load) void {
         onLoad(load, load.bv2);
     }
 
-    pub fn onLoad(load: *bun.JSC.API.JSBundler.Load, this: *BundleV2) void {
+    pub fn onLoad(load: *JSC.API.JSBundler.Load, this: *BundleV2) void {
         debug("onLoad: ({d}, {s})", .{ load.source_index.get(), @tagName(load.value) });
         defer load.deinit();
         defer {
@@ -1959,11 +1959,11 @@ pub const BundleV2 = struct {
         }
     }
 
-    pub fn onResolveFromJsLoop(resolve: *bun.JSC.API.JSBundler.Resolve) void {
+    pub fn onResolveFromJsLoop(resolve: *JSC.API.JSBundler.Resolve) void {
         onResolve(resolve, resolve.bv2);
     }
 
-    pub fn onResolve(resolve: *bun.JSC.API.JSBundler.Resolve, this: *BundleV2) void {
+    pub fn onResolve(resolve: *JSC.API.JSBundler.Resolve, this: *BundleV2) void {
         defer resolve.deinit();
         defer this.decrementScanCounter();
         debug("onResolve: ({s}:{s}, {s})", .{ resolve.import_record.namespace, resolve.import_record.specifier, @tagName(resolve.value) });
@@ -2817,7 +2817,7 @@ pub const BundleV2 = struct {
         this.decrementScanCounter();
     }
 
-    pub fn onNotifyDeferMini(_: *bun.JSC.API.JSBundler.Load, this: *BundleV2) void {
+    pub fn onNotifyDeferMini(_: *JSC.API.JSBundler.Load, this: *BundleV2) void {
         this.onNotifyDefer();
     }
 

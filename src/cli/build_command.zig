@@ -1,6 +1,7 @@
 const std = @import("std");
 const Command = @import("../cli.zig").Command;
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const string = bun.string;
 const Output = bun.Output;
 const Global = bun.Global;
@@ -311,7 +312,7 @@ pub const BuildCommand = struct {
             break :brk (BundleV2.generateFromCLI(
                 &this_transpiler,
                 allocator,
-                bun.JSC.AnyEventLoop.init(ctx.allocator),
+                JSC.AnyEventLoop.init(ctx.allocator),
                 ctx.debug.hot_reload == .watch,
                 &reachable_file_count,
                 &minify_duration,

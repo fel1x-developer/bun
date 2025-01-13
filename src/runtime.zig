@@ -1,5 +1,6 @@
 const options = @import("./options.zig");
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const string = bun.string;
 const Output = bun.Output;
 const Global = bun.Global;
@@ -223,7 +224,7 @@ pub const Runtime = struct {
         /// This is used for `--print` entry points so we can get the result.
         remove_cjs_module_wrapper: bool = false,
 
-        runtime_transpiler_cache: ?*bun.JSC.RuntimeTranspilerCache = null,
+        runtime_transpiler_cache: ?*JSC.RuntimeTranspilerCache = null,
 
         // TODO: make this a bitset of all unsupported features
         lower_using: bool = true,

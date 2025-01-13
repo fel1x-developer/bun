@@ -2,6 +2,18 @@
 //! combines `Bun.build` and `Bun.serve`, providing a hot-reloading development
 //! server, server components, and other integrations. Instead of taking the
 //! role as a framework, Bake is tool for frameworks to build on top of.
+//!
+const std = @import("std");
+const Allocator = std.mem.Allocator;
+
+const bun = @import("root").bun;
+const Environment = bun.Environment;
+
+const JSC = @import("root").JavaScriptCore;
+const JSValue = JSC.JSValue;
+const validators = JSC.Node.validators;
+const ZigString = JSC.ZigString;
+const Plugin = JSC.API.JSBundler.Plugin;
 
 pub const production = @import("./production.zig");
 pub const DevServer = @import("./DevServer.zig");
@@ -794,15 +806,3 @@ pub fn printWarning() void {
         bun.Output.flush();
     }
 }
-
-const std = @import("std");
-const Allocator = std.mem.Allocator;
-
-const bun = @import("root").bun;
-const Environment = bun.Environment;
-
-const JSC = bun.JSC;
-const JSValue = JSC.JSValue;
-const validators = bun.JSC.Node.validators;
-const ZigString = JSC.ZigString;
-const Plugin = JSC.API.JSBundler.Plugin;

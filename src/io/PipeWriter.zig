@@ -2,7 +2,7 @@ const bun = @import("root").bun;
 const C = @import("root").C;
 const std = @import("std");
 const Async = bun.Async;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const uv = bun.windows.libuv;
 const Source = @import("./source.zig").Source;
 
@@ -745,7 +745,7 @@ pub fn PosixStreamingWriter(
 ///   source: ?Source = null,
 ///   parent: *Parent = undefined,
 ///   is_done: bool = false,
-///   pub fn startWithCurrentPipe(this: *WindowsPipeWriter) bun.JSC.Maybe(void),
+///   pub fn startWithCurrentPipe(this: *WindowsPipeWriter) JSC.Maybe(void),
 ///   fn onClosePipe(pipe: *uv.Pipe) callconv(.C) void,
 /// };
 fn BaseWindowsPipeWriter(
@@ -838,14 +838,14 @@ fn BaseWindowsPipeWriter(
             // no-op
         }
 
-        pub fn startWithPipe(this: *WindowsPipeWriter, pipe: *uv.Pipe) bun.JSC.Maybe(void) {
+        pub fn startWithPipe(this: *WindowsPipeWriter, pipe: *uv.Pipe) JSC.Maybe(void) {
             bun.assert(this.source == null);
             this.source = .{ .pipe = pipe };
             this.setParent(this.parent);
             return this.startWithCurrentPipe();
         }
 
-        pub fn startSync(this: *WindowsPipeWriter, fd: bun.FileDescriptor, _: bool) bun.JSC.Maybe(void) {
+        pub fn startSync(this: *WindowsPipeWriter, fd: bun.FileDescriptor, _: bool) JSC.Maybe(void) {
             bun.assert(this.source == null);
             const source = Source{
                 .sync_file = Source.openFile(fd),
@@ -856,7 +856,7 @@ fn BaseWindowsPipeWriter(
             return this.startWithCurrentPipe();
         }
 
-        pub fn startWithFile(this: *WindowsPipeWriter, fd: bun.FileDescriptor) bun.JSC.Maybe(void) {
+        pub fn startWithFile(this: *WindowsPipeWriter, fd: bun.FileDescriptor) JSC.Maybe(void) {
             bun.assert(this.source == null);
             const source: bun.io.Source = .{ .file = Source.openFile(fd) };
             source.setData(this);
@@ -865,7 +865,7 @@ fn BaseWindowsPipeWriter(
             return this.startWithCurrentPipe();
         }
 
-        pub fn start(this: *WindowsPipeWriter, fd: bun.FileDescriptor, _: bool) bun.JSC.Maybe(void) {
+        pub fn start(this: *WindowsPipeWriter, fd: bun.FileDescriptor, _: bool) JSC.Maybe(void) {
             bun.assert(this.source == null);
             const source = switch (Source.open(uv.Loop.get(), fd)) {
                 .result => |source| source,
@@ -922,7 +922,7 @@ pub fn WindowsBufferedWriter(
             return @sizeOf(@This()) + this.write_buffer.len;
         }
 
-        pub fn startWithCurrentPipe(this: *WindowsWriter) bun.JSC.Maybe(void) {
+        pub fn startWithCurrentPipe(this: *WindowsWriter) JSC.Maybe(void) {
             bun.assert(this.source != null);
             this.is_done = false;
             this.write();
@@ -1183,7 +1183,7 @@ pub fn WindowsStreamingWriter(
             onClose(this.parent);
         }
 
-        pub fn startWithCurrentPipe(this: *WindowsWriter) bun.JSC.Maybe(void) {
+        pub fn startWithCurrentPipe(this: *WindowsWriter) JSC.Maybe(void) {
             bun.assert(this.source != null);
             this.is_done = false;
             return .{ .result = {} };

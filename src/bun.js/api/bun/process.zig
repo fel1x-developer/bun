@@ -3,7 +3,7 @@ const std = @import("std");
 const C = @import("root").C;
 const PosixSpawn = bun.spawn;
 const Environment = bun.Environment;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const Output = bun.Output;
 const uv = bun.windows.libuv;
 const pid_t = if (Environment.isPosix) std.posix.pid_t else uv.uv_pid_t;
@@ -989,7 +989,7 @@ pub const PosixSpawnOptions = struct {
         buffer: void,
         ipc: void,
         pipe: bun.FileDescriptor,
-        dup2: struct { out: bun.JSC.Subprocess.StdioKind, to: bun.JSC.Subprocess.StdioKind },
+        dup2: struct { out: JSC.Subprocess.StdioKind, to: JSC.Subprocess.StdioKind },
     };
 
     pub fn deinit(_: *const PosixSpawnOptions) void {
@@ -1061,7 +1061,7 @@ pub const WindowsSpawnOptions = struct {
         buffer: *bun.windows.libuv.Pipe,
         ipc: *bun.windows.libuv.Pipe,
         pipe: bun.FileDescriptor,
-        dup2: struct { out: bun.JSC.Subprocess.StdioKind, to: bun.JSC.Subprocess.StdioKind },
+        dup2: struct { out: JSC.Subprocess.StdioKind, to: JSC.Subprocess.StdioKind },
 
         pub fn deinit(this: *const Stdio) void {
             if (this.* == .buffer) {

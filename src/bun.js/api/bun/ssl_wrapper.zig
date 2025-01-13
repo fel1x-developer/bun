@@ -2,7 +2,7 @@ const bun = @import("root").bun;
 
 const BoringSSL = bun.BoringSSL;
 const X509 = @import("./x509.zig");
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const uws = bun.uws;
 
 /// Mimics the behavior of openssl.c in uSockets, wrapping data that can be received from any where (network, DuplexStream, etc)

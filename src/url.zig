@@ -11,7 +11,7 @@ const MutableString = bun.MutableString;
 const stringZ = bun.stringZ;
 const default_allocator = bun.default_allocator;
 const C = @import("root").C;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 
 // This is close to WHATWG URL, but we don't want the validation errors
 pub const URL = struct {

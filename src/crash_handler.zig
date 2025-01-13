@@ -19,6 +19,7 @@
 //! for std.debug.panicImpl and their code for gathering backtraces.
 const std = @import("std");
 const bun = @import("root").bun;
+const JSC = @import("root").JavaScriptCore;
 const builtin = @import("builtin");
 const mimalloc = @import("allocators/mimalloc.zig");
 const SourceMap = @import("./sourcemap/sourcemap.zig");
@@ -1696,7 +1697,6 @@ pub const StoredTrace = struct {
 };
 
 pub const js_bindings = struct {
-    const JSC = bun.JSC;
     const JSValue = JSC.JSValue;
 
     pub fn generate(global: *JSC.JSGlobalObject) JSC.JSValue {
@@ -1718,7 +1718,7 @@ pub const js_bindings = struct {
         return obj;
     }
 
-    pub fn jsGetMachOImageZeroOffset(_: *bun.JSC.JSGlobalObject, _: *bun.JSC.CallFrame) bun.JSError!JSValue {
+    pub fn jsGetMachOImageZeroOffset(_: *JSC.JSGlobalObject, _: *JSC.CallFrame) bun.JSError!JSValue {
         if (!bun.Environment.isMac) return .undefined;
 
         const header = std.c._dyld_get_image_header(0) orelse return .undefined;

@@ -3,6 +3,20 @@
 //! updating for DevServer, or serializing to a binary for use in production.
 const FrameworkRouter = @This();
 
+const std = @import("std");
+const mem = std.mem;
+const Allocator = mem.Allocator;
+
+const bun = @import("root").bun;
+const strings = bun.strings;
+const Resolver = bun.resolver.Resolver;
+const DirInfo = bun.resolver.DirInfo;
+
+const JSC = @import("root").JavaScriptCore;
+const JSValue = JSC.JSValue;
+const JSGlobalObject = JSC.JSGlobalObject;
+const CallFrame = JSC.CallFrame;
+
 /// Metadata for route files is specified out of line, either in DevServer where
 /// it is an IncrementalGraph(.server).FileIndex or the production build context
 /// where it is an entrypoint index.
@@ -1081,7 +1095,7 @@ pub const JSFrameworkRouter = struct {
         log: TinyLog,
     }),
 
-    const validators = bun.JSC.Node.validators;
+    const validators = JSC.Node.validators;
 
     pub fn getBindings(global: *JSC.JSGlobalObject) JSC.JSValue {
         return JSC.JSObject.create(.{
@@ -1305,17 +1319,3 @@ pub const JSFrameworkRouter = struct {
         return jsfr.files.items[(id.unwrap() orelse return .null).get()].toJS(global);
     }
 };
-
-const std = @import("std");
-const mem = std.mem;
-const Allocator = mem.Allocator;
-
-const bun = @import("root").bun;
-const strings = bun.strings;
-const Resolver = bun.resolver.Resolver;
-const DirInfo = bun.resolver.DirInfo;
-
-const JSC = bun.JSC;
-const JSValue = JSC.JSValue;
-const JSGlobalObject = JSC.JSGlobalObject;
-const CallFrame = JSC.CallFrame;

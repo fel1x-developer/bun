@@ -2,7 +2,7 @@ const Output = bun.Output;
 const Global = bun.Global;
 const std = @import("std");
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const JSC = @import("root").JavaScriptCore;
 const Allocator = std.mem.Allocator;
 const List = std.ArrayListUnmanaged;
 
@@ -103,7 +103,7 @@ pub const PatchFile = struct {
                             abs_patch_dir,
                             todir,
                         }, .auto);
-                        var nodefs = bun.JSC.Node.NodeFS{};
+                        var nodefs = JSC.Node.NodeFS{};
                         if (nodefs.mkdirRecursive(.{
                             .path = .{ .string = bun.PathString.init(path_to_make) },
                             .recursive = true,
@@ -120,7 +120,7 @@ pub const PatchFile = struct {
                     const filedir = bun.path.dirname(filepath.slice(), .auto);
                     const mode = part.file_creation.mode;
 
-                    var nodefs = bun.JSC.Node.NodeFS{};
+                    var nodefs = JSC.Node.NodeFS{};
                     if (filedir.len > 0) {
                         if (nodefs.mkdirRecursive(.{
                             .path = .{ .string = bun.PathString.init(filedir) },
@@ -1180,7 +1180,7 @@ pub const TestingAPIs = struct {
         return outstr.toJS(globalThis);
     }
 
-    pub fn parseApplyArgs(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSC.Node.Maybe(ApplyArgs, JSC.JSValue) {
+    pub fn parseApplyArgs(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) JSC.Node.Maybe(ApplyArgs, JSC.JSValue) {
         const arguments_ = callframe.arguments_old(2);
         var arguments = JSC.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
 
@@ -1289,7 +1289,7 @@ pub fn spawnOpts(
     };
 }
 
-pub fn diffPostProcess(result: *bun.spawn.sync.Result, old_folder: []const u8, new_folder: []const u8) !bun.JSC.Node.Maybe(std.ArrayList(u8), std.ArrayList(u8)) {
+pub fn diffPostProcess(result: *bun.spawn.sync.Result, old_folder: []const u8, new_folder: []const u8) !JSC.Node.Maybe(std.ArrayList(u8), std.ArrayList(u8)) {
     var stdout = std.ArrayList(u8).init(bun.default_allocator);
     var stderr = std.ArrayList(u8).init(bun.default_allocator);
 
@@ -1357,7 +1357,7 @@ pub fn gitDiffInternal(
     allocator: std.mem.Allocator,
     old_folder_: []const u8,
     new_folder_: []const u8,
-) !bun.JSC.Node.Maybe(std.ArrayList(u8), std.ArrayList(u8)) {
+) !JSC.Node.Maybe(std.ArrayList(u8), std.ArrayList(u8)) {
     const paths = gitDiffPreprocessPaths(allocator, old_folder_, new_folder_, false);
     const old_folder = paths[0];
     const new_folder = paths[1];
