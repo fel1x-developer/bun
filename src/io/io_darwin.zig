@@ -27,7 +27,7 @@ const fd_t = os.fd_t;
 const mem = std.mem;
 const assert = bun.assert;
 const c = std.c;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const JSC = @import("root").JavaScriptCore;
 pub const darwin = struct {
     pub usingnamespace c;

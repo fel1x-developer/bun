@@ -1,6 +1,6 @@
 const std = @import("std");
 const Progress = bun.Progress;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const logger = bun.logger;
 const Environment = bun.Environment;
 const Command = @import("../cli.zig").Command;

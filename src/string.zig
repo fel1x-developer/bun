@@ -1,5 +1,5 @@
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const JSC = @import("root").JavaScriptCore;
 const JSValue = JSC.JSValue;
 const Parent = @This();

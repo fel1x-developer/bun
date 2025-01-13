@@ -12,7 +12,7 @@ const posix = std.posix;
 const Dir = std.fs.Dir;
 const JSC = @import("root").JavaScriptCore;
 const PathString = JSC.PathString;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const C = @import("root").C;
 
 const IteratorError = error{ AccessDenied, SystemResources } || posix.UnexpectedError;

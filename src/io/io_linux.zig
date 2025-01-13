@@ -142,7 +142,7 @@ const os = struct {
     pub const EHWPOISON = 133;
 };
 
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 pub const Waker = struct {
     fd: bun.FileDescriptor,
 

@@ -1,5 +1,5 @@
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 
 pub usingnamespace std.meta;
 

@@ -1,6 +1,6 @@
 const JSC = @import("root").JavaScriptCore;
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 
 pub const CallbackGetterFn = fn (JSC.JSValue) callconv(.C) JSC.JSValue;
 pub const CallbackSetterFn = fn (JSC.JSValue, JSC.JSValue) callconv(.C) void;

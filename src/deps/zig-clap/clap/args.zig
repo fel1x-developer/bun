@@ -43,7 +43,7 @@ test "SliceIterator" {
     }
 }
 
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 /// An argument iterator which wraps the ArgIterator in ::std.
 /// On windows, this iterator allocates.
 pub const OsIterator = struct {

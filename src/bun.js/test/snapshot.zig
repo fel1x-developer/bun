@@ -1,5 +1,5 @@
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const default_allocator = bun.default_allocator;
 const string = bun.string;
 const MutableString = bun.MutableString;

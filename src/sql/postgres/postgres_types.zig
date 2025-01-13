@@ -1,5 +1,5 @@
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const postgres = JSC.Postgres;
 const Data = postgres.Data;
 const protocol = @This();

@@ -1,4 +1,4 @@
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const picohttp = bun.picohttp;
 const JSC = @import("root").JavaScriptCore;
 const string = bun.string;

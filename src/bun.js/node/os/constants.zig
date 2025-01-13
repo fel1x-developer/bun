@@ -1,5 +1,5 @@
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const string = bun.string;
 const Environment = bun.Environment;
 const JSC = @import("root").JavaScriptCore;

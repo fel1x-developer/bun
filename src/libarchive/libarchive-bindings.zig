@@ -1,5 +1,5 @@
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const C = @import("root").C;
 const wchar_t = u16;
 const la_int64_t = i64;

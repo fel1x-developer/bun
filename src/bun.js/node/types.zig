@@ -1,6 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const C = @import("root").C;
 const meta = bun.meta;
 const windows = bun.windows;

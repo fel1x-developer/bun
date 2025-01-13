@@ -1,5 +1,5 @@
 const env = @import("env.zig");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const JSC = @import("root").JavaScriptCore;
 
 /// Enable breaking changes for the next major release of Bun

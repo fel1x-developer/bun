@@ -1,4 +1,4 @@
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const logger = bun.logger;
 const std = @import("std");
 const Fs = bun.fs;

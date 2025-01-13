@@ -10,7 +10,7 @@ pub const NullableAllocator = @import("allocators/NullableAllocator.zig");
 const FeatureFlags = @import("./feature_flags.zig");
 const Environment = @import("./env.zig");
 const FixedBufferAllocator = std.heap.FixedBufferAllocator;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const OOM = bun.OOM;
 
 pub fn isSliceInBufferT(comptime T: type, slice: []const T, buffer: []const T) bool {

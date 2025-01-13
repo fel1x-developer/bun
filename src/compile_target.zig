@@ -4,7 +4,7 @@
 /// It uses npm to download the bun binary from the npm registry
 /// It stores the downloaded binary into the bun install cache.
 ///
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const C = @import("root").C;
 const std = @import("std");
 const Environment = bun.Environment;

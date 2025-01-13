@@ -1,6 +1,6 @@
 const BoringSSL = bun.BoringSSL;
 const std = @import("std");
-pub const bun = @import("root").bun;
+pub const bun = @import("root").Bun;
 
 fn NewHasher(comptime digest_size: comptime_int, comptime ContextType: type, comptime Full: anytype, comptime Init: anytype, comptime Update: anytype, comptime Final: anytype) type {
     return struct {

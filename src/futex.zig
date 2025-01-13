@@ -15,7 +15,7 @@ const Futex = @This();
 const windows = std.os.windows;
 const linux = std.os.linux;
 const c = std.c;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const assert = bun.assert;
 const atomic = std.atomic;
 

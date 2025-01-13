@@ -1,4 +1,4 @@
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const Lockfile = @import("./lockfile.zig");
 const std = @import("std");
 const Async = bun.Async;

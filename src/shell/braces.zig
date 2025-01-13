@@ -1,4 +1,4 @@
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const ArrayList = std.ArrayList;
 const std = @import("std");
 const builtin = @import("builtin");

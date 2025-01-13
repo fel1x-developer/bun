@@ -1,4 +1,4 @@
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const Command = @import("../cli.zig").Command;
 const PackageManager = @import("../install/install.zig").PackageManager;
 

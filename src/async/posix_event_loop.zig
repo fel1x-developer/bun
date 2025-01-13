@@ -1,4 +1,4 @@
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const Output = bun.Output;
 const JSC = @import("root").JavaScriptCore;
 const uws = bun.uws;

@@ -1,5 +1,5 @@
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const string = bun.string;
 const Output = bun.Output;
 const Global = bun.Global;
@@ -17,9 +17,9 @@ pub const Shell = enum {
     fish,
     pwsh,
 
-    const bash_completions = @import("root").completions.bash;
-    const zsh_completions = @import("root").completions.zsh;
-    const fish_completions = @import("root").completions.fish;
+    const bash_completions = @import("root").Completions.bash;
+    const zsh_completions = @import("root").Completions.zsh;
+    const fish_completions = @import("root").Completions.fish;
 
     pub fn completions(this: Shell) []const u8 {
         return switch (this) {

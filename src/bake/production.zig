@@ -1,7 +1,7 @@
 //! Implements building a Bake application to production
 const std = @import("std");
 
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const Environment = bun.Environment;
 const Output = bun.Output;
 const OutputFile = bun.options.OutputFile;

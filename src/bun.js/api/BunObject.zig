@@ -173,7 +173,7 @@ pub const BunObject = struct {
 
 const Bun = @This();
 const default_allocator = bun.default_allocator;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const uv = bun.windows.libuv;
 const Environment = bun.Environment;
 

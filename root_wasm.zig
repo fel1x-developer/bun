@@ -1,6 +1,6 @@
 pub usingnamespace @import("src/main_wasm.zig");
 
-pub const bun = @import("src/bun.zig");
+pub const bun = @import("src/Bun.zig");
 
 pub const completions = struct {};
 pub const is_bindgen = true;

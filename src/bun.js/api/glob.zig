@@ -7,7 +7,7 @@ const Syscall = @import("../../sys.zig");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const BunString = bun.String;
 const string = bun.string;
 const JSC = @import("root").JavaScriptCore;

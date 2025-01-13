@@ -48,7 +48,7 @@ const assert = std.debug.assert;
 const fmt16 = std.unicode.fmtUtf16le;
 
 const is_standalone = !@hasDecl(@import("root"), "JavaScriptCore");
-const bun = if (!is_standalone) @import("root").bun else @compileError("cannot use 'bun' in standalone build of bun_shim_impl");
+const bun = if (!is_standalone) @import("root").Bun else @compileError("cannot use 'bun' in standalone build of bun_shim_impl");
 const bunDebugMessage = bun.Output.scoped(.bun_shim_impl, true);
 const callmod_inline = if (is_standalone) std.builtin.CallModifier.always_inline else bun.callmod_inline;
 

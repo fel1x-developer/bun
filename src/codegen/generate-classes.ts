@@ -2022,7 +2022,7 @@ pub const ${className(typeName)} = struct {
         if (comptime Environment.enable_logs) zig("<r>${typeName}<d>.<r>toJS", .{});
         if (comptime Environment.allow_assert) {
             const value__ = ${symbolName(typeName, "create")}(globalObject, this);
-            @import("root").bun.assert(value__.as(${typeName}).? == this); // If this fails, likely a C ABI issue.
+            @import("root").Bun.assert(value__.as(${typeName}).? == this); // If this fails, likely a C ABI issue.
             return value__;
         } else {
             return ${symbolName(typeName, "create")}(globalObject, this);
@@ -2206,7 +2206,7 @@ const ZIG_GENERATED_CLASSES_HEADER = `
 ///        - pub usingnamespace JSC.Codegen.JSMyClassName;
 ///  5. bun run build
 ///
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const JSC = @import("root").JavaScriptCore;
 const Classes = JSC.GeneratedClassesList;
 const Environment = bun.Environment;

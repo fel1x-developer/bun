@@ -1,6 +1,6 @@
 const std = @import("std");
 pub const css = @import("../css_parser.zig");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 
 const Error = css.Error;
 const ArrayList = std.ArrayListUnmanaged;

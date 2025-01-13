@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const clap = @import("../clap.zig");
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const Output = bun.Output;
 
 const args = clap.args;

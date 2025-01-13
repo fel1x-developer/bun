@@ -18,7 +18,7 @@
 //! A lot of this handler is based on the Zig Standard Library implementation
 //! for std.debug.panicImpl and their code for gathering backtraces.
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const JSC = @import("root").JavaScriptCore;
 const builtin = @import("builtin");
 const mimalloc = @import("allocators/mimalloc.zig");

@@ -3,7 +3,7 @@ const std = @import("std");
 const strings = @import("../string_immutable.zig");
 const FeatureFlags = @import("../feature_flags.zig");
 const default_allocator = @import("../allocators/memory_allocator.zig").c_allocator;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const JSC = @import("root").JavaScriptCore;
 const Fs = @import("../fs.zig");
 

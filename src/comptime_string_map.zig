@@ -1,6 +1,6 @@
 const JSC = @import("root").JavaScriptCore;
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const mem = std.mem;
 const strings = @import("./string_immutable.zig");
 

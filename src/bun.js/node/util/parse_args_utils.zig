@@ -1,5 +1,5 @@
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const JSC = @import("root").JavaScriptCore;
 const testing = std.testing;
 const String = if (@import("builtin").is_test) TestString else bun.String;

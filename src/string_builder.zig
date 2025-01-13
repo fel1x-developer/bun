@@ -1,6 +1,6 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const Environment = bun.Environment;
 const string = @import("string_types.zig").string;
 const StringBuilder = @This();

@@ -1,4 +1,4 @@
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 
 const BoringSSL = bun.BoringSSL;
 const X509 = @import("./x509.zig");

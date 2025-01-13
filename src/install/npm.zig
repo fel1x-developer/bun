@@ -1,5 +1,5 @@
 const URL = @import("../url.zig").URL;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const std = @import("std");
 const MutableString = @import("../string_mutable.zig").MutableString;
 const Semver = @import("./semver.zig");

@@ -1,5 +1,5 @@
 const options = @import("./options.zig");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const JSC = @import("root").JavaScriptCore;
 const string = bun.string;
 const Output = bun.Output;

@@ -1,5 +1,5 @@
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const c = @import("picohttpparser.zig");
 const ExactSizeMatcher = bun.ExactSizeMatcher;
 const Match = ExactSizeMatcher(2);

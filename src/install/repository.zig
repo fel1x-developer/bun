@@ -1,4 +1,4 @@
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const Global = bun.Global;
 const logger = bun.logger;
 const Dependency = @import("./dependency.zig");

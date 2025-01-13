@@ -1,6 +1,6 @@
 pub const Error = error{Fail};
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const JSC = @import("root").JavaScriptCore;
 pub const MemorySettings = extern struct {
     preallocated_parsing_buffer_size: usize,

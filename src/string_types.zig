@@ -4,7 +4,7 @@ pub const string = []const u8;
 pub const stringZ = [:0]const u8;
 pub const stringMutable = []u8;
 pub const CodePoint = i32;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 // macOS sets file path limit to 1024
 // Since a pointer on x64 is 64 bits and only 46 bits are used
 // We can safely store the entire path slice in a single u64.

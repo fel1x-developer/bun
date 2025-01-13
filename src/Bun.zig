@@ -2,7 +2,7 @@
 //
 // Do not import this file directly!
 //   To import it:
-//      @import("root").bun
+//      @import("root").Bun
 //
 // Otherwise, you risk a circular dependency or Zig including multiple copies of this file which leads to strange bugs.
 const builtin = @import("builtin");

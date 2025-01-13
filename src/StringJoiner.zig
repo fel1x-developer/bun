@@ -2,7 +2,7 @@
 //! Implemented as a linked list of potentially-owned slices and a length.
 const std = @import("std");
 const default_allocator = bun.default_allocator;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const string = bun.string;
 const Allocator = std.mem.Allocator;
 const NullableAllocator = bun.NullableAllocator;

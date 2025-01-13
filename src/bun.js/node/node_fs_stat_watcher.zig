@@ -1,6 +1,6 @@
 const std = @import("std");
 const JSC = @import("root").JavaScriptCore;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const Fs = @import("../../fs.zig");
 const Path = @import("../../resolver/resolve_path.zig");
 const Encoder = JSC.WebCore.Encoder;

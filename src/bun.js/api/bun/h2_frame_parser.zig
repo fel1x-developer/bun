@@ -1,5 +1,5 @@
 const getAllocator = @import("../../base.zig").getAllocator;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const Output = bun.Output;
 const std = @import("std");
 const Allocator = std.mem.Allocator;

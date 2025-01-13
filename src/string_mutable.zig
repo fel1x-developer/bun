@@ -1,7 +1,7 @@
 const std = @import("std");
 const expect = std.testing.expect;
 
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 
 const strings = bun.strings;
 const js_lexer = bun.js_lexer;

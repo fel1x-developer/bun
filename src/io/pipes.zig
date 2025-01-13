@@ -1,5 +1,5 @@
 const Async = bun.Async;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const Environment = bun.Environment;
 
 pub const PollOrFd = union(enum) {

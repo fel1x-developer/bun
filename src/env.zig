@@ -1,6 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 
 pub const BuildTarget = enum { native, wasm, wasi };
 pub const build_target: BuildTarget = brk: {

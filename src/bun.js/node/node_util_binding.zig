@@ -1,5 +1,5 @@
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const C = @import("root").C;
 const Allocator = std.mem.Allocator;
 const Environment = bun.Environment;

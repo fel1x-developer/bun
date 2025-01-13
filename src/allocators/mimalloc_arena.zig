@@ -2,7 +2,7 @@ const std = @import("std");
 const mem = std.mem;
 const builtin = std.builtin;
 
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const mimalloc = bun.allocators.Minimalloc;
 const Environment = bun.Environment;
 const FeatureFlags = bun.FeatureFlags;

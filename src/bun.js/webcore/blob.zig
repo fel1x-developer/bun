@@ -1,6 +1,6 @@
 const std = @import("std");
 const Api = @import("../../api/schema.zig").Api;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const C = @import("root").C;
 const MimeType = http.MimeType;
 const ZigURL = @import("../../url.zig").URL;

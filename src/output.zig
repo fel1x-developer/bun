@@ -1,4 +1,4 @@
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const C = @import("root").C;
 const std = @import("std");
 const Environment = @import("./env.zig");

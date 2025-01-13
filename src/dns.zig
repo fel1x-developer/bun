@@ -1,4 +1,4 @@
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const std = @import("std");
 const JSC = @import("root").JavaScriptCore;
 const JSValue = JSC.JSValue;

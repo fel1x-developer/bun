@@ -13,7 +13,7 @@ const Mutex = bun.Mutex;
 const ArrayListUnmanaged = std.ArrayListUnmanaged;
 const AutoArrayHashMapUnmanaged = std.AutoArrayHashMapUnmanaged;
 
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const Environment = bun.Environment;
 const assert = bun.assert;
 const DynamicBitSetUnmanaged = bun.bit_set.DynamicBitSetUnmanaged;

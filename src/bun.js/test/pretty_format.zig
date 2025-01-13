@@ -1,5 +1,5 @@
 const std = @import("std");
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const Output = bun.Output;
 const JSC = @import("root").JavaScriptCore;
 const JSGlobalObject = JSC.JSGlobalObject;

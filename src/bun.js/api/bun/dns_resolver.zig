@@ -1,6 +1,6 @@
 const Bun = @This();
 const default_allocator = bun.default_allocator;
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const Environment = bun.Environment;
 const C = @import("root").C;
 

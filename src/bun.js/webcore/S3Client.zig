@@ -1,4 +1,4 @@
-const bun = @import("root").bun;
+const bun = @import("root").Bun;
 const JSC = @import("root").JavaScriptCore;
 const JSValue = JSC.JSValue;
 const Blob = JSC.WebCore.Blob;
