@@ -7,7 +7,7 @@ const PackageManager = @import("./install.zig").PackageManager;
 const Environment = bun.Environment;
 const Output = bun.Output;
 const Global = bun.Global;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const WaiterThread = bun.spawn.WaiterThread;
 const Timer = std.time.Timer;
 const String = bun.Semver.String;
@@ -59,7 +59,7 @@ pub const LifecycleScriptSubprocess = struct {
         return this.manager.event_loop.loop();
     }
 
-    pub fn eventLoop(this: *const LifecycleScriptSubprocess) *JSC.AnyEventLoop {
+    pub fn eventLoop(this: *const LifecycleScriptSubprocess) *jsc.AnyEventLoop {
         return &this.manager.event_loop;
     }
 
@@ -208,7 +208,7 @@ pub const LifecycleScriptSubprocess = struct {
 
             .windows = if (Environment.isWindows)
                 .{
-                    .loop = JSC.EventLoopHandle.init(&manager.event_loop),
+                    .loop = jsc.EventLoopHandle.init(&manager.event_loop),
                 }
             else {},
 

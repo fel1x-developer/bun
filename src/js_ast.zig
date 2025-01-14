@@ -18,7 +18,7 @@ const RefHashCtx = @import("ast/base.zig").RefHashCtx;
 const ObjectPool = @import("./pool.zig").ObjectPool;
 const ImportRecord = @import("import_record.zig").ImportRecord;
 const allocators = @import("allocators.zig");
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const RefCtx = @import("./ast/base.zig").RefCtx;
 const JSONParser = bun.JSON;
 const is_bindgen = false;
@@ -1497,9 +1497,9 @@ pub const E = struct {
             return ExprNodeList.init(out[0 .. out.len - remain.len]);
         }
 
-        pub fn toJS(this: @This(), allocator: std.mem.Allocator, globalObject: *JSC.JSGlobalObject) ToJSError!JSC.JSValue {
+        pub fn toJS(this: @This(), allocator: std.mem.Allocator, globalObject: *jsc.JSGlobalObject) ToJSError!jsc.JSValue {
             const items = this.items.slice();
-            var array = JSC.JSValue.createEmptyArray(globalObject, items.len);
+            var array = jsc.JSValue.createEmptyArray(globalObject, items.len);
             array.protect();
             defer array.unprotect();
             for (items, 0..) |expr, j| {
@@ -1539,8 +1539,8 @@ pub const E = struct {
 
     pub const Boolean = struct {
         value: bool,
-        pub fn toJS(this: @This(), ctx: JSC.C.JSContextRef) JSC.C.JSValueRef {
-            return JSC.C.JSValueMakeBoolean(ctx, this.value);
+        pub fn toJS(this: @This(), ctx: jsc.C.JSContextRef) jsc.C.JSValueRef {
+            return jsc.C.JSValueMakeBoolean(ctx, this.value);
         }
     };
     pub const Super = struct {};
@@ -1865,8 +1865,8 @@ pub const E = struct {
             return try writer.write(self.value);
         }
 
-        pub fn toJS(this: @This()) JSC.JSValue {
-            return JSC.JSValue.jsNumber(this.value);
+        pub fn toJS(this: @This()) jsc.JSValue {
+            return jsc.JSValue.jsNumber(this.value);
         }
     };
 
@@ -1879,9 +1879,9 @@ pub const E = struct {
             return try writer.write(self.value);
         }
 
-        pub fn toJS(_: @This()) JSC.JSValue {
+        pub fn toJS(_: @This()) jsc.JSValue {
             // TODO:
-            return JSC.JSValue.jsNumber(0);
+            return jsc.JSValue.jsNumber(0);
         }
     };
 
@@ -1914,8 +1914,8 @@ pub const E = struct {
             return if (asProperty(self, key)) |query| query.expr else @as(?Expr, null);
         }
 
-        pub fn toJS(this: *Object, allocator: std.mem.Allocator, globalObject: *JSC.JSGlobalObject) ToJSError!JSC.JSValue {
-            var obj = JSC.JSValue.createEmptyObject(globalObject, this.properties.len);
+        pub fn toJS(this: *Object, allocator: std.mem.Allocator, globalObject: *jsc.JSGlobalObject) ToJSError!jsc.JSValue {
+            var obj = jsc.JSValue.createEmptyObject(globalObject, this.properties.len);
             obj.protect();
             defer obj.unprotect();
             const props: []const G.Property = this.properties.slice();
@@ -2494,7 +2494,7 @@ pub const E = struct {
             }
         }
 
-        pub fn toJS(s: *String, allocator: std.mem.Allocator, globalObject: *JSC.JSGlobalObject) !JSC.JSValue {
+        pub fn toJS(s: *String, allocator: std.mem.Allocator, globalObject: *jsc.JSGlobalObject) !jsc.JSValue {
             s.resolveRopeIfNeeded(allocator);
             if (!s.isPresent()) {
                 var emp = bun.String.empty;
@@ -2521,11 +2521,11 @@ pub const E = struct {
             }
         }
 
-        pub fn toZigString(s: *String, allocator: std.mem.Allocator) JSC.ZigString {
+        pub fn toZigString(s: *String, allocator: std.mem.Allocator) jsc.ZigString {
             if (s.isUTF8()) {
-                return JSC.ZigString.fromUTF8(s.slice(allocator));
+                return jsc.ZigString.fromUTF8(s.slice(allocator));
             } else {
-                return JSC.ZigString.initUTF16(s.slice16());
+                return jsc.ZigString.initUTF16(s.slice16());
             }
         }
 
@@ -3296,7 +3296,7 @@ pub const Expr = struct {
     }
 
     pub fn fromBlob(
-        blob: *const JSC.WebCore.Blob,
+        blob: *const jsc.WebCore.Blob,
         allocator: std.mem.Allocator,
         mime_type_: ?MimeType,
         log: *logger.Log,
@@ -3340,7 +3340,7 @@ pub const Expr = struct {
         return Expr.init(
             E.String,
             E.String{
-                .data = try JSC.ZigString.init(bytes).toBase64DataURL(allocator),
+                .data = try jsc.ZigString.init(bytes).toBase64DataURL(allocator),
             },
             loc,
         );
@@ -3379,7 +3379,7 @@ pub const Expr = struct {
         return false;
     }
 
-    pub fn toJS(this: Expr, allocator: std.mem.Allocator, globalObject: *JSC.JSGlobalObject) ToJSError!JSC.JSValue {
+    pub fn toJS(this: Expr, allocator: std.mem.Allocator, globalObject: *jsc.JSGlobalObject) ToJSError!jsc.JSValue {
         return this.data.toJS(allocator, globalObject);
     }
 
@@ -6224,17 +6224,17 @@ pub const Expr = struct {
             return Equality.unknown;
         }
 
-        pub fn toJS(this: Data, allocator: std.mem.Allocator, globalObject: *JSC.JSGlobalObject) ToJSError!JSC.JSValue {
+        pub fn toJS(this: Data, allocator: std.mem.Allocator, globalObject: *jsc.JSGlobalObject) ToJSError!jsc.JSValue {
             return switch (this) {
                 .e_array => |e| e.toJS(allocator, globalObject),
                 .e_object => |e| e.toJS(allocator, globalObject),
                 .e_string => |e| e.toJS(allocator, globalObject),
-                .e_null => JSC.JSValue.null,
-                .e_undefined => JSC.JSValue.undefined,
+                .e_null => jsc.JSValue.null,
+                .e_undefined => jsc.JSValue.undefined,
                 .e_boolean => |boolean| if (boolean.value)
-                    JSC.JSValue.true
+                    jsc.JSValue.true
                 else
-                    JSC.JSValue.false,
+                    jsc.JSValue.false,
                 .e_number => |e| e.toJS(),
                 // .e_big_int => |e| e.toJS(ctx, exception),
 
@@ -6249,7 +6249,7 @@ pub const Expr = struct {
                 // brk: {
                 //     // var node = try allocator.create(Macro.JSNode);
                 //     // node.* = Macro.JSNode.initExpr(Expr{ .data = this, .loc = logger.Loc.Empty });
-                //     // break :brk JSC.JSValue.c(Macro.JSNode.Class.make(globalObject, node));
+                //     // break :brk jsc.JSValue.c(Macro.JSNode.Class.make(globalObject, node));
                 // },
 
                 else => {
@@ -7894,7 +7894,7 @@ pub fn printmem(comptime format: string, args: anytype) void {
 }
 
 pub const Macro = struct {
-    const JavaScript = bun.JSC;
+    const JavaScript = bun.jsc;
     const JSCBase = @import("./bun.js/base.zig");
     const Resolver = @import("./resolver/resolver.zig").Resolver;
     const isPackagePath = @import("./resolver/resolver.zig").isPackagePath;
@@ -7921,7 +7921,7 @@ pub const Macro = struct {
         env: *DotEnv.Loader,
         macros: MacroMap,
         remap: MacroRemap,
-        javascript_object: JSC.JSValue = JSC.JSValue.zero,
+        javascript_object: jsc.JSValue = jsc.JSValue.zero,
 
         pub fn getRemap(this: MacroContext, path: string) ?MacroRemapEntry {
             if (this.remap.entries.len == 0) return null;
@@ -7960,7 +7960,7 @@ pub const Macro = struct {
             bun.assert(!isMacroPath(import_record_path_without_macro_prefix));
 
             const input_specifier = brk: {
-                if (JSC.HardcodedModule.Aliases.get(import_record_path, .bun)) |replacement| {
+                if (jsc.HardcodedModule.Aliases.get(import_record_path, .bun)) |replacement| {
                     break :brk replacement.path;
                 }
 
@@ -8084,7 +8084,7 @@ pub const Macro = struct {
             defer resolver.opts.transform_options = old_transform_options;
 
             // JSC needs to be initialized if building from CLI
-            JSC.initialize(false);
+            jsc.initialize(false);
 
             var _vm = try JavaScript.VirtualMachine.init(.{
                 .allocator = default_allocator,
@@ -8120,7 +8120,7 @@ pub const Macro = struct {
     }
 
     pub const Runner = struct {
-        const VisitMap = std.AutoHashMapUnmanaged(JSC.JSValue, Expr);
+        const VisitMap = std.AutoHashMapUnmanaged(jsc.JSValue, Expr);
 
         threadlocal var args_buf: [3]js.JSObjectRef = undefined;
         threadlocal var exception_holder: Zig.ZigException.Holder = undefined;
@@ -8130,7 +8130,7 @@ pub const Macro = struct {
             caller: Expr,
             function_name: string,
             macro: *const Macro,
-            global: *JSC.JSGlobalObject,
+            global: *jsc.JSGlobalObject,
             allocator: std.mem.Allocator,
             id: i32,
             log: *logger.Log,
@@ -8144,7 +8144,7 @@ pub const Macro = struct {
                 allocator: std.mem.Allocator,
                 function_name: string,
                 caller: Expr,
-                args: []JSC.JSValue,
+                args: []jsc.JSValue,
                 source: *const logger.Source,
                 id: i32,
             ) MacroError!Expr {
@@ -8180,9 +8180,9 @@ pub const Macro = struct {
 
             pub fn run(
                 this: *Run,
-                value: JSC.JSValue,
+                value: jsc.JSValue,
             ) MacroError!Expr {
-                return try switch (JSC.ConsoleObject.Formatter.Tag.get(value, this.global).tag) {
+                return try switch (jsc.ConsoleObject.Formatter.Tag.get(value, this.global).tag) {
                     .Error => this.coerce(value, .Error),
                     .Undefined => this.coerce(value, .Undefined),
                     .Null => this.coerce(value, .Null),
@@ -8212,8 +8212,8 @@ pub const Macro = struct {
 
             pub fn coerce(
                 this: *Run,
-                value: JSC.JSValue,
-                comptime tag: JSC.ConsoleObject.Formatter.Tag,
+                value: jsc.JSValue,
+                comptime tag: jsc.ConsoleObject.Formatter.Tag,
             ) MacroError!Expr {
                 switch (comptime tag) {
                     .Error => {
@@ -8232,18 +8232,18 @@ pub const Macro = struct {
                             return _entry.value_ptr.*;
                         }
 
-                        var blob_: ?JSC.WebCore.Blob = null;
+                        var blob_: ?jsc.WebCore.Blob = null;
                         const mime_type: ?MimeType = null;
 
                         if (value.jsType() == .DOMWrapper) {
-                            if (value.as(JSC.WebCore.Response)) |resp| {
+                            if (value.as(jsc.WebCore.Response)) |resp| {
                                 return this.run(resp.getBlobWithoutCallFrame(this.global));
-                            } else if (value.as(JSC.WebCore.Request)) |resp| {
+                            } else if (value.as(jsc.WebCore.Request)) |resp| {
                                 return this.run(resp.getBlobWithoutCallFrame(this.global));
-                            } else if (value.as(JSC.WebCore.Blob)) |resp| {
+                            } else if (value.as(jsc.WebCore.Blob)) |resp| {
                                 blob_ = resp.*;
                                 blob_.?.allocator = null;
-                            } else if (value.as(JSC.ResolveMessage) != null or value.as(JSC.BuildMessage) != null) {
+                            } else if (value.as(jsc.ResolveMessage) != null or value.as(jsc.BuildMessage) != null) {
                                 _ = this.macro.vm.uncaughtException(this.global, value, false);
                                 return error.MacroFailed;
                             }
@@ -8273,7 +8273,7 @@ pub const Macro = struct {
                     .Boolean => {
                         return Expr{ .data = .{ .e_boolean = .{ .value = value.toBoolean() } }, .loc = this.caller.loc };
                     },
-                    JSC.ConsoleObject.Formatter.Tag.Array => {
+                    jsc.ConsoleObject.Formatter.Tag.Array => {
                         this.is_top_level = false;
 
                         const _entry = this.visited.getOrPut(this.allocator, value) catch unreachable;
@@ -8288,7 +8288,7 @@ pub const Macro = struct {
                             return _entry.value_ptr.*;
                         }
 
-                        var iter = JSC.JSArrayIterator.init(value, this.global);
+                        var iter = jsc.JSArrayIterator.init(value, this.global);
                         if (iter.len == 0) {
                             const result = Expr.init(
                                 E.Array,
@@ -8325,7 +8325,7 @@ pub const Macro = struct {
                         return out;
                     },
                     // TODO: optimize this
-                    JSC.ConsoleObject.Formatter.Tag.Object => {
+                    jsc.ConsoleObject.Formatter.Tag.Object => {
                         this.is_top_level = false;
                         const _entry = this.visited.getOrPut(this.allocator, value) catch unreachable;
                         if (_entry.found_existing) {
@@ -8339,7 +8339,7 @@ pub const Macro = struct {
                             return _entry.value_ptr.*;
                         }
 
-                        var object_iter = try JSC.JSPropertyIterator(.{
+                        var object_iter = try jsc.JSPropertyIterator(.{
                             .skip_empty_name = false,
                             .include_value = true,
                         }).init(this.global, value);
@@ -8372,7 +8372,7 @@ pub const Macro = struct {
                         // if (console_tag.cell == .JSDate) {
                         //     // in the code for printing dates, it never exceeds this amount
                         //     var iso_string_buf = this.allocator.alloc(u8, 36) catch unreachable;
-                        //     var str = JSC.ZigString.init("");
+                        //     var str = jsc.ZigString.init("");
                         //     value.jsonStringify(this.global, 0, &str);
                         //     var out_buf: []const u8 = std.fmt.bufPrint(iso_string_buf, "{}", .{str}) catch "";
                         //     if (out_buf.len > 2) {
@@ -8448,12 +8448,12 @@ pub const Macro = struct {
             caller: Expr,
             source: *const logger.Source,
             id: i32,
-            javascript_object: JSC.JSValue,
+            javascript_object: jsc.JSValue,
         ) MacroError!Expr {
             if (comptime Environment.isDebug) Output.prettyln("<r><d>[macro]<r> call <d><b>{s}<r>", .{function_name});
 
             exception_holder = Zig.ZigException.Holder.init();
-            var js_args: []JSC.JSValue = &.{};
+            var js_args: []jsc.JSValue = &.{};
             var js_processed_args_len: usize = 0;
             defer {
                 for (js_args[0..js_processed_args_len -| @as(usize, @intFromBool(javascript_object != .zero))]) |arg| {
@@ -8463,12 +8463,12 @@ pub const Macro = struct {
                 allocator.free(js_args);
             }
 
-            const globalObject = JSC.VirtualMachine.get().global;
+            const globalObject = jsc.VirtualMachine.get().global;
 
             switch (caller.data) {
                 .e_call => |call| {
                     const call_args: []Expr = call.args.slice();
-                    js_args = try allocator.alloc(JSC.JSValue, call_args.len + @as(usize, @intFromBool(javascript_object != .zero)));
+                    js_args = try allocator.alloc(jsc.JSValue, call_args.len + @as(usize, @intFromBool(javascript_object != .zero)));
                     js_processed_args_len = js_args.len;
 
                     for (0.., call_args, js_args[0..call_args.len]) |i, in, *out| {
@@ -8495,7 +8495,7 @@ pub const Macro = struct {
 
             if (javascript_object != .zero) {
                 if (js_args.len == 0) {
-                    js_args = try allocator.alloc(JSC.JSValue, 1);
+                    js_args = try allocator.alloc(jsc.JSValue, 1);
                 }
 
                 js_args[js_args.len - 1] = javascript_object;
@@ -8507,9 +8507,9 @@ pub const Macro = struct {
                 threadlocal var call_args: CallArgs = undefined;
                 threadlocal var result: MacroError!Expr = undefined;
                 pub fn callWrapper(args: CallArgs) MacroError!Expr {
-                    JSC.markBinding(@src());
+                    jsc.markBinding(@src());
                     call_args = args;
-                    Bun__startMacro(&call, JSC.VirtualMachine.get().global);
+                    Bun__startMacro(&call, jsc.VirtualMachine.get().global);
                     return result;
                 }
 

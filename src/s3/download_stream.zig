@@ -1,7 +1,7 @@
 const std = @import("std");
 const bun = @import("root").bun;
-const JSC = bun.JSC;
-const picohttp = JSC.WebCore.picohttp;
+const jsc = bun.jsc;
+const picohttp = jsc.WebCore.picohttp;
 const S3Error = @import("./error.zig").S3Error;
 const S3Credentials = @import("./credentials.zig").S3Credentials;
 const SignResult = S3Credentials.SignResult;
@@ -9,9 +9,9 @@ const strings = bun.strings;
 const log = bun.Output.scoped(.S3, true);
 pub const S3HttpDownloadStreamingTask = struct {
     http: bun.http.AsyncHTTP,
-    vm: *JSC.VirtualMachine,
+    vm: *jsc.VirtualMachine,
     sign_result: SignResult,
-    headers: JSC.WebCore.Headers,
+    headers: jsc.WebCore.Headers,
     callback_context: *anyopaque,
     // this transfers ownership from the chunk
     callback: *const fn (chunk: bun.MutableString, has_more: bool, err: ?S3Error, *anyopaque) void,
@@ -37,7 +37,7 @@ pub const S3HttpDownloadStreamingTask = struct {
     },
     state: State.AtomicType = State.AtomicType.init(@bitCast(State{})),
 
-    concurrent_task: JSC.ConcurrentTask = .{},
+    concurrent_task: jsc.ConcurrentTask = .{},
     range: ?[]const u8,
     proxy_url: []const u8,
 

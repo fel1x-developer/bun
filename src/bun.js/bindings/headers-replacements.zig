@@ -1,4 +1,4 @@
-const bindings = bun.JSC;
+const bindings = bun.jsc;
 pub const struct_JSC__CallFrame = bindings.CallFrame;
 pub const struct_JSC__StringPrototype = bindings.StringPrototype;
 pub const struct_JSC__SetIteratorPrototype = bindings.SetIteratorPrototype;

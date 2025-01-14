@@ -17,11 +17,11 @@ const windows = bun.windows;
 
 const C = bun.C;
 const Environment = bun.Environment;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const MAX_PATH_BYTES = bun.MAX_PATH_BYTES;
 const PathString = bun.PathString;
 const Syscall = @This();
-const SystemError = JSC.SystemError;
+const SystemError = jsc.SystemError;
 
 const linux = syscall;
 
@@ -271,7 +271,7 @@ pub const Tag = enum(u8) {
         return @intFromEnum(this) > @intFromEnum(Tag.WriteFile);
     }
 
-    pub var strings = std.EnumMap(Tag, JSC.C.JSStringRef).initFull(null);
+    pub var strings = std.EnumMap(Tag, jsc.C.JSStringRef).initFull(null);
 };
 
 pub const Error = struct {
@@ -446,17 +446,17 @@ pub const Error = struct {
         return Error{ .errno = todo_errno, .syscall = .TODO };
     }
 
-    pub fn toJS(this: Error, ctx: JSC.C.JSContextRef) JSC.C.JSObjectRef {
+    pub fn toJS(this: Error, ctx: jsc.C.JSContextRef) jsc.C.JSObjectRef {
         return this.toSystemError().toErrorInstance(ctx).asObjectRef();
     }
 
-    pub fn toJSC(this: Error, ptr: *JSC.JSGlobalObject) JSC.JSValue {
+    pub fn toJSC(this: Error, ptr: *jsc.JSGlobalObject) jsc.JSValue {
         return this.toSystemError().toErrorInstance(ptr);
     }
 };
 
 pub fn Maybe(comptime ReturnTypeT: type) type {
-    return JSC.Node.Maybe(ReturnTypeT, Error);
+    return jsc.Node.Maybe(ReturnTypeT, Error);
 }
 
 pub fn getcwd(buf: *bun.PathBuffer) Maybe([]const u8) {
@@ -1140,7 +1140,7 @@ pub fn openFileAtWindowsNtPath(
                         };
                     }
                 }
-                return JSC.Maybe(bun.FileDescriptor){
+                return jsc.Maybe(bun.FileDescriptor){
                     .result = bun.toFD(result),
                 };
             },
@@ -2673,12 +2673,12 @@ pub fn existsZ(path: [:0]const u8) bool {
     }
 }
 
-pub fn faccessat(dir_: anytype, subpath: anytype) JSC.Maybe(bool) {
+pub fn faccessat(dir_: anytype, subpath: anytype) jsc.Maybe(bool) {
     const has_sentinel = std.meta.sentinel(@TypeOf(subpath)) != null;
     const dir_fd = bun.toFD(dir_);
 
     if (comptime !has_sentinel) {
-        const path = std.os.toPosixPath(subpath) catch return JSC.Maybe(bool){ .err = Error.fromCode(.NAMETOOLONG, .access) };
+        const path = std.os.toPosixPath(subpath) catch return jsc.Maybe(bool){ .err = Error.fromCode(.NAMETOOLONG, .access) };
         return faccessat(dir_fd, path);
     }
 
@@ -2687,23 +2687,23 @@ pub fn faccessat(dir_: anytype, subpath: anytype) JSC.Maybe(bool) {
         const rc = linux.faccessat(dir_fd.cast(), subpath, linux.F_OK, 0);
         syslog("faccessat({}, {}, O_RDONLY, 0) = {d}", .{ dir_fd, bun.fmt.fmtOSPath(subpath, .{}), if (rc == 0) 0 else @intFromEnum(bun.C.getErrno(rc)) });
         if (rc == 0) {
-            return JSC.Maybe(bool){ .result = true };
+            return jsc.Maybe(bool){ .result = true };
         }
 
-        return JSC.Maybe(bool){ .result = false };
+        return jsc.Maybe(bool){ .result = false };
     }
 
     // on other platforms use faccessat from libc
     const rc = std.c.faccessat(dir_fd.cast(), subpath, std.posix.F_OK, 0);
     syslog("faccessat({}, {}, O_RDONLY, 0) = {d}", .{ dir_fd, bun.fmt.fmtOSPath(subpath, .{}), if (rc == 0) 0 else @intFromEnum(bun.C.getErrno(rc)) });
     if (rc == 0) {
-        return JSC.Maybe(bool){ .result = true };
+        return jsc.Maybe(bool){ .result = true };
     }
 
-    return JSC.Maybe(bool){ .result = false };
+    return jsc.Maybe(bool){ .result = false };
 }
 
-pub fn directoryExistsAt(dir_: anytype, subpath: anytype) JSC.Maybe(bool) {
+pub fn directoryExistsAt(dir_: anytype, subpath: anytype) jsc.Maybe(bool) {
     const dir_fd = bun.toFD(dir_);
     if (comptime Environment.isWindows) {
         const wbuf = bun.WPathBufferPool.get();
@@ -2730,7 +2730,7 @@ pub fn directoryExistsAt(dir_: anytype, subpath: anytype) JSC.Maybe(bool) {
         };
         var basic_info: w.FILE_BASIC_INFORMATION = undefined;
         const rc = kernel32.NtQueryAttributesFile(&attr, &basic_info);
-        if (JSC.Maybe(bool).errnoSysP(rc, .access, subpath)) |err| {
+        if (jsc.Maybe(bool).errnoSysP(rc, .access, subpath)) |err| {
             syslog("NtQueryAttributesFile({}, {}, O_DIRECTORY | O_RDONLY, 0) = {}", .{ dir_fd, bun.fmt.fmtOSPath(path, .{}), err });
             return err;
         }
@@ -2798,7 +2798,7 @@ pub fn existsAt(fd: bun.FileDescriptor, subpath: [:0]const u8) bool {
         };
         var basic_info: w.FILE_BASIC_INFORMATION = undefined;
         const rc = kernel32.NtQueryAttributesFile(&attr, &basic_info);
-        if (JSC.Maybe(bool).errnoSysP(rc, .access, subpath)) |err| {
+        if (jsc.Maybe(bool).errnoSysP(rc, .access, subpath)) |err| {
             syslog("NtQueryAttributesFile({}, O_RDONLY, 0) = {}", .{ bun.fmt.fmtOSPath(path, .{}), err });
             return false;
         }
@@ -3410,7 +3410,7 @@ pub const File = struct {
 
         pub fn unwrap(self: *const ReadToEndResult) ![]u8 {
             if (self.err) |err| {
-                try (JSC.Maybe(void){ .err = err }).unwrap();
+                try (jsc.Maybe(void){ .err = err }).unwrap();
             }
             return self.bytes.items;
         }

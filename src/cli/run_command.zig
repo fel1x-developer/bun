@@ -11,8 +11,8 @@ const default_allocator = bun.default_allocator;
 const C = bun.C;
 const std = @import("std");
 const uws = bun.uws;
-const JSC = bun.JSC;
-const WaiterThread = JSC.Subprocess.WaiterThread;
+const jsc = bun.jsc;
+const WaiterThread = jsc.Subprocess.WaiterThread;
 const OOM = bun.OOM;
 
 const lex = bun.js_lexer;
@@ -300,7 +300,7 @@ pub const RunCommand = struct {
         }
 
         if (!use_system_shell) {
-            const mini = bun.JSC.MiniEventLoop.initGlobal(env);
+            const mini = bun.jsc.MiniEventLoop.initGlobal(env);
             const code = bun.shell.Interpreter.initAndRunFromSource(ctx, mini, name, copy_script.items) catch |err| {
                 if (!silent) {
                     Output.prettyErrorln("<r><red>error<r>: Failed to run script <b>{s}<r> due to error <b>{s}<r>", .{ name, @errorName(err) });
@@ -348,7 +348,7 @@ pub const RunCommand = struct {
             .ipc = ipc_fd,
 
             .windows = if (Environment.isWindows) .{
-                .loop = JSC.EventLoopHandle.init(JSC.MiniEventLoop.initGlobal(env)),
+                .loop = jsc.EventLoopHandle.init(jsc.MiniEventLoop.initGlobal(env)),
             } else {},
         }) catch |err| {
             if (!silent) {
@@ -512,7 +512,7 @@ pub const RunCommand = struct {
             .use_execve_on_macos = silent,
 
             .windows = if (Environment.isWindows) .{
-                .loop = JSC.EventLoopHandle.init(JSC.MiniEventLoop.initGlobal(env)),
+                .loop = jsc.EventLoopHandle.init(jsc.MiniEventLoop.initGlobal(env)),
             } else {},
         }) catch |err| {
             bun.handleErrorReturnTrace(err, @errorReturnTrace());

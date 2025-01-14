@@ -1,14 +1,14 @@
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 
 //extern "C" EncodedJSValue Bun__JSPropertyIterator__getNameAndValue(JSPropertyIterator* iter, JSC::JSGlobalObject* globalObject, JSC::JSObject* object, BunString* propertyName, size_t i)
-extern "C" fn Bun__JSPropertyIterator__create(globalObject: *JSC.JSGlobalObject, encodedValue: JSC.JSValue, *usize, own_properties_only: bool, only_non_index_properties: bool) ?*anyopaque;
-extern "C" fn Bun__JSPropertyIterator__getNameAndValue(iter: ?*anyopaque, globalObject: *JSC.JSGlobalObject, object: *anyopaque, propertyName: *bun.String, i: usize) JSC.JSValue;
-extern "C" fn Bun__JSPropertyIterator__getNameAndValueNonObservable(iter: ?*anyopaque, globalObject: *JSC.JSGlobalObject, object: *anyopaque, propertyName: *bun.String, i: usize) JSC.JSValue;
+extern "C" fn Bun__JSPropertyIterator__create(globalObject: *jsc.JSGlobalObject, encodedValue: jsc.JSValue, *usize, own_properties_only: bool, only_non_index_properties: bool) ?*anyopaque;
+extern "C" fn Bun__JSPropertyIterator__getNameAndValue(iter: ?*anyopaque, globalObject: *jsc.JSGlobalObject, object: *anyopaque, propertyName: *bun.String, i: usize) jsc.JSValue;
+extern "C" fn Bun__JSPropertyIterator__getNameAndValueNonObservable(iter: ?*anyopaque, globalObject: *jsc.JSGlobalObject, object: *anyopaque, propertyName: *bun.String, i: usize) jsc.JSValue;
 extern "C" fn Bun__JSPropertyIterator__getName(iter: ?*anyopaque, propertyName: *bun.String, i: usize) void;
 extern "C" fn Bun__JSPropertyIterator__deinit(iter: ?*anyopaque) void;
-extern "C" fn Bun__JSPropertyIterator__getLongestPropertyName(iter: ?*anyopaque, globalObject: *JSC.JSGlobalObject, object: *anyopaque) usize;
-extern "C" fn Bun__JSPropertyIterator__getCodeProperty(iter: ?*anyopaque, globalObject: *JSC.JSGlobalObject, object: *anyopaque) JSC.JSValue;
+extern "C" fn Bun__JSPropertyIterator__getLongestPropertyName(iter: ?*anyopaque, globalObject: *jsc.JSGlobalObject, object: *anyopaque) usize;
+extern "C" fn Bun__JSPropertyIterator__getCodeProperty(iter: ?*anyopaque, globalObject: *jsc.JSGlobalObject, object: *anyopaque) jsc.JSValue;
 pub const JSPropertyIteratorOptions = struct {
     skip_empty_name: bool,
     include_value: bool,
@@ -24,9 +24,9 @@ pub fn JSPropertyIterator(comptime options: JSPropertyIteratorOptions) type {
         iter_i: u32 = 0,
         impl: ?*anyopaque = null,
 
-        globalObject: *JSC.JSGlobalObject,
-        object: *JSC.JSCell = undefined,
-        value: JSC.JSValue = .zero,
+        globalObject: *jsc.JSGlobalObject,
+        object: *jsc.JSCell = undefined,
+        value: jsc.JSValue = .zero,
         tried_code_property: bool = false,
 
         pub fn getLongestPropertyName(this: *@This()) usize {
@@ -41,7 +41,7 @@ pub fn JSPropertyIterator(comptime options: JSPropertyIteratorOptions) type {
             this.* = undefined;
         }
 
-        pub fn init(globalObject: *JSC.JSGlobalObject, object: JSC.JSValue) bun.JSError!@This() {
+        pub fn init(globalObject: *jsc.JSGlobalObject, object: jsc.JSValue) bun.JSError!@This() {
             var iter = @This(){
                 .object = object.asCell(),
                 .globalObject = globalObject,

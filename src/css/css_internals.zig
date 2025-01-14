@@ -4,10 +4,10 @@ const builtin = @import("builtin");
 const Arena = @import("../allocators/mimalloc_arena.zig").Arena;
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
-const JSC = bun.JSC;
-const JSValue = bun.JSC.JSValue;
-const JSPromise = bun.JSC.JSPromise;
-const JSGlobalObject = bun.JSC.JSGlobalObject;
+const jsc = bun.jsc;
+const JSValue = bun.jsc.JSValue;
+const JSPromise = bun.jsc.JSPromise;
+const JSGlobalObject = bun.jsc.JSGlobalObject;
 
 threadlocal var arena_: ?Arena = null;
 
@@ -17,19 +17,19 @@ const TestKind = enum {
     prefix,
 };
 
-pub fn minifyTestWithOptions(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn minifyTestWithOptions(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     return testingImpl(globalThis, callframe, .minify);
 }
 
-pub fn prefixTestWithOptions(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn prefixTestWithOptions(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     return testingImpl(globalThis, callframe, .prefix);
 }
 
-pub fn testWithOptions(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn testWithOptions(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     return testingImpl(globalThis, callframe, .normal);
 }
 
-pub fn testingImpl(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame, comptime test_kind: TestKind) bun.JSError!JSC.JSValue {
+pub fn testingImpl(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame, comptime test_kind: TestKind) bun.JSError!jsc.JSValue {
     var arena = arena_ orelse brk: {
         break :brk Arena.init() catch @panic("oopsie arena no good");
     };
@@ -37,8 +37,8 @@ pub fn testingImpl(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame, c
     const alloc = arena.allocator();
 
     const arguments_ = callframe.arguments_old(3);
-    var arguments = JSC.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
-    const source_arg: JSC.JSValue = arguments.nextEat() orelse {
+    var arguments = jsc.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+    const source_arg: jsc.JSValue = arguments.nextEat() orelse {
         return globalThis.throw("minifyTestWithOptions: expected 2 arguments, got 0", .{});
     };
     if (!source_arg.isString()) {
@@ -117,7 +117,7 @@ pub fn testingImpl(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame, c
     }
 }
 
-fn targetsFromJS(globalThis: *JSC.JSGlobalObject, jsobj: JSValue) bun.JSError!bun.css.targets.Browsers {
+fn targetsFromJS(globalThis: *jsc.JSGlobalObject, jsobj: JSValue) bun.JSError!bun.css.targets.Browsers {
     var targets = bun.css.targets.Browsers{};
 
     if (try jsobj.getTruthy(globalThis, "android")) |val| {
@@ -187,7 +187,7 @@ fn targetsFromJS(globalThis: *JSC.JSGlobalObject, jsobj: JSValue) bun.JSError!bu
     return targets;
 }
 
-pub fn attrTest(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn attrTest(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     var arena = arena_ orelse brk: {
         break :brk Arena.init() catch @panic("oopsie arena no good");
     };
@@ -195,8 +195,8 @@ pub fn attrTest(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.
     const alloc = arena.allocator();
 
     const arguments_ = callframe.arguments_old(4);
-    var arguments = JSC.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
-    const source_arg: JSC.JSValue = arguments.nextEat() orelse {
+    var arguments = jsc.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+    const source_arg: jsc.JSValue = arguments.nextEat() orelse {
         return globalThis.throw("attrTest: expected 3 arguments, got 0", .{});
     };
     if (!source_arg.isString()) {
@@ -218,7 +218,7 @@ pub fn attrTest(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.
     const expected = expected_bunstr.toUTF8(bun.default_allocator);
     defer expected.deinit();
 
-    const minify_arg: JSC.JSValue = arguments.nextEat() orelse {
+    const minify_arg: jsc.JSValue = arguments.nextEat() orelse {
         return globalThis.throw("attrTest: expected 3 arguments, got 2", .{});
     };
     const minify = minify_arg.isBoolean() and minify_arg.toBoolean();

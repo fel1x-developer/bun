@@ -1,10 +1,10 @@
 const EditorContext = @import("../open.zig").EditorContext;
-const Blob = JSC.WebCore.Blob;
+const Blob = jsc.WebCore.Blob;
 const default_allocator = bun.default_allocator;
 const Output = bun.Output;
 const RareData = @This();
 const Syscall = bun.sys;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const std = @import("std");
 const BoringSSL = bun.BoringSSL;
 const bun = @import("root").bun;
@@ -23,7 +23,7 @@ stderr_store: ?*Blob.Store = null,
 stdin_store: ?*Blob.Store = null,
 stdout_store: ?*Blob.Store = null,
 
-postgresql_context: JSC.Postgres.PostgresSQLContext = .{},
+postgresql_context: jsc.Postgres.PostgresSQLContext = .{},
 
 entropy_cache: ?*EntropyCache = null,
 
@@ -35,7 +35,7 @@ cleanup_hooks: std.ArrayListUnmanaged(CleanupHook) = .{},
 
 file_polls_: ?*Async.FilePoll.Store = null,
 
-global_dns_data: ?*JSC.DNS.GlobalData = null,
+global_dns_data: ?*jsc.DNS.GlobalData = null,
 
 spawn_ipc_usockets_context: ?*uws.SocketContext = null,
 
@@ -154,13 +154,13 @@ pub fn mimeTypeFromString(this: *RareData, allocator: std.mem.Allocator, str: []
 pub const HotMap = struct {
     _map: bun.StringArrayHashMap(Entry),
 
-    const HTTPServer = JSC.API.HTTPServer;
-    const HTTPSServer = JSC.API.HTTPSServer;
-    const DebugHTTPServer = JSC.API.DebugHTTPServer;
-    const DebugHTTPSServer = JSC.API.DebugHTTPSServer;
-    const TCPSocket = JSC.API.TCPSocket;
-    const TLSSocket = JSC.API.TLSSocket;
-    const Listener = JSC.API.Listener;
+    const HTTPServer = jsc.API.HTTPServer;
+    const HTTPSServer = jsc.API.HTTPSServer;
+    const DebugHTTPServer = jsc.API.DebugHTTPServer;
+    const DebugHTTPSServer = jsc.API.DebugHTTPSServer;
+    const TCPSocket = jsc.API.TCPSocket;
+    const TLSSocket = jsc.API.TLSSocket;
+    const Listener = jsc.API.Listener;
     const Entry = bun.TaggedPointerUnion(.{
         HTTPServer,
         HTTPSServer,
@@ -203,7 +203,7 @@ pub const HotMap = struct {
     }
 };
 
-pub fn filePolls(this: *RareData, vm: *JSC.VirtualMachine) *Async.FilePoll.Store {
+pub fn filePolls(this: *RareData, vm: *jsc.VirtualMachine) *Async.FilePoll.Store {
     return this.file_polls_ orelse {
         this.file_polls_ = vm.allocator.create(Async.FilePoll.Store) catch unreachable;
         this.file_polls_.?.* = Async.FilePoll.Store.init();
@@ -272,7 +272,7 @@ pub const EntropyCache = struct {
 pub const CleanupHook = struct {
     ctx: ?*anyopaque,
     func: Function,
-    globalThis: *JSC.JSGlobalObject,
+    globalThis: *jsc.JSGlobalObject,
 
     pub fn eql(self: CleanupHook, other: CleanupHook) bool {
         return self.ctx == other.ctx and self.func == other.func and self.globalThis == other.globalThis;
@@ -283,7 +283,7 @@ pub const CleanupHook = struct {
     }
 
     pub fn init(
-        globalThis: *JSC.JSGlobalObject,
+        globalThis: *jsc.JSGlobalObject,
         ctx: ?*anyopaque,
         func: CleanupHook.Function,
     ) CleanupHook {
@@ -299,7 +299,7 @@ pub const CleanupHook = struct {
 
 pub fn pushCleanupHook(
     this: *RareData,
-    globalThis: *JSC.JSGlobalObject,
+    globalThis: *jsc.JSGlobalObject,
     ctx: ?*anyopaque,
     func: CleanupHook.Function,
 ) void {
@@ -407,7 +407,7 @@ pub fn stdin(rare: *RareData) *Blob.Store {
 
 const Subprocess = @import("./api/bun/subprocess.zig").Subprocess;
 
-pub fn spawnIPCContext(rare: *RareData, vm: *JSC.VirtualMachine) *uws.SocketContext {
+pub fn spawnIPCContext(rare: *RareData, vm: *jsc.VirtualMachine) *uws.SocketContext {
     if (rare.spawn_ipc_usockets_context) |ctx| {
         return ctx;
     }
@@ -419,16 +419,16 @@ pub fn spawnIPCContext(rare: *RareData, vm: *JSC.VirtualMachine) *uws.SocketCont
     return ctx;
 }
 
-pub fn globalDNSResolver(rare: *RareData, vm: *JSC.VirtualMachine) *JSC.DNS.DNSResolver {
+pub fn globalDNSResolver(rare: *RareData, vm: *jsc.VirtualMachine) *jsc.DNS.DNSResolver {
     if (rare.global_dns_data == null) {
-        rare.global_dns_data = JSC.DNS.GlobalData.init(vm.allocator, vm);
+        rare.global_dns_data = jsc.DNS.GlobalData.init(vm.allocator, vm);
         rare.global_dns_data.?.resolver.ref(); // live forever
     }
 
     return &rare.global_dns_data.?.resolver;
 }
 
-pub fn nodeFSStatWatcherScheduler(rare: *RareData, vm: *JSC.VirtualMachine) *StatWatcherScheduler {
+pub fn nodeFSStatWatcherScheduler(rare: *RareData, vm: *jsc.VirtualMachine) *StatWatcherScheduler {
     return rare.node_fs_stat_watcher_scheduler orelse {
         rare.node_fs_stat_watcher_scheduler = StatWatcherScheduler.init(vm.allocator, vm);
         return rare.node_fs_stat_watcher_scheduler.?;

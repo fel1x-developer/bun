@@ -49,20 +49,20 @@ const URL = @import("./url.zig").URL;
 const Linker = linker.Linker;
 const Resolver = _resolver.Resolver;
 const TOML = @import("./toml/toml_parser.zig").TOML;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const PackageManager = @import("./install/install.zig").PackageManager;
 const DataURL = @import("./resolver/data_url.zig").DataURL;
 
 pub fn MacroJSValueType_() type {
-    if (comptime JSC.is_bindgen) {
+    if (comptime jsc.is_bindgen) {
         return struct {
             pub const zero = @This(){};
         };
     }
-    return JSC.JSValue;
+    return jsc.JSValue;
 }
 pub const MacroJSValueType = MacroJSValueType_();
-const default_macro_js_value = if (JSC.is_bindgen) MacroJSValueType{} else JSC.JSValue.zero;
+const default_macro_js_value = if (jsc.is_bindgen) MacroJSValueType{} else jsc.JSValue.zero;
 
 const EntryPoints = @import("./bundler/entry_points.zig");
 const SystemTimer = @import("./system_timer.zig").Timer;
@@ -76,7 +76,7 @@ pub const ParseResult = struct {
     empty: bool = false,
     pending_imports: _resolver.PendingResolution.List = .{},
 
-    runtime_transpiler_cache: ?*bun.JSC.RuntimeTranspilerCache = null,
+    runtime_transpiler_cache: ?*bun.jsc.RuntimeTranspilerCache = null,
 
     pub const AlreadyBundled = union(enum) {
         none: void,
@@ -121,7 +121,7 @@ pub const ParseResult = struct {
 const cache_files = false;
 
 pub const PluginRunner = struct {
-    global_object: *JSC.JSGlobalObject,
+    global_object: *jsc.JSGlobalObject,
     allocator: std.mem.Allocator,
 
     pub fn extractNamespace(specifier: string) string {
@@ -153,7 +153,7 @@ pub const PluginRunner = struct {
         importer: []const u8,
         log: *logger.Log,
         loc: logger.Loc,
-        target: JSC.JSGlobalObject.BunPluginTarget,
+        target: jsc.JSGlobalObject.BunPluginTarget,
     ) bun.JSError!?Fs.Path {
         var global = this.global_object;
         const namespace_slice = extractNamespace(specifier);
@@ -249,7 +249,7 @@ pub const PluginRunner = struct {
         }
     }
 
-    pub fn onResolveJSC(this: *const PluginRunner, namespace: bun.String, specifier: bun.String, importer: bun.String, target: JSC.JSGlobalObject.BunPluginTarget) bun.JSError!?JSC.ErrorableString {
+    pub fn onResolveJSC(this: *const PluginRunner, namespace: bun.String, specifier: bun.String, importer: bun.String, target: jsc.JSGlobalObject.BunPluginTarget) bun.JSError!?jsc.ErrorableString {
         var global = this.global_object;
         const on_resolve_plugin = global.runOnResolvePlugins(
             if (namespace.length() > 0 and !namespace.eqlComptime("file"))
@@ -263,7 +263,7 @@ pub const PluginRunner = struct {
         const path_value = try on_resolve_plugin.get(global, "path") orelse return null;
         if (path_value.isEmptyOrUndefinedOrNull()) return null;
         if (!path_value.isString()) {
-            return JSC.ErrorableString.err(
+            return jsc.ErrorableString.err(
                 error.JSErrorObject,
                 bun.String.static("Expected \"path\" to be a string in onResolve plugin").toErrorInstance(this.global_object).asVoid(),
             );
@@ -272,7 +272,7 @@ pub const PluginRunner = struct {
         const file_path = path_value.toBunString(global);
 
         if (file_path.length() == 0) {
-            return JSC.ErrorableString.err(
+            return jsc.ErrorableString.err(
                 error.JSErrorObject,
                 bun.String.static("Expected \"path\" to be a non-empty string in onResolve plugin").toErrorInstance(this.global_object).asVoid(),
             );
@@ -283,7 +283,7 @@ pub const PluginRunner = struct {
             file_path.eqlComptime("...") or
             file_path.eqlComptime(" "))
         {
-            return JSC.ErrorableString.err(
+            return jsc.ErrorableString.err(
                 error.JSErrorObject,
                 bun.String.static("\"path\" is invalid in onResolve plugin").toErrorInstance(this.global_object).asVoid(),
             );
@@ -292,7 +292,7 @@ pub const PluginRunner = struct {
         const user_namespace: bun.String = brk: {
             if (try on_resolve_plugin.get(global, "namespace")) |namespace_value| {
                 if (!namespace_value.isString()) {
-                    return JSC.ErrorableString.err(
+                    return jsc.ErrorableString.err(
                         error.JSErrorObject,
                         bun.String.static("Expected \"namespace\" to be a string").toErrorInstance(this.global_object).asVoid(),
                     );
@@ -336,7 +336,7 @@ pub const PluginRunner = struct {
         var out_ = bun.String.init(combined_string);
         const out = out_.toJS(this.global_object).toBunString(this.global_object);
         this.allocator.free(combined_string);
-        return JSC.ErrorableString.ok(out);
+        return jsc.ErrorableString.ok(out);
     }
 };
 
@@ -1067,7 +1067,7 @@ pub const Transpiler = struct {
         comptime format: js_printer.Format,
         comptime enable_source_map: bool,
         source_map_context: ?js_printer.SourceMapHandler,
-        runtime_transpiler_cache: ?*bun.JSC.RuntimeTranspilerCache,
+        runtime_transpiler_cache: ?*bun.jsc.RuntimeTranspilerCache,
     ) !usize {
         const tracer = bun.tracy.traceNamed(@src(), if (enable_source_map) "JSPrinter.printWithSourceMap" else "JSPrinter.print");
         defer tracer.end();
@@ -1235,7 +1235,7 @@ pub const Transpiler = struct {
         dont_bundle_twice: bool = false,
         allow_commonjs: bool = false,
 
-        runtime_transpiler_cache: ?*bun.JSC.RuntimeTranspilerCache = null,
+        runtime_transpiler_cache: ?*bun.jsc.RuntimeTranspilerCache = null,
 
         keep_json_and_toml_as_one_statement: bool = false,
         allow_bytecode_cache: bool = false,
@@ -1398,7 +1398,7 @@ pub const Transpiler = struct {
                 opts.features.top_level_await = true;
 
                 opts.macro_context = &transpiler.macro_context.?;
-                if (comptime !JSC.is_bindgen) {
+                if (comptime !jsc.is_bindgen) {
                     if (target != .bun_macro) {
                         opts.macro_context.javascript_object = this_parse.macro_js_ctx;
                     }

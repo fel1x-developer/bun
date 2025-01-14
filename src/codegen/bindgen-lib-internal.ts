@@ -41,7 +41,7 @@ export const pascal = (s: string) => cap(camel(s));
 
 // Return symbol names of extern values (must be equivalent between C++ and Zig)
 
-/** The JS Host function, aka fn (*JSC.JSGlobalObject, *JSC.CallFrame) JSValue.MaybeException */
+/** The JS Host function, aka fn (*jsc.JSGlobalObject, *jsc.CallFrame) JSValue.MaybeException */
 export const extJsFunction = (namespaceVar: string, fnLabel: string) =>
   `bindgen_${cap(namespaceVar)}_js${cap(fnLabel)}`;
 /** Each variant gets a dispatcher function. */

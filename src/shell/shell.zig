@@ -4,10 +4,10 @@ const builtin = @import("builtin");
 const Arena = std.heap.ArenaAllocator;
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
-const JSC = bun.JSC;
-const JSValue = bun.JSC.JSValue;
-const JSPromise = bun.JSC.JSPromise;
-const JSGlobalObject = bun.JSC.JSGlobalObject;
+const jsc = bun.jsc;
+const JSValue = bun.jsc.JSValue;
+const JSPromise = bun.jsc.JSPromise;
+const JSGlobalObject = bun.jsc.JSGlobalObject;
 const Which = @import("../which.zig");
 const Braces = @import("./braces.zig");
 const Syscall = @import("../sys.zig");
@@ -47,7 +47,7 @@ pub const WINDOWS_DEV_NULL: [:0]const u8 = "NUL";
 
 /// The strings in this type are allocated with event loop ctx allocator
 pub const ShellErr = union(enum) {
-    sys: JSC.SystemError,
+    sys: jsc.SystemError,
     custom: []const u8,
     invalid_arguments: struct { val: []const u8 = "" },
     todo: []const u8,
@@ -56,7 +56,7 @@ pub const ShellErr = union(enum) {
         return .{
             .sys = switch (@TypeOf(e)) {
                 Syscall.Error => e.toSystemError(),
-                JSC.SystemError => e,
+                jsc.SystemError => e,
                 else => @compileError("Invalid `e`: " ++ @typeName(e)),
             },
         };
@@ -83,7 +83,7 @@ pub const ShellErr = union(enum) {
         }
     }
 
-    pub fn throwJS(this: *const @This(), globalThis: *JSC.JSGlobalObject) bun.JSError {
+    pub fn throwJS(this: *const @This(), globalThis: *jsc.JSGlobalObject) bun.JSError {
         defer this.deinit(bun.default_allocator);
         switch (this.*) {
             .sys => {
@@ -91,11 +91,11 @@ pub const ShellErr = union(enum) {
                 return globalThis.throwValue(err);
             },
             .custom => {
-                var str = JSC.ZigString.init(this.custom);
+                var str = jsc.ZigString.init(this.custom);
                 str.markUTF8();
                 const err_value = str.toErrorInstance(globalThis);
                 return globalThis.throwValue(err_value);
-                // this.bunVM().allocator.free(JSC.ZigString.untagged(str._unsafe_ptr_do_not_use)[0..str.len]);
+                // this.bunVM().allocator.free(jsc.ZigString.untagged(str._unsafe_ptr_do_not_use)[0..str.len]);
             },
             .invalid_arguments => {
                 return globalThis.throwInvalidArguments("{s}", .{this.invalid_arguments.val});
@@ -180,9 +180,9 @@ const log = bun.Output.scoped(.SHELL, true);
 const logsys = bun.Output.scoped(.SYS, true);
 
 pub const GlobalJS = struct {
-    globalThis: *JSC.JSGlobalObject,
+    globalThis: *jsc.JSGlobalObject,
 
-    pub inline fn init(g: *JSC.JSGlobalObject) GlobalJS {
+    pub inline fn init(g: *jsc.JSGlobalObject) GlobalJS {
         return .{
             .globalThis = g,
         };
@@ -192,7 +192,7 @@ pub const GlobalJS = struct {
         return this.globalThis.bunVM().allocator;
     }
 
-    pub inline fn eventLoopCtx(this: @This()) *JSC.VirtualMachine {
+    pub inline fn eventLoopCtx(this: @This()) *jsc.VirtualMachine {
         return this.globalThis.bunVM();
     }
 
@@ -235,7 +235,7 @@ pub const GlobalJS = struct {
     }
 
     pub inline fn enqueueTaskConcurrentWaitPid(this: @This(), task: anytype) void {
-        this.globalThis.bunVMConcurrently().enqueueTaskConcurrent(JSC.ConcurrentTask.create(JSC.Task.init(task)));
+        this.globalThis.bunVMConcurrently().enqueueTaskConcurrent(jsc.ConcurrentTask.create(jsc.Task.init(task)));
     }
 
     pub inline fn topLevelDir(this: @This()) []const u8 {
@@ -246,8 +246,8 @@ pub const GlobalJS = struct {
         return this.globalThis.bunVM().transpiler.env;
     }
 
-    pub inline fn platformEventLoop(this: @This()) *JSC.PlatformEventLoop {
-        const loop = JSC.AbstractVM(this.eventLoopCtx());
+    pub inline fn platformEventLoop(this: @This()) *jsc.PlatformEventLoop {
+        const loop = jsc.AbstractVM(this.eventLoopCtx());
         return loop.platformEventLoop();
     }
 
@@ -257,9 +257,9 @@ pub const GlobalJS = struct {
 };
 
 pub const GlobalMini = struct {
-    mini: *JSC.MiniEventLoop,
+    mini: *jsc.MiniEventLoop,
 
-    pub inline fn init(g: *JSC.MiniEventLoop) @This() {
+    pub inline fn init(g: *jsc.MiniEventLoop) @This() {
         return .{
             .mini = g,
         };
@@ -273,7 +273,7 @@ pub const GlobalMini = struct {
         return this.mini.allocator;
     }
 
-    pub inline fn eventLoopCtx(this: @This()) *JSC.MiniEventLoop {
+    pub inline fn eventLoopCtx(this: @This()) *jsc.MiniEventLoop {
         return this.mini;
     }
 
@@ -307,7 +307,7 @@ pub const GlobalMini = struct {
     }
 
     pub inline fn enqueueTaskConcurrentWaitPid(this: @This(), task: anytype) void {
-        var anytask = bun.default_allocator.create(JSC.AnyTaskWithExtraContext) catch bun.outOfMemory();
+        var anytask = bun.default_allocator.create(jsc.AnyTaskWithExtraContext) catch bun.outOfMemory();
         _ = anytask.from(task, "runFromMainThreadMini");
         this.mini.enqueueTaskConcurrent(anytask);
     }
@@ -328,13 +328,13 @@ pub const GlobalMini = struct {
         shellerr.throwMini();
     }
 
-    pub inline fn platformEventLoop(this: @This()) *JSC.PlatformEventLoop {
-        const loop = JSC.AbstractVM(this.eventLoopCtx());
+    pub inline fn platformEventLoop(this: @This()) *jsc.PlatformEventLoop {
+        const loop = jsc.AbstractVM(this.eventLoopCtx());
         return loop.platformEventLoop();
     }
 };
 
-// const GlobalHandle = if (JSC.EventLoopKind == .js) GlobalJS else GlobalMini;
+// const GlobalHandle = if (jsc.EventLoopKind == .js) GlobalJS else GlobalMini;
 
 pub const AST = struct {
     pub const Script = struct {
@@ -3741,9 +3741,9 @@ pub const Test = struct {
 };
 
 pub fn shellCmdFromJS(
-    globalThis: *JSC.JSGlobalObject,
+    globalThis: *jsc.JSGlobalObject,
     string_args: JSValue,
-    template_args: *JSC.JSArrayIterator,
+    template_args: *jsc.JSArrayIterator,
     out_jsobjs: *std.ArrayList(JSValue),
     jsstrings: *std.ArrayList(bun.String),
     out_script: *std.ArrayList(u8),
@@ -3772,7 +3772,7 @@ pub fn shellCmdFromJS(
 }
 
 pub fn handleTemplateValue(
-    globalThis: *JSC.JSGlobalObject,
+    globalThis: *jsc.JSGlobalObject,
     template_value: JSValue,
     out_jsobjs: *std.ArrayList(JSValue),
     out_script: *std.ArrayList(u8),
@@ -3791,7 +3791,7 @@ pub fn handleTemplateValue(
             return;
         }
 
-        if (template_value.as(JSC.WebCore.Blob)) |blob| {
+        if (template_value.as(jsc.WebCore.Blob)) |blob| {
             if (blob.store) |store| {
                 if (store.data == .file) {
                     if (store.data.file.pathlike == .path) {
@@ -3812,7 +3812,7 @@ pub fn handleTemplateValue(
             return;
         }
 
-        if (JSC.WebCore.ReadableStream.fromJS(template_value, globalThis)) |rstream| {
+        if (jsc.WebCore.ReadableStream.fromJS(template_value, globalThis)) |rstream| {
             _ = rstream;
 
             const idx = out_jsobjs.items.len;
@@ -3823,7 +3823,7 @@ pub fn handleTemplateValue(
             return;
         }
 
-        if (template_value.as(JSC.WebCore.Response)) |req| {
+        if (template_value.as(jsc.WebCore.Response)) |req| {
             _ = req;
 
             const idx = out_jsobjs.items.len;
@@ -3889,13 +3889,13 @@ pub fn handleTemplateValue(
 }
 
 pub const ShellSrcBuilder = struct {
-    globalThis: *JSC.JSGlobalObject,
+    globalThis: *jsc.JSGlobalObject,
     outbuf: *std.ArrayList(u8),
     jsstrs_to_escape: *std.ArrayList(bun.String),
     jsstr_ref_buf: [128]u8 = [_]u8{0} ** 128,
 
     pub fn init(
-        globalThis: *JSC.JSGlobalObject,
+        globalThis: *jsc.JSGlobalObject,
         outbuf: *std.ArrayList(u8),
         jsstrs_to_escape: *std.ArrayList(bun.String),
     ) ShellSrcBuilder {
@@ -4307,11 +4307,11 @@ pub fn SmolList(comptime T: type, comptime INLINED_MAX: comptime_int) type {
 
 /// Used in JS tests, see `internal-for-testing.ts` and shell tests.
 pub const TestingAPIs = struct {
-    pub fn disabledOnThisPlatform(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn disabledOnThisPlatform(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         if (comptime bun.Environment.isWindows) return JSValue.false;
 
         const arguments_ = callframe.arguments_old(1);
-        var arguments = JSC.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+        var arguments = jsc.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
         const string = arguments.nextEat() orelse {
             return globalThis.throw("shellInternals.disabledOnPosix: expected 1 arguments, got 0", .{});
         };
@@ -4330,11 +4330,11 @@ pub const TestingAPIs = struct {
     }
 
     pub fn shellLex(
-        globalThis: *JSC.JSGlobalObject,
-        callframe: *JSC.CallFrame,
-    ) bun.JSError!JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+        callframe: *jsc.CallFrame,
+    ) bun.JSError!jsc.JSValue {
         const arguments_ = callframe.arguments_old(2);
-        var arguments = JSC.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+        var arguments = jsc.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
         const string_args = arguments.nextEat() orelse {
             return globalThis.throw("shell_parse: expected 2 arguments, got 0", .{});
         };
@@ -4398,11 +4398,11 @@ pub const TestingAPIs = struct {
     }
 
     pub fn shellParse(
-        globalThis: *JSC.JSGlobalObject,
-        callframe: *JSC.CallFrame,
-    ) bun.JSError!JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+        callframe: *jsc.CallFrame,
+    ) bun.JSError!jsc.JSValue {
         const arguments_ = callframe.arguments_old(2);
-        var arguments = JSC.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+        var arguments = jsc.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
         const string_args = arguments.nextEat() orelse {
             return globalThis.throw("shell_parse: expected 2 arguments, got 0", .{});
         };

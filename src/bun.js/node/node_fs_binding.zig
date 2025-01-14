@@ -1,32 +1,32 @@
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const std = @import("std");
-const Flavor = JSC.Node.Flavor;
-const ArgumentsSlice = JSC.Node.ArgumentsSlice;
+const Flavor = jsc.Node.Flavor;
+const ArgumentsSlice = jsc.Node.ArgumentsSlice;
 const system = std.posix.system;
-const Maybe = JSC.Maybe;
-const Encoding = JSC.Node.Encoding;
+const Maybe = jsc.Maybe;
+const Encoding = jsc.Node.Encoding;
 const FeatureFlags = bun.FeatureFlags;
-const Args = JSC.Node.NodeFS.Arguments;
-const d = JSC.d;
+const Args = jsc.Node.NodeFS.Arguments;
+const d = jsc.d;
 
-const NodeFSFunction = fn (this: *JSC.Node.NodeJSFS, globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue;
+const NodeFSFunction = fn (this: *jsc.Node.NodeJSFS, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue;
 
-const NodeFSFunctionEnum = std.meta.DeclEnum(JSC.Node.NodeFS);
+const NodeFSFunctionEnum = std.meta.DeclEnum(jsc.Node.NodeFS);
 
 fn callSync(comptime FunctionEnum: NodeFSFunctionEnum) NodeFSFunction {
-    const Function = @field(JSC.Node.NodeFS, @tagName(FunctionEnum));
+    const Function = @field(jsc.Node.NodeFS, @tagName(FunctionEnum));
     const FunctionType = @TypeOf(Function);
 
     const function: std.builtin.Type.Fn = comptime @typeInfo(FunctionType).Fn;
     comptime if (function.params.len != 3) @compileError("Expected 3 arguments");
     const Arguments = comptime function.params[1].type.?;
     const FormattedName = comptime [1]u8{std.ascii.toUpper(@tagName(FunctionEnum)[0])} ++ @tagName(FunctionEnum)[1..];
-    const Result = comptime JSC.Maybe(@field(JSC.Node.NodeFS.ReturnType, FormattedName));
+    const Result = comptime jsc.Maybe(@field(jsc.Node.NodeFS.ReturnType, FormattedName));
     _ = Result;
 
     const NodeBindingClosure = struct {
-        pub fn bind(this: *JSC.Node.NodeJSFS, globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+        pub fn bind(this: *jsc.Node.NodeJSFS, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
             var arguments = callframe.arguments_old(8);
 
             var slice = ArgumentsSlice.init(globalObject.bunVM(), arguments.slice());
@@ -50,7 +50,7 @@ fn callSync(comptime FunctionEnum: NodeFSFunctionEnum) NodeFSFunction {
             );
             switch (result) {
                 .err => |err| {
-                    return globalObject.throwValue(JSC.JSValue.c(err.toJS(globalObject)));
+                    return globalObject.throwValue(jsc.JSValue.c(err.toJS(globalObject)));
                 },
                 .result => |*res| {
                     return globalObject.toJS(res, .temporary);
@@ -63,14 +63,14 @@ fn callSync(comptime FunctionEnum: NodeFSFunctionEnum) NodeFSFunction {
 }
 
 fn call(comptime FunctionEnum: NodeFSFunctionEnum) NodeFSFunction {
-    const Function = @field(JSC.Node.NodeFS, @tagName(FunctionEnum));
+    const Function = @field(jsc.Node.NodeFS, @tagName(FunctionEnum));
     const FunctionType = @TypeOf(Function);
 
     const function: std.builtin.Type.Fn = comptime @typeInfo(FunctionType).Fn;
     comptime if (function.params.len != 3) @compileError("Expected 3 arguments");
     const Arguments = comptime function.params[1].type.?;
     const NodeBindingClosure = struct {
-        pub fn bind(this: *JSC.Node.NodeJSFS, globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+        pub fn bind(this: *jsc.Node.NodeJSFS, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
             var arguments = callframe.arguments_old(8);
 
             var slice = ArgumentsSlice.init(globalObject.bunVM(), arguments.slice());
@@ -88,13 +88,13 @@ fn call(comptime FunctionEnum: NodeFSFunctionEnum) NodeFSFunction {
                 return .zero;
             }
 
-            const Task = @field(JSC.Node.Async, @tagName(FunctionEnum));
+            const Task = @field(jsc.Node.Async, @tagName(FunctionEnum));
             if (comptime FunctionEnum == .cp) {
                 return Task.create(globalObject, this, args, globalObject.bunVM(), slice.arena);
             } else {
                 if (comptime FunctionEnum == .readdir) {
                     if (args.recursive) {
-                        return JSC.Node.Async.readdir_recursive.create(globalObject, args, globalObject.bunVM());
+                        return jsc.Node.Async.readdir_recursive.create(globalObject, args, globalObject.bunVM());
                     }
                 }
 
@@ -106,12 +106,12 @@ fn call(comptime FunctionEnum: NodeFSFunctionEnum) NodeFSFunction {
 }
 
 pub const NodeJSFS = struct {
-    node_fs: JSC.Node.NodeFS = .{},
+    node_fs: jsc.Node.NodeFS = .{},
 
-    pub usingnamespace JSC.Codegen.JSNodeJSFS;
+    pub usingnamespace jsc.Codegen.JSNodeJSFS;
     pub usingnamespace bun.New(@This());
 
-    pub fn finalize(this: *JSC.Node.NodeJSFS) void {
+    pub fn finalize(this: *jsc.Node.NodeJSFS) void {
         if (this.node_fs.vm) |vm| {
             if (vm.node_fs == &this.node_fs) {
                 return;
@@ -203,12 +203,12 @@ pub const NodeJSFS = struct {
     pub const fdatasyncSync = callSync(.fdatasync);
     pub const fdatasync = call(.fdatasync);
 
-    pub fn getDirent(_: *NodeJSFS, globalThis: *JSC.JSGlobalObject) JSC.JSValue {
-        return JSC.Node.Dirent.getConstructor(globalThis);
+    pub fn getDirent(_: *NodeJSFS, globalThis: *jsc.JSGlobalObject) jsc.JSValue {
+        return jsc.Node.Dirent.getConstructor(globalThis);
     }
 
-    pub fn getStats(_: *NodeJSFS, globalThis: *JSC.JSGlobalObject) JSC.JSValue {
-        return JSC.Node.StatsSmall.getConstructor(globalThis);
+    pub fn getStats(_: *NodeJSFS, globalThis: *jsc.JSGlobalObject) jsc.JSValue {
+        return jsc.Node.StatsSmall.getConstructor(globalThis);
     }
 
     pub const watch = callSync(.watch);
@@ -221,7 +221,7 @@ pub const NodeJSFS = struct {
     pub const opendirSync = notimpl;
 };
 
-pub fn createBinding(globalObject: *JSC.JSGlobalObject) JSC.JSValue {
+pub fn createBinding(globalObject: *jsc.JSGlobalObject) jsc.JSValue {
     const module = NodeJSFS.new(.{});
 
     const vm = globalObject.bunVM();
@@ -230,7 +230,7 @@ pub fn createBinding(globalObject: *JSC.JSGlobalObject) JSC.JSValue {
     return module.toJS(globalObject);
 }
 
-pub fn createMemfdForTesting(globalObject: *JSC.JSGlobalObject, callFrame: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn createMemfdForTesting(globalObject: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     const arguments = callFrame.arguments_old(1);
 
     if (arguments.len < 1) {
@@ -245,7 +245,7 @@ pub fn createMemfdForTesting(globalObject: *JSC.JSGlobalObject, callFrame: *JSC.
     switch (bun.sys.memfd_create("my_memfd", std.os.linux.MFD.CLOEXEC)) {
         .result => |fd| {
             _ = bun.sys.ftruncate(fd, size);
-            return JSC.JSValue.jsNumber(fd.cast());
+            return jsc.JSValue.jsNumber(fd.cast());
         },
         .err => |err| {
             return globalObject.throwValue(err.toJSC(globalObject));

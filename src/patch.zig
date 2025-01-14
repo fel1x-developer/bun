@@ -2,7 +2,7 @@ const Output = bun.Output;
 const Global = bun.Global;
 const std = @import("std");
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const Allocator = std.mem.Allocator;
 const List = std.ArrayListUnmanaged;
 
@@ -63,7 +63,7 @@ pub const PatchFile = struct {
         pathbuf: bun.PathBuffer = undefined,
         patch_dir_abs_path: ?[:0]const u8 = null,
 
-        fn patchDirAbsPath(state: *@This(), fd: bun.FileDescriptor) JSC.Maybe([:0]const u8) {
+        fn patchDirAbsPath(state: *@This(), fd: bun.FileDescriptor) jsc.Maybe([:0]const u8) {
             if (state.patch_dir_abs_path) |p| return .{ .result = p };
             return switch (bun.sys.getFdPath(fd, &state.pathbuf)) {
                 .result => |p| {
@@ -75,7 +75,7 @@ pub const PatchFile = struct {
         }
     };
 
-    pub fn apply(this: *const PatchFile, allocator: Allocator, patch_dir: bun.FileDescriptor) ?JSC.SystemError {
+    pub fn apply(this: *const PatchFile, allocator: Allocator, patch_dir: bun.FileDescriptor) ?jsc.SystemError {
         var state: ApplyState = .{};
         var sfb = std.heap.stackFallback(1024, allocator);
         var arena = bun.ArenaAllocator.init(sfb.get());
@@ -103,7 +103,7 @@ pub const PatchFile = struct {
                             abs_patch_dir,
                             todir,
                         }, .auto);
-                        var nodefs = bun.JSC.Node.NodeFS{};
+                        var nodefs = bun.jsc.Node.NodeFS{};
                         if (nodefs.mkdirRecursive(.{
                             .path = .{ .string = bun.PathString.init(path_to_make) },
                             .recursive = true,
@@ -120,7 +120,7 @@ pub const PatchFile = struct {
                     const filedir = bun.path.dirname(filepath.slice(), .auto);
                     const mode = part.file_creation.mode;
 
-                    var nodefs = bun.JSC.Node.NodeFS{};
+                    var nodefs = bun.jsc.Node.NodeFS{};
                     if (filedir.len > 0) {
                         if (nodefs.mkdirRecursive(.{
                             .path = .{ .string = bun.PathString.init(filedir) },
@@ -233,7 +233,7 @@ pub const PatchFile = struct {
         arena: *bun.ArenaAllocator,
         patch_dir: bun.FileDescriptor,
         state: *ApplyState,
-    ) JSC.Maybe(void) {
+    ) jsc.Maybe(void) {
         const file_path: [:0]const u8 = arena.allocator().dupeZ(u8, patch.path) catch bun.outOfMemory();
 
         // Need to get the mode of the original file
@@ -354,7 +354,7 @@ pub const PatchFile = struct {
             };
         }
 
-        return JSC.Maybe(void).success;
+        return jsc.Maybe(void).success;
     }
 };
 
@@ -1094,9 +1094,9 @@ const PatchLinesParser = struct {
 };
 
 pub const TestingAPIs = struct {
-    pub fn makeDiff(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn makeDiff(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const arguments_ = callframe.arguments_old(2);
-        var arguments = JSC.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+        var arguments = jsc.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
 
         const old_folder_jsval = arguments.nextEat() orelse {
             return globalThis.throw("expected 2 strings", .{});
@@ -1130,7 +1130,7 @@ pub const TestingAPIs = struct {
         };
     }
     const ApplyArgs = struct {
-        patchfile_txt: JSC.ZigString.Slice,
+        patchfile_txt: jsc.ZigString.Slice,
         patchfile: PatchFile,
         dirfd: bun.FileDescriptor,
 
@@ -1142,7 +1142,7 @@ pub const TestingAPIs = struct {
             }
         }
     };
-    pub fn apply(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn apply(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         var args = switch (parseApplyArgs(globalThis, callframe)) {
             .err => |e| return e,
             .result => |a| a,
@@ -1156,9 +1156,9 @@ pub const TestingAPIs = struct {
         return .true;
     }
     /// Used in JS tests, see `internal-for-testing.ts` and patch tests.
-    pub fn parse(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn parse(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const arguments_ = callframe.arguments_old(2);
-        var arguments = JSC.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+        var arguments = jsc.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
 
         const patchfile_src_js = arguments.nextEat() orelse {
             return globalThis.throw("TestingAPIs.parse: expected at least 1 argument, got 0", .{});
@@ -1180,9 +1180,9 @@ pub const TestingAPIs = struct {
         return outstr.toJS(globalThis);
     }
 
-    pub fn parseApplyArgs(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSC.Node.Maybe(ApplyArgs, JSC.JSValue) {
+    pub fn parseApplyArgs(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.jsc.Node.Maybe(ApplyArgs, jsc.JSValue) {
         const arguments_ = callframe.arguments_old(2);
-        var arguments = JSC.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+        var arguments = jsc.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
 
         const patchfile_js = arguments.nextEat() orelse {
             globalThis.throw("apply: expected at least 1 argument, got 0", .{}) catch {};
@@ -1233,7 +1233,7 @@ pub fn spawnOpts(
     new_folder: []const u8,
     cwd: [:0]const u8,
     git: [:0]const u8,
-    loop: *JSC.AnyEventLoop,
+    loop: *jsc.AnyEventLoop,
 ) bun.spawn.sync.Options {
     const argv: []const []const u8 = brk: {
         const ARGV = &[_][:0]const u8{
@@ -1289,7 +1289,7 @@ pub fn spawnOpts(
     };
 }
 
-pub fn diffPostProcess(result: *bun.spawn.sync.Result, old_folder: []const u8, new_folder: []const u8) !bun.JSC.Node.Maybe(std.ArrayList(u8), std.ArrayList(u8)) {
+pub fn diffPostProcess(result: *bun.spawn.sync.Result, old_folder: []const u8, new_folder: []const u8) !bun.jsc.Node.Maybe(std.ArrayList(u8), std.ArrayList(u8)) {
     var stdout = std.ArrayList(u8).init(bun.default_allocator);
     var stderr = std.ArrayList(u8).init(bun.default_allocator);
 
@@ -1357,7 +1357,7 @@ pub fn gitDiffInternal(
     allocator: std.mem.Allocator,
     old_folder_: []const u8,
     new_folder_: []const u8,
-) !bun.JSC.Node.Maybe(std.ArrayList(u8), std.ArrayList(u8)) {
+) !bun.jsc.Node.Maybe(std.ArrayList(u8), std.ArrayList(u8)) {
     const paths = gitDiffPreprocessPaths(allocator, old_folder_, new_folder_, false);
     const old_folder = paths[0];
     const new_folder = paths[1];

@@ -1,5 +1,5 @@
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const std = @import("std");
 const builtin = @import("builtin");
 const FileDescriptor = bun.FileDescriptor;

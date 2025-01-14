@@ -2,13 +2,13 @@ const std = @import("std");
 const bun = @import("root").bun;
 const Allocator = std.mem.Allocator;
 const Environment = bun.Environment;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const string = bun.string;
 const Output = bun.Output;
-const ZigString = JSC.ZigString;
+const ZigString = jsc.ZigString;
 const uv = bun.windows.libuv;
 
-pub fn internalErrorName(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn internalErrorName(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(1).slice();
     if (arguments.len < 1) {
         return globalThis.throwNotEnoughArguments("internalErrorName", 1, arguments.len);
@@ -115,7 +115,7 @@ pub fn internalErrorName(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFr
 /// const extractedNewLineRe = new RegExp("(?<=\\n)");
 /// extractedSplitNewLines = value => RegExpPrototypeSymbolSplit(extractedNewLineRe, value);
 /// ```
-pub fn extractedSplitNewLinesFastPathStringsOnly(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn extractedSplitNewLinesFastPathStringsOnly(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     bun.assert(callframe.argumentsCount() == 1);
     const value = callframe.argument(0);
     bun.assert(value.isString());
@@ -128,16 +128,16 @@ pub fn extractedSplitNewLinesFastPathStringsOnly(globalThis: *JSC.JSGlobalObject
         .utf8 => if (bun.strings.isAllASCII(str.byteSlice()))
             return split(.utf8, globalThis, bun.default_allocator, &str)
         else
-            return JSC.JSValue.jsUndefined(),
+            return jsc.JSValue.jsUndefined(),
     };
 }
 
 fn split(
     comptime encoding: bun.strings.EncodingNonAscii,
-    globalThis: *JSC.JSGlobalObject,
+    globalThis: *jsc.JSGlobalObject,
     allocator: Allocator,
     str: *const bun.String,
-) bun.JSError!JSC.JSValue {
+) bun.JSError!jsc.JSValue {
     var fallback = std.heap.stackFallback(1024, allocator);
     const alloc = fallback.get();
     const Char = switch (encoding) {

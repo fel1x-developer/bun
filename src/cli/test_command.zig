@@ -38,10 +38,10 @@ const PathString = bun.PathString;
 const is_bindgen = false;
 const HTTPThread = bun.http.HTTPThread;
 
-const JSC = bun.JSC;
-const jest = JSC.Jest;
-const TestRunner = JSC.Jest.TestRunner;
-const Snapshots = JSC.Snapshot.Snapshots;
+const jsc = bun.jsc;
+const jest = jsc.Jest;
+const TestRunner = jsc.Jest.TestRunner;
+const Snapshots = jsc.Snapshot.Snapshots;
 const Test = TestRunner.Test;
 const CodeCoverageReport = bun.sourcemap.CodeCoverageReport;
 const uws = bun.uws;
@@ -719,7 +719,7 @@ pub const CommandLineReporter = struct {
         Output.printStartEnd(bun.start_time, std.time.nanoTimestamp());
     }
 
-    pub fn generateCodeCoverage(this: *CommandLineReporter, vm: *JSC.VirtualMachine, opts: *TestCommand.CodeCoverageOptions, comptime reporters: TestCommand.Reporters, comptime enable_ansi_colors: bool) !void {
+    pub fn generateCodeCoverage(this: *CommandLineReporter, vm: *jsc.VirtualMachine, opts: *TestCommand.CodeCoverageOptions, comptime reporters: TestCommand.Reporters, comptime enable_ansi_colors: bool) !void {
         if (comptime !reporters.text and !reporters.lcov) {
             return;
         }
@@ -741,7 +741,7 @@ pub const CommandLineReporter = struct {
         try this.printCodeCoverage(vm, opts, byte_ranges.items, reporters, enable_ansi_colors);
     }
 
-    pub fn printCodeCoverage(this: *CommandLineReporter, vm: *JSC.VirtualMachine, opts: *TestCommand.CodeCoverageOptions, byte_ranges: []bun.sourcemap.ByteRangeMapping, comptime reporters: TestCommand.Reporters, comptime enable_ansi_colors: bool) !void {
+    pub fn printCodeCoverage(this: *CommandLineReporter, vm: *jsc.VirtualMachine, opts: *TestCommand.CodeCoverageOptions, byte_ranges: []bun.sourcemap.ByteRangeMapping, comptime reporters: TestCommand.Reporters, comptime enable_ansi_colors: bool) !void {
         _ = this; // autofix
         const trace = bun.tracy.traceNamed(@src(), comptime brk: {
             if (reporters.text and reporters.lcov) {
@@ -812,11 +812,11 @@ pub const CommandLineReporter = struct {
             if (comptime !reporters.lcov) break :brk .{ {}, {}, {}, {} };
 
             // Ensure the directory exists
-            var fs = bun.JSC.Node.NodeFS{};
+            var fs = bun.jsc.Node.NodeFS{};
             _ = fs.mkdirRecursive(
                 .{
-                    .path = bun.JSC.Node.PathLike{
-                        .encoded_slice = JSC.ZigString.Slice.fromUTF8NeverFree(opts.reports_directory),
+                    .path = bun.jsc.Node.PathLike{
+                        .encoded_slice = jsc.ZigString.Slice.fromUTF8NeverFree(opts.reports_directory),
                     },
                     .always_return_none = true,
                 },
@@ -1035,7 +1035,7 @@ const Scanner = struct {
     };
 
     export fn BunTest__shouldGenerateCodeCoverage(test_name_str: bun.String) callconv(.C) bool {
-        var zig_slice: bun.JSC.ZigString.Slice = .{};
+        var zig_slice: bun.jsc.ZigString.Slice = .{};
         defer zig_slice.deinit();
 
         // In this particular case, we don't actually care about non-ascii latin1 characters.
@@ -1051,7 +1051,7 @@ const Scanner = struct {
         }
 
         const ext = std.fs.path.extension(slice);
-        const loader_by_ext = JSC.VirtualMachine.get().transpiler.options.loader(ext);
+        const loader_by_ext = jsc.VirtualMachine.get().transpiler.options.loader(ext);
 
         // allow file loader just incase they use a custom loader with a non-standard extension
         if (!(loader_by_ext.isJavaScriptLike() or loader_by_ext == .file)) {
@@ -1194,14 +1194,14 @@ pub const TestCommand = struct {
             loader.* = DotEnv.Loader.init(map, ctx.allocator);
             break :brk loader;
         };
-        bun.JSC.initialize(false);
+        bun.jsc.initialize(false);
         HTTPThread.init(&.{});
 
         var snapshot_file_buf = std.ArrayList(u8).init(ctx.allocator);
         var snapshot_values = Snapshots.ValuesHashMap.init(ctx.allocator);
         var snapshot_counts = bun.StringHashMap(usize).init(ctx.allocator);
         var inline_snapshots_to_write = std.AutoArrayHashMap(TestRunner.File.ID, std.ArrayList(Snapshots.InlineSnapshotToWrite)).init(ctx.allocator);
-        JSC.isBunTest = true;
+        jsc.isBunTest = true;
 
         var reporter = try ctx.allocator.create(CommandLineReporter);
         reporter.* = CommandLineReporter{
@@ -1247,7 +1247,7 @@ pub const TestCommand = struct {
 
         js_ast.Expr.Data.Store.create();
         js_ast.Stmt.Data.Store.create();
-        var vm = try JSC.VirtualMachine.init(
+        var vm = try jsc.VirtualMachine.init(
             .{
                 .allocator = ctx.allocator,
                 .args = ctx.args,
@@ -1282,7 +1282,7 @@ pub const TestCommand = struct {
 
         vm.loadExtraEnvAndSourceCodePrinter();
         vm.is_main_thread = true;
-        JSC.VirtualMachine.is_main_thread_vm = true;
+        jsc.VirtualMachine.is_main_thread_vm = true;
 
         if (ctx.test_options.coverage.enabled) {
             vm.transpiler.options.code_coverage = true;
@@ -1304,7 +1304,7 @@ pub const TestCommand = struct {
         }
 
         if (TZ_NAME.len > 0) {
-            _ = vm.global.setTimeZone(&JSC.ZigString.init(TZ_NAME));
+            _ = vm.global.setTimeZone(&jsc.ZigString.init(TZ_NAME));
         }
 
         var results = try std.ArrayList(PathString).initCapacity(ctx.allocator, ctx.positionals.len);
@@ -1375,8 +1375,8 @@ pub const TestCommand = struct {
             vm.hot_reload = ctx.debug.hot_reload;
 
             switch (vm.hot_reload) {
-                .hot => JSC.HotReloader.enableHotModuleReloading(vm),
-                .watch => JSC.WatchReloader.enableHotModuleReloading(vm),
+                .hot => jsc.HotReloader.enableHotModuleReloading(vm),
+                .watch => jsc.WatchReloader.enableHotModuleReloading(vm),
                 else => {},
             }
 
@@ -1571,7 +1571,7 @@ pub const TestCommand = struct {
         }
 
         if (vm.hot_reload == .watch) {
-            vm.runWithAPILock(JSC.VirtualMachine, vm, runEventLoopForWatch);
+            vm.runWithAPILock(jsc.VirtualMachine, vm, runEventLoopForWatch);
         }
 
         if (reporter.summary.fail > 0 or (coverage.enabled and coverage.fractions.failing and coverage.fail_on_low_coverage) or !write_snapshots_success) {
@@ -1581,7 +1581,7 @@ pub const TestCommand = struct {
         }
     }
 
-    fn runEventLoopForWatch(vm: *JSC.VirtualMachine) void {
+    fn runEventLoopForWatch(vm: *jsc.VirtualMachine) void {
         vm.eventLoop().tickPossiblyForever();
 
         while (true) {
@@ -1596,13 +1596,13 @@ pub const TestCommand = struct {
 
     pub fn runAllTests(
         reporter_: *CommandLineReporter,
-        vm_: *JSC.VirtualMachine,
+        vm_: *jsc.VirtualMachine,
         files_: []const PathString,
         allocator_: std.mem.Allocator,
     ) void {
         const Context = struct {
             reporter: *CommandLineReporter,
-            vm: *JSC.VirtualMachine,
+            vm: *jsc.VirtualMachine,
             files: []const PathString,
             allocator: std.mem.Allocator,
             pub fn begin(this: *@This()) void {
@@ -1636,7 +1636,7 @@ pub const TestCommand = struct {
 
     pub fn run(
         reporter: *CommandLineReporter,
-        vm: *JSC.VirtualMachine,
+        vm: *jsc.VirtualMachine,
         file_name: string,
         _: std.mem.Allocator,
         is_last: bool,
@@ -1761,7 +1761,7 @@ pub const TestCommand = struct {
             vm.global.handleRejectedPromises();
             if (repeat_index > 0) {
                 vm.clearEntryPoint();
-                var entry = JSC.ZigString.init(file_path);
+                var entry = jsc.ZigString.init(file_path);
                 vm.global.deleteModuleRegistryEntry(&entry);
             }
 

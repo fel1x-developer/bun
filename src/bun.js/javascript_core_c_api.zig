@@ -2,7 +2,7 @@
 /// **** DO NOT USE THIS ON NEW CODE ****
 /// *************************************
 /// To generate a new class exposed to JavaScript, look at *.classes.ts
-/// Otherwise, use `JSC.JSValue`.
+/// Otherwise, use `jsc.JSValue`.
 /// ************************************
 const bun = @import("root").bun;
 const std = @import("std");
@@ -12,7 +12,7 @@ const generic = opaque {
         return @as(cpp.JSValue, @enumFromInt(@as(cpp.JSValueReprInt, @bitCast(@intFromPtr(this)))));
     }
 
-    pub inline fn bunVM(this: *@This()) *bun.JSC.VirtualMachine {
+    pub inline fn bunVM(this: *@This()) *bun.jsc.VirtualMachine {
         return this.ptr().bunVM();
     }
 };

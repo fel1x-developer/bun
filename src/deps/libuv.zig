@@ -1,5 +1,5 @@
 const bun = @import("root").bun;
-const Maybe = bun.JSC.Maybe;
+const Maybe = bun.jsc.Maybe;
 
 const WORD = c_ushort;
 const LARGE_INTEGER = i64;

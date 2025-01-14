@@ -1,19 +1,19 @@
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const std = @import("std");
-const Blob = JSC.WebCore.Blob;
+const Blob = jsc.WebCore.Blob;
 const invalid_fd = bun.invalid_fd;
 
-const SystemError = JSC.SystemError;
+const SystemError = jsc.SystemError;
 const SizeType = Blob.SizeType;
 const io = bun.io;
 const FileOpenerMixin = Blob.Store.FileOpenerMixin;
 const FileCloserMixin = Blob.Store.FileCloserMixin;
 const Environment = bun.Environment;
 const bloblog = bun.Output.scoped(.WriteFile, true);
-const JSPromise = JSC.JSPromise;
-const JSGlobalObject = JSC.JSGlobalObject;
-const ZigString = JSC.ZigString;
+const JSPromise = jsc.JSPromise;
+const JSGlobalObject = jsc.JSGlobalObject;
+const ZigString = jsc.ZigString;
 const libuv = bun.windows.libuv;
 
 const log = bun.Output.scoped(.ReadFile, true);
@@ -36,12 +36,12 @@ pub fn NewReadFileHandler(comptime Function: anytype) type {
                     if (blob.size > 0)
                         blob.size = @min(@as(Blob.SizeType, @truncate(bytes.len)), blob.size);
                     const WrappedFn = struct {
-                        pub fn wrapped(b: *Blob, g: *JSGlobalObject, by: []u8) JSC.JSValue {
-                            return JSC.toJSHostValue(g, Function(b, g, by, .temporary));
+                        pub fn wrapped(b: *Blob, g: *JSGlobalObject, by: []u8) jsc.JSValue {
+                            return jsc.toJSHostValue(g, Function(b, g, by, .temporary));
                         }
                     };
 
-                    JSC.AnyPromise.wrap(.{ .normal = promise }, globalThis, WrappedFn.wrapped, .{ &blob, globalThis, bytes });
+                    jsc.AnyPromise.wrap(.{ .normal = promise }, globalThis, WrappedFn.wrapped, .{ &blob, globalThis, bytes });
                 },
                 .err => |err| {
                     promise.reject(globalThis, err.toErrorInstance(globalThis));
@@ -69,7 +69,7 @@ pub const ReadFile = struct {
     size: SizeType = 0,
     buffer: std.ArrayListUnmanaged(u8) = .{},
     task: bun.ThreadPool.Task = undefined,
-    system_error: ?JSC.SystemError = null,
+    system_error: ?jsc.SystemError = null,
     errno: ?anyerror = null,
     onCompleteCtx: *anyopaque = undefined,
     onCompleteCallback: OnReadFileCallback = undefined,
@@ -163,7 +163,7 @@ pub const ReadFile = struct {
             this.close_after_io = this.io_request.scheduled;
         }
 
-        JSC.WorkPool.schedule(&this.task);
+        jsc.WorkPool.schedule(&this.task);
     }
 
     pub fn onIOError(this: *ReadFile, err: bun.sys.Error) void {
@@ -178,7 +178,7 @@ pub const ReadFile = struct {
             // unless pending IO has been scheduled in-between.
             this.close_after_io = this.io_request.scheduled;
         }
-        JSC.WorkPool.schedule(&this.task);
+        jsc.WorkPool.schedule(&this.task);
     }
 
     pub fn onRequestReadable(request: *io.Request) io.Action {
@@ -211,7 +211,7 @@ pub const ReadFile = struct {
     }
 
     pub fn doRead(this: *ReadFile, buffer: []u8, read_len: *usize, retry: *bool) bool {
-        const result: JSC.Maybe(usize) = brk: {
+        const result: jsc.Maybe(usize) = brk: {
             if (std.posix.S.ISSOCK(this.file_store.mode)) {
                 break :brk bun.sys.recvNonBlock(this.opened_fd, buffer);
             }
@@ -257,9 +257,9 @@ pub const ReadFile = struct {
         return true;
     }
 
-    pub const ReadFileTask = JSC.WorkTask(@This());
+    pub const ReadFileTask = jsc.WorkTask(@This());
 
-    pub fn then(this: *ReadFile, _: *JSC.JSGlobalObject) void {
+    pub fn then(this: *ReadFile, _: *jsc.JSGlobalObject) void {
         const cb = this.onCompleteCallback;
         const cb_ctx = this.onCompleteCtx;
 
@@ -347,13 +347,13 @@ pub const ReadFile = struct {
 
         if (this.store) |store| {
             if (store.data == .file) {
-                store.data.file.last_modified = JSC.toJSTime(stat.mtime().tv_sec, stat.mtime().tv_nsec);
+                store.data.file.last_modified = jsc.toJSTime(stat.mtime().tv_sec, stat.mtime().tv_nsec);
             }
         }
 
         if (bun.S.ISDIR(@intCast(stat.mode))) {
             this.errno = error.EISDIR;
-            this.system_error = JSC.SystemError{
+            this.system_error = jsc.SystemError{
                 .code = bun.String.static("EISDIR"),
                 .path = if (this.file_store.pathlike == .path)
                     bun.String.createUTF8(this.file_store.pathlike.path.slice())
@@ -438,7 +438,7 @@ pub const ReadFile = struct {
         this.doReadLoop();
     }
 
-    fn doReadLoopTask(task: *JSC.WorkPoolTask) void {
+    fn doReadLoopTask(task: *jsc.WorkPoolTask) void {
         var this: *ReadFile = @alignCast(@fieldParentPtr("task", task));
 
         this.update();
@@ -560,7 +560,7 @@ pub const ReadFileUV = struct {
     read_eof: bool = false,
     size: SizeType = 0,
     buffer: std.ArrayListUnmanaged(u8) = .{},
-    system_error: ?JSC.SystemError = null,
+    system_error: ?jsc.SystemError = null,
     errno: ?anyerror = null,
     on_complete_data: *anyopaque = undefined,
     on_complete_fn: ReadFile.OnReadFileCallback,
@@ -661,12 +661,12 @@ pub const ReadFileUV = struct {
 
         // keep in sync with resolveSizeAndLastModified
         if (this.store.data == .file) {
-            this.store.data.file.last_modified = JSC.toJSTime(stat.mtime().tv_sec, stat.mtime().tv_nsec);
+            this.store.data.file.last_modified = jsc.toJSTime(stat.mtime().tv_sec, stat.mtime().tv_nsec);
         }
 
         if (bun.S.ISDIR(@intCast(stat.mode))) {
             this.errno = error.EISDIR;
-            this.system_error = JSC.SystemError{
+            this.system_error = jsc.SystemError{
                 .code = bun.String.static("EISDIR"),
                 .path = if (this.file_store.pathlike == .path)
                     bun.String.createUTF8(this.file_store.pathlike.path.slice())

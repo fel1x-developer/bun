@@ -4,10 +4,10 @@ const MutableString = bun.MutableString;
 const Output = bun.Output;
 const default_allocator = bun.default_allocator;
 const string = bun.string;
-const JSC = bun.JSC;
-const JSValue = JSC.JSValue;
-const JSGlobalObject = JSC.JSGlobalObject;
-const ConsoleObject = JSC.ConsoleObject;
+const jsc = bun.jsc;
+const JSValue = jsc.JSValue;
+const JSGlobalObject = jsc.JSGlobalObject;
+const ConsoleObject = jsc.ConsoleObject;
 const DiffMatchPatch = @import("../../deps/diffz/DiffMatchPatch.zig");
 
 pub const DiffFormatter = struct {

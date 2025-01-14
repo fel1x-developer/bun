@@ -4,14 +4,14 @@ const bun = @import("root").bun;
 const MimeType = bun.http.MimeType;
 const ZigURL = @import("../../url.zig").URL;
 const HTTPClient = bun.http;
-const JSC = bun.JSC;
-const js = JSC.C;
+const jsc = bun.jsc;
+const js = jsc.C;
 
 const Method = @import("../../http/method.zig").Method;
-const FetchHeaders = JSC.FetchHeaders;
-const AbortSignal = JSC.WebCore.AbortSignal;
+const FetchHeaders = jsc.FetchHeaders;
+const AbortSignal = jsc.WebCore.AbortSignal;
 const ObjectPool = @import("../../pool.zig").ObjectPool;
-const SystemError = JSC.SystemError;
+const SystemError = jsc.SystemError;
 const Output = bun.Output;
 const MutableString = bun.MutableString;
 const strings = bun.strings;
@@ -25,27 +25,27 @@ const castObj = @import("../base.zig").castObj;
 const getAllocator = @import("../base.zig").getAllocator;
 
 const Environment = @import("../../env.zig");
-const ZigString = JSC.ZigString;
+const ZigString = jsc.ZigString;
 const IdentityContext = @import("../../identity_context.zig").IdentityContext;
-const JSPromise = JSC.JSPromise;
-const JSValue = JSC.JSValue;
-const JSGlobalObject = JSC.JSGlobalObject;
+const JSPromise = jsc.JSPromise;
+const JSValue = jsc.JSValue;
+const JSGlobalObject = jsc.JSGlobalObject;
 const NullableAllocator = bun.NullableAllocator;
 
-const VirtualMachine = JSC.VirtualMachine;
-const Task = JSC.Task;
+const VirtualMachine = jsc.VirtualMachine;
+const Task = jsc.Task;
 const JSPrinter = bun.js_printer;
 const picohttp = bun.picohttp;
 const StringJoiner = bun.StringJoiner;
 const uws = bun.uws;
 
-const InlineBlob = JSC.WebCore.InlineBlob;
-const AnyBlob = JSC.WebCore.AnyBlob;
-const InternalBlob = JSC.WebCore.InternalBlob;
-const BodyMixin = JSC.WebCore.BodyMixin;
-const Body = JSC.WebCore.Body;
-const Blob = JSC.WebCore.Blob;
-const Response = JSC.WebCore.Response;
+const InlineBlob = jsc.WebCore.InlineBlob;
+const AnyBlob = jsc.WebCore.AnyBlob;
+const InternalBlob = jsc.WebCore.InternalBlob;
+const BodyMixin = jsc.WebCore.BodyMixin;
+const Body = jsc.WebCore.Body;
+const Blob = jsc.WebCore.Blob;
+const Response = jsc.WebCore.Response;
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Request
 pub const Request = struct {
@@ -53,9 +53,9 @@ pub const Request = struct {
     // NOTE(@cirospaciari): renamed to _headers to avoid direct manipulation, use getFetchHeaders, setFetchHeaders, ensureFetchHeaders and hasFetchHeaders instead
     _headers: ?*FetchHeaders = null,
     signal: ?*AbortSignal = null,
-    body: *JSC.BodyValueRef,
+    body: *jsc.BodyValueRef,
     method: Method = Method.GET,
-    request_context: JSC.API.AnyRequestContext = JSC.API.AnyRequestContext.Null,
+    request_context: jsc.API.AnyRequestContext = jsc.API.AnyRequestContext.Null,
     https: bool = false,
     weak_ptr_data: bun.WeakPtrData = .{},
     // We must report a consistent value for this
@@ -63,7 +63,7 @@ pub const Request = struct {
     internal_event_callback: InternalJSEventCallback = .{},
 
     const RequestMixin = BodyMixin(@This());
-    pub usingnamespace JSC.Codegen.JSRequest;
+    pub usingnamespace jsc.Codegen.JSRequest;
     pub usingnamespace bun.New(@This());
 
     pub const getText = RequestMixin.getText;
@@ -89,15 +89,15 @@ pub const Request = struct {
 
     pub export fn Request__setInternalEventCallback(
         this: *Request,
-        callback: JSC.JSValue,
-        globalThis: *JSC.JSGlobalObject,
+        callback: jsc.JSValue,
+        globalThis: *jsc.JSGlobalObject,
     ) void {
         this.internal_event_callback = InternalJSEventCallback.init(callback, globalThis);
         // we always have the abort event but we need to enable the timeout event as well in case of `node:http`.Server.setTimeout is set
         this.request_context.enableTimeoutEvents();
     }
 
-    pub export fn Request__setTimeout(this: *Request, seconds: JSC.JSValue, globalThis: *JSC.JSGlobalObject) void {
+    pub export fn Request__setTimeout(this: *Request, seconds: jsc.JSValue, globalThis: *jsc.JSGlobalObject) void {
         if (!seconds.isNumber()) {
             globalThis.throw("Failed to set timeout: The provided value is not of type 'number'.", .{}) catch {};
             return;
@@ -107,7 +107,7 @@ pub const Request = struct {
     }
 
     comptime {
-        if (!JSC.is_bindgen) {
+        if (!jsc.is_bindgen) {
             _ = Request__getUWSRequest;
             _ = Request__setInternalEventCallback;
             _ = Request__setTimeout;
@@ -115,15 +115,15 @@ pub const Request = struct {
     }
 
     pub const InternalJSEventCallback = struct {
-        function: JSC.Strong = .{},
+        function: jsc.Strong = .{},
 
         pub const EventType = enum(u8) {
             timeout = 0,
             abort = 1,
         };
-        pub fn init(function: JSC.JSValue, globalThis: *JSC.JSGlobalObject) InternalJSEventCallback {
+        pub fn init(function: jsc.JSValue, globalThis: *jsc.JSGlobalObject) InternalJSEventCallback {
             return InternalJSEventCallback{
-                .function = JSC.Strong.create(function, globalThis),
+                .function = jsc.Strong.create(function, globalThis),
             };
         }
 
@@ -131,9 +131,9 @@ pub const Request = struct {
             return this.function.has();
         }
 
-        pub fn trigger(this: *InternalJSEventCallback, eventType: EventType, globalThis: *JSC.JSGlobalObject) bool {
+        pub fn trigger(this: *InternalJSEventCallback, eventType: EventType, globalThis: *jsc.JSGlobalObject) bool {
             if (this.function.get()) |callback| {
-                _ = callback.call(globalThis, JSC.JSValue.jsUndefined(), &.{JSC.JSValue.jsNumber(
+                _ = callback.call(globalThis, jsc.JSValue.jsUndefined(), &.{jsc.JSValue.jsNumber(
                     @intFromEnum(eventType),
                 )}) catch |err| globalThis.reportActiveExceptionAsUnhandled(err);
                 return true;
@@ -149,7 +149,7 @@ pub const Request = struct {
     pub fn init(
         url: bun.String,
         headers: ?*FetchHeaders,
-        body: *JSC.BodyValueRef,
+        body: *jsc.BodyValueRef,
         method: Method,
     ) Request {
         return Request{
@@ -280,31 +280,31 @@ pub const Request = struct {
 
     pub fn getCache(
         _: *Request,
-        globalThis: *JSC.JSGlobalObject,
-    ) JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+    ) jsc.JSValue {
         return ZigString.init(Properties.UTF8.default).toJS(globalThis);
     }
     pub fn getCredentials(
         _: *Request,
-        globalThis: *JSC.JSGlobalObject,
-    ) JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+    ) jsc.JSValue {
         return ZigString.init(Properties.UTF8.include).toJS(globalThis);
     }
     pub fn getDestination(
         _: *Request,
-        globalThis: *JSC.JSGlobalObject,
-    ) JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+    ) jsc.JSValue {
         return ZigString.init("").toJS(globalThis);
     }
 
     pub fn getIntegrity(
         _: *Request,
-        globalThis: *JSC.JSGlobalObject,
-    ) JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+    ) jsc.JSValue {
         return ZigString.Empty.toJS(globalThis);
     }
 
-    pub fn getSignal(this: *Request, globalThis: *JSC.JSGlobalObject) JSC.JSValue {
+    pub fn getSignal(this: *Request, globalThis: *jsc.JSGlobalObject) jsc.JSValue {
         // Already have an C++ instance
         if (this.signal) |signal| {
             return signal.toJS(globalThis);
@@ -321,15 +321,15 @@ pub const Request = struct {
 
     pub fn getMethod(
         this: *Request,
-        globalThis: *JSC.JSGlobalObject,
-    ) JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+    ) jsc.JSValue {
         return bun.String.static(@tagName(this.method)).toJS(globalThis);
     }
 
     pub fn getMode(
         _: *Request,
-        globalThis: *JSC.JSGlobalObject,
-    ) JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+    ) jsc.JSValue {
         return ZigString.init(Properties.UTF8.navigate).toJS(globalThis);
     }
 
@@ -359,14 +359,14 @@ pub const Request = struct {
 
     pub fn getRedirect(
         _: *Request,
-        globalThis: *JSC.JSGlobalObject,
-    ) JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+    ) jsc.JSValue {
         return ZigString.init(Properties.UTF8.follow).toJS(globalThis);
     }
     pub fn getReferrer(
         this: *Request,
-        globalObject: *JSC.JSGlobalObject,
-    ) JSC.JSValue {
+        globalObject: *jsc.JSGlobalObject,
+    ) jsc.JSValue {
         if (this._headers) |headers_ref| {
             if (headers_ref.get("referrer", globalObject)) |referrer| {
                 return ZigString.init(referrer).toJS(globalObject);
@@ -377,11 +377,11 @@ pub const Request = struct {
     }
     pub fn getReferrerPolicy(
         _: *Request,
-        globalThis: *JSC.JSGlobalObject,
-    ) JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+    ) jsc.JSValue {
         return ZigString.init("").toJS(globalThis);
     }
-    pub fn getUrl(this: *Request, globalObject: *JSC.JSGlobalObject) JSC.JSValue {
+    pub fn getUrl(this: *Request, globalObject: *jsc.JSGlobalObject) jsc.JSValue {
         this.ensureURL() catch {
             globalObject.throw("Failed to join URL", .{}) catch {}; // TODO: propagate
             return .zero;
@@ -451,7 +451,7 @@ pub const Request = struct {
                             bun.assert(this.sizeOfURL() == url.len);
                         }
 
-                        var href = bun.JSC.URL.hrefFromString(bun.String.fromBytes(url));
+                        var href = bun.jsc.URL.hrefFromString(bun.String.fromBytes(url));
                         if (!href.isEmpty()) {
                             if (href.byteSlice().ptr == url.ptr) {
                                 this.url = bun.String.createLatin1(url[0..href.length()]);
@@ -487,7 +487,7 @@ pub const Request = struct {
                         this.url = bun.String.createUTF8(temp_url);
                     }
 
-                    const href = bun.JSC.URL.hrefFromString(this.url);
+                    const href = bun.jsc.URL.hrefFromString(this.url);
                     // TODO: what is the right thing to do for invalid URLS?
                     if (!href.isEmpty()) {
                         this.url = href;
@@ -521,7 +521,7 @@ pub const Request = struct {
         url,
     };
 
-    pub fn constructInto(globalThis: *JSC.JSGlobalObject, arguments: []const JSC.JSValue) bun.JSError!Request {
+    pub fn constructInto(globalThis: *jsc.JSGlobalObject, arguments: []const jsc.JSValue) bun.JSError!Request {
         var success = false;
         const vm = globalThis.bunVM();
         const body = try vm.initRequestBodyValue(.{ .Null = {} });
@@ -552,7 +552,7 @@ pub const Request = struct {
             // fastest path:
             url_or_object_type.isStringLike() or
             // slower path:
-            url_or_object.as(JSC.DOMURL) != null;
+            url_or_object.as(jsc.DOMURL) != null;
 
         if (is_first_argument_a_url) {
             const str = try bun.String.fromJS2(arguments[0], globalThis);
@@ -612,7 +612,7 @@ pub const Request = struct {
                     }
                 }
 
-                if (value.asDirect(JSC.WebCore.Response)) |response| {
+                if (value.asDirect(jsc.WebCore.Response)) |response| {
                     if (!fields.contains(.method)) {
                         req.method = response.init.method;
                         fields.insert(.method);
@@ -729,7 +729,7 @@ pub const Request = struct {
             return globalThis.throw("Failed to construct 'Request': url is required.", .{});
         }
 
-        const href = JSC.URL.hrefFromString(req.url);
+        const href = jsc.URL.hrefFromString(req.url);
         if (href.isEmpty()) {
             if (!globalThis.hasException()) {
                 // globalThis.throw can cause GC, which could cause the above string to be freed.
@@ -762,7 +762,7 @@ pub const Request = struct {
         return req;
     }
 
-    pub fn constructor(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!*Request {
+    pub fn constructor(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!*Request {
         const arguments_ = callframe.arguments_old(2);
         const arguments = arguments_.ptr[0..arguments_.len];
 
@@ -778,9 +778,9 @@ pub const Request = struct {
 
     pub fn doClone(
         this: *Request,
-        globalThis: *JSC.JSGlobalObject,
-        callframe: *JSC.CallFrame,
-    ) bun.JSError!JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+        callframe: *jsc.CallFrame,
+    ) bun.JSError!jsc.JSValue {
         const this_value = callframe.this();
         var cloned = this.clone(getAllocator(globalThis), globalThis);
 
@@ -832,7 +832,7 @@ pub const Request = struct {
     /// If the headers are empty and request_context is null, it will create an empty FetchHeaders object.
     pub fn ensureFetchHeaders(
         this: *Request,
-        globalThis: *JSC.JSGlobalObject,
+        globalThis: *jsc.JSGlobalObject,
     ) *FetchHeaders {
         if (this._headers) |headers| {
             // headers is already set
@@ -884,8 +884,8 @@ pub const Request = struct {
     /// This should only be called by the JS code. use getFetchHeaders to get the current headers or ensureFetchHeaders to get the headers and create them if they don't exist.
     pub fn getHeaders(
         this: *Request,
-        globalThis: *JSC.JSGlobalObject,
-    ) JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+    ) jsc.JSValue {
         return this.ensureFetchHeaders(globalThis).toJS(globalThis);
     }
 

@@ -31,7 +31,7 @@ const NodeFallbackModules = @import("../node_fallbacks.zig");
 const Mutex = bun.Mutex;
 const StringBoolMap = bun.StringHashMap(bool);
 const FileDescriptorType = bun.FileDescriptor;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 
 const allocators = @import("../allocators.zig");
 const Msg = logger.Msg;
@@ -713,7 +713,7 @@ pub const Resolver = struct {
         if (r.opts.mark_builtins_as_external) {
             if (strings.hasPrefixComptime(import_path, "node:") or
                 strings.hasPrefixComptime(import_path, "bun:") or
-                bun.JSC.HardcodedModule.Aliases.has(import_path, r.opts.target))
+                bun.jsc.HardcodedModule.Aliases.has(import_path, r.opts.target))
             {
                 return .{
                     .success = Result{
@@ -1264,7 +1264,7 @@ pub const Resolver = struct {
 
                 if (had_node_prefix) {
                     // Module resolution fails automatically for unknown node builtins
-                    if (!bun.JSC.HardcodedModule.Aliases.has(import_path_without_node_prefix, .node)) {
+                    if (!bun.jsc.HardcodedModule.Aliases.has(import_path_without_node_prefix, .node)) {
                         return .{ .not_found = {} };
                     }
 
@@ -3032,7 +3032,7 @@ pub const Resolver = struct {
             //     }
             //
             if (r.opts.mark_builtins_as_external or r.opts.target.isBun()) {
-                if (JSC.HardcodedModule.Aliases.has(esm_resolution.path, r.opts.target)) {
+                if (jsc.HardcodedModule.Aliases.has(esm_resolution.path, r.opts.target)) {
                     return .{
                         .success = .{
                             .path_pair = .{ .primary = bun.fs.Path.init(esm_resolution.path) },
@@ -3294,12 +3294,12 @@ pub const Resolver = struct {
     }
 
     comptime {
-        const Resolver__nodeModulePathsForJS = JSC.toJSHostFunction(Resolver__nodeModulePathsForJS_);
+        const Resolver__nodeModulePathsForJS = jsc.toJSHostFunction(Resolver__nodeModulePathsForJS_);
         @export(Resolver__nodeModulePathsForJS, .{ .name = "Resolver__nodeModulePathsForJS" });
     }
-    pub fn Resolver__nodeModulePathsForJS_(globalThis: *bun.JSC.JSGlobalObject, callframe: *bun.JSC.CallFrame) bun.JSError!JSC.JSValue {
-        bun.JSC.markBinding(@src());
-        const argument: bun.JSC.JSValue = callframe.argument(0);
+    pub fn Resolver__nodeModulePathsForJS_(globalThis: *bun.jsc.JSGlobalObject, callframe: *bun.jsc.CallFrame) bun.JSError!jsc.JSValue {
+        bun.jsc.markBinding(@src());
+        const argument: bun.jsc.JSValue = callframe.argument(0);
 
         if (argument == .zero or !argument.isString()) {
             return globalThis.throwInvalidArgumentType("nodeModulePaths", "path", "string");
@@ -3311,8 +3311,8 @@ pub const Resolver = struct {
         return nodeModulePathsJSValue(r, in_str, globalThis);
     }
 
-    pub export fn Resolver__propForRequireMainPaths(globalThis: *bun.JSC.JSGlobalObject) callconv(.C) JSC.JSValue {
-        bun.JSC.markBinding(@src());
+    pub export fn Resolver__propForRequireMainPaths(globalThis: *bun.jsc.JSGlobalObject) callconv(.C) jsc.JSValue {
+        bun.jsc.markBinding(@src());
 
         const in_str = bun.String.createUTF8(".");
         const r = &globalThis.bunVM().transpiler.resolver;
@@ -3322,8 +3322,8 @@ pub const Resolver = struct {
     pub fn nodeModulePathsJSValue(
         r: *ThisResolver,
         in_str: bun.String,
-        globalObject: *bun.JSC.JSGlobalObject,
-    ) bun.JSC.JSValue {
+        globalObject: *bun.jsc.JSGlobalObject,
+    ) bun.jsc.JSValue {
         var list = std.ArrayList(bun.String).init(bun.default_allocator);
         defer list.deinit();
 
@@ -4219,7 +4219,7 @@ pub const GlobalCache = enum {
 };
 
 comptime {
-    if (!bun.JSC.is_bindgen) {
+    if (!bun.jsc.is_bindgen) {
         _ = Resolver.Resolver__propForRequireMainPaths;
     }
 }

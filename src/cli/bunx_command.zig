@@ -158,7 +158,7 @@ pub const BunxCommand = struct {
 
         // TODO: make this better
         if (package_json_read.err) |err| {
-            try (bun.JSC.Maybe(void){ .err = err }).unwrap();
+            try (bun.jsc.Maybe(void){ .err = err }).unwrap();
         }
 
         const package_json_contents = package_json_read.bytes.items;
@@ -714,7 +714,7 @@ pub const BunxCommand = struct {
             .stdin = .inherit,
 
             .windows = if (Environment.isWindows) .{
-                .loop = bun.JSC.EventLoopHandle.init(bun.JSC.MiniEventLoop.initGlobal(this_transpiler.env)),
+                .loop = bun.jsc.EventLoopHandle.init(bun.jsc.MiniEventLoop.initGlobal(this_transpiler.env)),
             } else {},
         }) catch |err| {
             Output.prettyErrorln("<r><red>error<r>: bunx failed to install <b>{s}<r> due to error <b>{s}<r>", .{ install_param, @errorName(err) });

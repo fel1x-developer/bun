@@ -124,12 +124,12 @@ function builtinType<T>() {
 export namespace t {
   /**
    * Can only be used as an argument type.
-   * Tells the code generator to pass `*JSC.JSGlobalObject` as a parameter
+   * Tells the code generator to pass `*jsc.JSGlobalObject` as a parameter
    */
   export const globalObject = builtinType<never>()("globalObject");
   /**
    * Can only be used as an argument type.
-   * Tells the code generator to pass `*JSC.VirtualMachine` as a parameter
+   * Tells the code generator to pass `*jsc.VirtualMachine` as a parameter
    */
   export const zigVirtualMachine = builtinType<never>()("zigVirtualMachine");
 

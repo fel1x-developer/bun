@@ -1,6 +1,6 @@
 const bun = @import("root").bun;
 const picohttp = bun.picohttp;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const string = bun.string;
 const Output = bun.Output;
 const Global = bun.Global;
@@ -435,7 +435,7 @@ const ProxyTunnel = struct {
         }
     }
 
-    fn start(this: *HTTPClient, comptime is_ssl: bool, socket: NewHTTPContext(is_ssl).HTTPSocket, ssl_options: JSC.API.ServerConfig.SSLConfig) void {
+    fn start(this: *HTTPClient, comptime is_ssl: bool, socket: NewHTTPContext(is_ssl).HTTPSocket, ssl_options: jsc.API.ServerConfig.SSLConfig) void {
         const proxy_tunnel = ProxyTunnel.new(.{});
 
         var custom_options = ssl_options;
@@ -1032,7 +1032,7 @@ const ShutdownQueue = UnboundedQueue(AsyncHTTP, .next);
 const RequestWriteQueue = UnboundedQueue(AsyncHTTP, .next);
 
 pub const HTTPThread = struct {
-    loop: *JSC.MiniEventLoop,
+    loop: *jsc.MiniEventLoop,
     http_context: NewHTTPContext(false),
     https_context: NewHTTPContext(true),
 
@@ -1223,7 +1223,7 @@ pub const HTTPThread = struct {
         default_arena = Arena.init() catch unreachable;
         default_allocator = default_arena.allocator();
 
-        const loop = bun.JSC.MiniEventLoop.initGlobal(null);
+        const loop = bun.jsc.MiniEventLoop.initGlobal(null);
 
         if (Environment.isWindows) {
             _ = std.process.getenvW(comptime bun.strings.w("SystemRoot")) orelse {
@@ -2255,7 +2255,7 @@ proxy_tunnel: ?*ProxyTunnel = null,
 signals: Signals = .{},
 async_http_id: u32 = 0,
 hostname: ?[]u8 = null,
-unix_socket_path: JSC.ZigString.Slice = JSC.ZigString.Slice.empty,
+unix_socket_path: jsc.ZigString.Slice = jsc.ZigString.Slice.empty,
 
 pub fn deinit(this: *HTTPClient) void {
     if (this.redirect.len > 0) {
@@ -2271,7 +2271,7 @@ pub fn deinit(this: *HTTPClient) void {
         tunnel.detachAndDeref();
     }
     this.unix_socket_path.deinit();
-    this.unix_socket_path = JSC.ZigString.Slice.empty;
+    this.unix_socket_path = jsc.ZigString.Slice.empty;
 }
 
 pub fn isKeepAlivePossible(this: *HTTPClient) bool {
@@ -2479,7 +2479,7 @@ pub const AsyncHTTP = struct {
         this.request = null;
         this.response = null;
         this.client.unix_socket_path.deinit();
-        this.client.unix_socket_path = JSC.ZigString.Slice.empty;
+        this.client.unix_socket_path = jsc.ZigString.Slice.empty;
     }
 
     pub const State = enum(u32) {
@@ -2495,7 +2495,7 @@ pub const AsyncHTTP = struct {
         http_proxy: ?URL = null,
         hostname: ?[]u8 = null,
         signals: ?Signals = null,
-        unix_socket_path: ?JSC.ZigString.Slice = null,
+        unix_socket_path: ?jsc.ZigString.Slice = null,
         disable_timeout: ?bool = null,
         verbose: ?HTTPVerboseLevel = null,
         disable_keepalive: ?bool = null,
@@ -3001,7 +3001,7 @@ pub fn doRedirect(
     }
 
     this.unix_socket_path.deinit();
-    this.unix_socket_path = JSC.ZigString.Slice.empty;
+    this.unix_socket_path = jsc.ZigString.Slice.empty;
     // TODO: what we do with stream body?
     const request_body = if (this.state.flags.resend_request_body_on_redirect and this.state.original_request_body == .bytes)
         this.state.original_request_body.bytes
@@ -3529,7 +3529,7 @@ pub fn closeAndFail(this: *HTTPClient, err: anyerror, comptime is_ssl: bool, soc
 
 fn startProxyHandshake(this: *HTTPClient, comptime is_ssl: bool, socket: NewHTTPContext(is_ssl).HTTPSocket) void {
     // if we have options we pass them (ca, reject_unauthorized, etc) otherwise use the default
-    const ssl_options = if (this.tls_props != null) this.tls_props.?.* else JSC.API.ServerConfig.SSLConfig.zero;
+    const ssl_options = if (this.tls_props != null) this.tls_props.?.* else jsc.API.ServerConfig.SSLConfig.zero;
     ProxyTunnel.start(this, is_ssl, socket, ssl_options);
 }
 
@@ -3901,7 +3901,7 @@ pub const HTTPClientResult = struct {
     body_size: BodySize = .unknown,
     certificate_info: ?CertificateInfo = null,
 
-    pub fn abortReason(this: *const HTTPClientResult) ?JSC.CommonAbortReason {
+    pub fn abortReason(this: *const HTTPClientResult) ?jsc.CommonAbortReason {
         if (this.isTimeout()) {
             return .Timeout;
         }
@@ -4433,7 +4433,7 @@ pub fn handleResponseMetadata(
                             if (comptime Environment.allow_assert)
                                 assert(string_builder.cap == string_builder.len);
 
-                            const normalized_url = JSC.URL.hrefFromString(bun.String.fromBytes(string_builder.allocatedSlice()));
+                            const normalized_url = jsc.URL.hrefFromString(bun.String.fromBytes(string_builder.allocatedSlice()));
                             defer normalized_url.deref();
                             if (normalized_url.tag == .Dead) {
                                 // URL__getHref failed, dont pass dead tagged string to toOwnedSlice.
@@ -4477,7 +4477,7 @@ pub fn handleResponseMetadata(
                             if (comptime Environment.allow_assert)
                                 assert(string_builder.cap == string_builder.len);
 
-                            const normalized_url = JSC.URL.hrefFromString(bun.String.fromBytes(string_builder.allocatedSlice()));
+                            const normalized_url = jsc.URL.hrefFromString(bun.String.fromBytes(string_builder.allocatedSlice()));
                             defer normalized_url.deref();
                             const normalized_url_str = try normalized_url.toOwnedSlice(bun.default_allocator);
 
@@ -4488,7 +4488,7 @@ pub fn handleResponseMetadata(
                         } else {
                             const original_url = this.url;
 
-                            const new_url_ = bun.JSC.URL.join(
+                            const new_url_ = bun.jsc.URL.join(
                                 bun.String.fromBytes(original_url.href),
                                 bun.String.fromBytes(location),
                             );

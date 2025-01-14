@@ -8,7 +8,7 @@ const bun = @import("root").bun;
 const log = bun.Output.scoped(.STR, true);
 const js_lexer = @import("./js_lexer.zig");
 const grapheme = @import("./grapheme.zig");
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const OOM = bun.OOM;
 
 pub const Encoding = enum {
@@ -2181,7 +2181,7 @@ pub fn toUTF8AppendToList(list: *std.ArrayList(u8), utf16: []const u16) !void {
 }
 
 pub fn toUTF8FromLatin1(allocator: std.mem.Allocator, latin1: []const u8) !?std.ArrayList(u8) {
-    if (bun.JSC.is_bindgen)
+    if (bun.jsc.is_bindgen)
         unreachable;
 
     if (isAllASCII(latin1))
@@ -2192,7 +2192,7 @@ pub fn toUTF8FromLatin1(allocator: std.mem.Allocator, latin1: []const u8) !?std.
 }
 
 pub fn toUTF8FromLatin1Z(allocator: std.mem.Allocator, latin1: []const u8) !?std.ArrayList(u8) {
-    if (bun.JSC.is_bindgen)
+    if (bun.jsc.is_bindgen)
         unreachable;
 
     if (isAllASCII(latin1))

@@ -1362,7 +1362,7 @@ pub fn getErrno(_: anytype) E {
     return .SUCCESS;
 }
 
-const Maybe = bun.JSC.Maybe;
+const Maybe = bun.jsc.Maybe;
 
 const w = std.os.windows;
 

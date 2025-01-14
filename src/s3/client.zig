@@ -1,6 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const picohttp = bun.picohttp;
 
 pub const ACL = @import("./acl.zig").ACL;
@@ -123,13 +123,13 @@ pub fn upload(
 pub fn writableStream(
     this: *S3Credentials,
     path: []const u8,
-    globalThis: *JSC.JSGlobalObject,
+    globalThis: *jsc.JSGlobalObject,
     options: MultiPartUploadOptions,
     content_type: ?[]const u8,
     proxy: ?[]const u8,
-) bun.JSError!JSC.JSValue {
+) bun.JSError!jsc.JSValue {
     const Wrapper = struct {
-        pub fn callback(result: S3UploadResult, sink: *JSC.WebCore.NetworkSink) void {
+        pub fn callback(result: S3UploadResult, sink: *jsc.WebCore.NetworkSink) void {
             if (sink.endPromise.hasValue()) {
                 if (sink.endPromise.globalObject()) |globalObject| {
                     const event_loop = globalObject.bunVM().eventLoop();
@@ -137,7 +137,7 @@ pub fn writableStream(
                     defer event_loop.exit();
                     switch (result) {
                         .success => {
-                            sink.endPromise.resolve(globalObject, JSC.jsNumber(0));
+                            sink.endPromise.resolve(globalObject, jsc.jsNumber(0));
                         },
                         .failure => |err| {
                             if (!sink.done) {
@@ -165,24 +165,24 @@ pub fn writableStream(
         .callback_context = undefined,
         .globalThis = globalThis,
         .options = options,
-        .vm = JSC.VirtualMachine.get(),
+        .vm = jsc.VirtualMachine.get(),
     });
 
     task.poll_ref.ref(task.vm);
 
     task.ref(); // + 1 for the stream
-    var response_stream = JSC.WebCore.NetworkSink.new(.{
+    var response_stream = jsc.WebCore.NetworkSink.new(.{
         .task = .{ .s3_upload = task },
         .buffer = .{},
         .globalThis = globalThis,
         .encoded = false,
-        .endPromise = JSC.JSPromise.Strong.init(globalThis),
+        .endPromise = jsc.JSPromise.Strong.init(globalThis),
     }).toSink();
 
     task.callback_context = @ptrCast(response_stream);
     var signal = &response_stream.sink.signal;
 
-    signal.* = JSC.WebCore.NetworkSink.JSSink.SinkSignal.init(.zero);
+    signal.* = jsc.WebCore.NetworkSink.JSSink.SinkSignal.init(.zero);
 
     // explicitly set it to a dead pointer
     // we use this memory address to disable signals being sent
@@ -192,8 +192,8 @@ pub fn writableStream(
 }
 
 const S3UploadStreamWrapper = struct {
-    readable_stream_ref: JSC.WebCore.ReadableStream.Strong,
-    sink: *JSC.WebCore.NetworkSink,
+    readable_stream_ref: jsc.WebCore.ReadableStream.Strong,
+    sink: *jsc.WebCore.NetworkSink,
     task: *MultiPartUpload,
     callback: ?*const fn (S3UploadResult, *anyopaque) void,
     callback_context: *anyopaque,
@@ -206,7 +206,7 @@ const S3UploadStreamWrapper = struct {
         if (sink.endPromise.hasValue()) {
             if (sink.endPromise.globalObject()) |globalObject| {
                 switch (result) {
-                    .success => sink.endPromise.resolve(globalObject, JSC.jsNumber(0)),
+                    .success => sink.endPromise.resolve(globalObject, jsc.jsNumber(0)),
                     .failure => |err| {
                         if (!sink.done) {
                             sink.abort();
@@ -231,7 +231,7 @@ const S3UploadStreamWrapper = struct {
     }
 };
 
-pub fn onUploadStreamResolveRequestStream(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn onUploadStreamResolveRequestStream(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     var args = callframe.arguments_old(2);
     var this = args.ptr[args.len - 1].asPromisePtr(S3UploadStreamWrapper);
     defer this.deref();
@@ -245,7 +245,7 @@ pub fn onUploadStreamResolveRequestStream(globalThis: *JSC.JSGlobalObject, callf
     return .undefined;
 }
 
-pub fn onUploadStreamRejectRequestStream(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn onUploadStreamRejectRequestStream(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     const args = callframe.arguments_old(2);
     var this = args.ptr[args.len - 1].asPromisePtr(S3UploadStreamWrapper);
     defer this.deref();
@@ -271,16 +271,16 @@ pub fn onUploadStreamRejectRequestStream(globalThis: *JSC.JSGlobalObject, callfr
 
     return .undefined;
 }
-pub const shim = JSC.Shimmer("Bun", "S3UploadStream", @This());
+pub const shim = jsc.Shimmer("Bun", "S3UploadStream", @This());
 
 pub const Export = shim.exportFunctions(.{
     .onResolveRequestStream = onUploadStreamResolveRequestStream,
     .onRejectRequestStream = onUploadStreamRejectRequestStream,
 });
 comptime {
-    const jsonResolveRequestStream = JSC.toJSHostFunction(onUploadStreamResolveRequestStream);
+    const jsonResolveRequestStream = jsc.toJSHostFunction(onUploadStreamResolveRequestStream);
     @export(jsonResolveRequestStream, .{ .name = Export[0].symbol_name });
-    const jsonRejectRequestStream = JSC.toJSHostFunction(onUploadStreamRejectRequestStream);
+    const jsonRejectRequestStream = jsc.toJSHostFunction(onUploadStreamRejectRequestStream);
     @export(jsonRejectRequestStream, .{ .name = Export[1].symbol_name });
 }
 
@@ -288,25 +288,25 @@ comptime {
 pub fn uploadStream(
     this: *S3Credentials,
     path: []const u8,
-    readable_stream: JSC.WebCore.ReadableStream,
-    globalThis: *JSC.JSGlobalObject,
+    readable_stream: jsc.WebCore.ReadableStream,
+    globalThis: *jsc.JSGlobalObject,
     options: MultiPartUploadOptions,
     acl: ?ACL,
     content_type: ?[]const u8,
     proxy: ?[]const u8,
     callback: ?*const fn (S3UploadResult, *anyopaque) void,
     callback_context: *anyopaque,
-) JSC.JSValue {
+) jsc.JSValue {
     this.ref(); // ref the credentials
     const proxy_url = (proxy orelse "");
 
     if (readable_stream.isDisturbed(globalThis)) {
-        return JSC.JSPromise.rejectedPromiseValue(globalThis, bun.String.static("ReadableStream is already disturbed").toErrorInstance(globalThis));
+        return jsc.JSPromise.rejectedPromiseValue(globalThis, bun.String.static("ReadableStream is already disturbed").toErrorInstance(globalThis));
     }
 
     switch (readable_stream.ptr) {
         .Invalid => {
-            return JSC.JSPromise.rejectedPromiseValue(globalThis, bun.String.static("ReadableStream is invalid").toErrorInstance(globalThis));
+            return jsc.JSPromise.rejectedPromiseValue(globalThis, bun.String.static("ReadableStream is invalid").toErrorInstance(globalThis));
         },
         inline .File, .Bytes => |stream| {
             if (stream.pending.result == .err) {
@@ -318,7 +318,7 @@ pub fn uploadStream(
                     js_err.unprotect();
                 }
                 js_err.ensureStillAlive();
-                return JSC.JSPromise.rejectedPromise(globalThis, js_err).asValue(globalThis);
+                return jsc.JSPromise.rejectedPromise(globalThis, js_err).asValue(globalThis);
             }
         },
         else => {},
@@ -335,25 +335,25 @@ pub fn uploadStream(
         .state = .wait_stream_check,
         .options = options,
         .acl = acl,
-        .vm = JSC.VirtualMachine.get(),
+        .vm = jsc.VirtualMachine.get(),
     });
 
     task.poll_ref.ref(task.vm);
 
     task.ref(); // + 1 for the stream sink
 
-    var response_stream = JSC.WebCore.NetworkSink.new(.{
+    var response_stream = jsc.WebCore.NetworkSink.new(.{
         .task = .{ .s3_upload = task },
         .buffer = .{},
         .globalThis = globalThis,
         .encoded = false,
-        .endPromise = JSC.JSPromise.Strong.init(globalThis),
+        .endPromise = jsc.JSPromise.Strong.init(globalThis),
     }).toSink();
     task.ref(); // + 1 for the stream wrapper
 
     const endPromise = response_stream.sink.endPromise.value();
     const ctx = S3UploadStreamWrapper.new(.{
-        .readable_stream_ref = JSC.WebCore.ReadableStream.Strong.init(readable_stream, globalThis),
+        .readable_stream_ref = jsc.WebCore.ReadableStream.Strong.init(readable_stream, globalThis),
         .sink = &response_stream.sink,
         .callback = callback,
         .callback_context = callback_context,
@@ -367,7 +367,7 @@ pub fn uploadStream(
 
     var signal = &response_stream.sink.signal;
 
-    signal.* = JSC.WebCore.NetworkSink.JSSink.SinkSignal.init(.zero);
+    signal.* = jsc.WebCore.NetworkSink.JSSink.SinkSignal.init(.zero);
 
     // explicitly set it to a dead pointer
     // we use this memory address to disable signals being sent
@@ -375,7 +375,7 @@ pub fn uploadStream(
     bun.assert(signal.isDead());
 
     // We are already corked!
-    const assignment_result: JSC.JSValue = JSC.WebCore.NetworkSink.JSSink.assignToStream(
+    const assignment_result: jsc.JSValue = jsc.WebCore.NetworkSink.JSSink.assignToStream(
         globalThis,
         readable_stream.value,
         response_stream,
@@ -500,9 +500,9 @@ pub fn downloadStream(
     const headers = brk: {
         if (range) |range_| {
             const _headers = result.mixWithHeader(&header_buffer, .{ .name = "range", .value = range_ });
-            break :brk JSC.WebCore.Headers.fromPicoHttpHeaders(_headers, bun.default_allocator) catch bun.outOfMemory();
+            break :brk jsc.WebCore.Headers.fromPicoHttpHeaders(_headers, bun.default_allocator) catch bun.outOfMemory();
         } else {
-            break :brk JSC.WebCore.Headers.fromPicoHttpHeaders(result.headers(), bun.default_allocator) catch bun.outOfMemory();
+            break :brk jsc.WebCore.Headers.fromPicoHttpHeaders(result.headers(), bun.default_allocator) catch bun.outOfMemory();
         }
     };
     const proxy = proxy_url orelse "";
@@ -515,7 +515,7 @@ pub fn downloadStream(
         .callback = callback,
         .range = range,
         .headers = headers,
-        .vm = JSC.VirtualMachine.get(),
+        .vm = jsc.VirtualMachine.get(),
     });
     task.poll_ref.ref(task.vm);
 
@@ -559,9 +559,9 @@ pub fn readableStream(
     offset: usize,
     size: ?usize,
     proxy_url: ?[]const u8,
-    globalThis: *JSC.JSGlobalObject,
-) JSC.JSValue {
-    var reader = JSC.WebCore.ByteStream.Source.new(.{
+    globalThis: *jsc.JSGlobalObject,
+) jsc.JSValue {
+    var reader = jsc.WebCore.ByteStream.Source.new(.{
         .context = undefined,
         .globalThis = globalThis,
     });
@@ -570,7 +570,7 @@ pub fn readableStream(
     const readable_value = reader.toReadableStream(globalThis);
 
     const S3DownloadStreamWrapper = struct {
-        readable_stream_ref: JSC.WebCore.ReadableStream.Strong,
+        readable_stream_ref: jsc.WebCore.ReadableStream.Strong,
         path: []const u8,
         pub usingnamespace bun.New(@This());
 
@@ -619,7 +619,7 @@ pub fn readableStream(
     };
 
     downloadStream(this, path, offset, size, proxy_url, @ptrCast(&S3DownloadStreamWrapper.callback), S3DownloadStreamWrapper.new(.{
-        .readable_stream_ref = JSC.WebCore.ReadableStream.Strong.init(.{
+        .readable_stream_ref = jsc.WebCore.ReadableStream.Strong.init(.{
             .ptr = .{ .Bytes = &reader.context },
             .value = readable_value,
         }, globalThis),

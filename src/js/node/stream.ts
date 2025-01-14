@@ -2612,7 +2612,7 @@ var require_readable = __commonJS({
       this._readableState.encoding = this._readableState.decoder.encoding;
       const buffer = this._readableState.buffer;
       let content = "";
-      // BufferList does not support iterator now, and iterator is slow in JSC.
+      // BufferList does not support iterator now, and iterator is slow in jsc.
       // for (const data of buffer) {
       //   content += decoder.write(data);
       // }

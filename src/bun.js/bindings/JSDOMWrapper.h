@@ -38,7 +38,7 @@ using JSDOMGlobalObject = Zig::GlobalObject;
 class ScriptExecutionContext;
 
 // JSC allows us to extend JSType. If the highest 3 bits are set, we can add any Object types and they are
-// recognized as OtherObj in JSC. And we encode Node type into JSType if the given JSType is subclass of Node.
+// recognized as OtherObj in jsc. And we encode Node type into JSType if the given JSType is subclass of Node.
 // offset | 7 | 6 | 5 | 4   3   2   1   0  |
 // value  | 1 | 1 | 1 | Non-node DOM types |
 // If the given JSType is a subclass of Node, the format is the following.

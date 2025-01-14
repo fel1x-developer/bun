@@ -1,10 +1,10 @@
 const std = @import("std");
 const bun = @import("root").bun;
-const JSC = bun.JSC;
-const VirtualMachine = JSC.VirtualMachine;
-const JSValue = JSC.JSValue;
-const JSGlobalObject = JSC.JSGlobalObject;
-const Debugger = JSC.Debugger;
+const jsc = bun.jsc;
+const VirtualMachine = jsc.VirtualMachine;
+const JSValue = jsc.JSValue;
+const JSGlobalObject = jsc.JSGlobalObject;
+const Debugger = jsc.Debugger;
 const Environment = bun.Environment;
 const Async = @import("async");
 const uv = bun.windows.libuv;
@@ -99,7 +99,7 @@ pub const All = struct {
     }
 
     pub fn incrementTimerRef(this: *All, delta: i32) void {
-        const vm: *JSC.VirtualMachine = @alignCast(@fieldParentPtr("timer", this));
+        const vm: *jsc.VirtualMachine = @alignCast(@fieldParentPtr("timer", this));
 
         const old = this.active_timer_count;
         const new = old + delta;
@@ -191,8 +191,8 @@ pub const All = struct {
         interval: i32,
         arguments_array_or_zero: JSValue,
         repeat: bool,
-    ) !JSC.JSValue {
-        JSC.markBinding(@src());
+    ) !jsc.JSValue {
+        jsc.markBinding(@src());
         var vm = globalThis.bunVM();
 
         const kind: Kind = if (repeat) .setInterval else .setTimeout;
@@ -201,7 +201,7 @@ pub const All = struct {
         if (kind == .setTimeout and interval == 0) {
             const timer_object, const timer_js = TimerObject.init(globalThis, vm, id, .setImmediate, 0, callback, arguments_array_or_zero);
             timer_object.ref();
-            vm.enqueueImmediateTask(JSC.Task.init(timer_object));
+            vm.enqueueImmediateTask(jsc.Task.init(timer_object));
             if (vm.isInspectorEnabled()) {
                 Debugger.didScheduleAsyncCall(globalThis, .DOMTimer, ID.asyncID(.{ .id = id, .kind = kind }), !repeat);
             }
@@ -223,7 +223,7 @@ pub const All = struct {
         callback: JSValue,
         arguments: JSValue,
     ) callconv(.C) JSValue {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         const id = globalThis.bunVM().timer.last_id;
         globalThis.bunVM().timer.last_id +%= 1;
 
@@ -236,7 +236,7 @@ pub const All = struct {
     }
 
     comptime {
-        if (!JSC.is_bindgen) {
+        if (!jsc.is_bindgen) {
             @export(setImmediate, .{ .name = "Bun__Timer__setImmediate" });
         }
     }
@@ -247,7 +247,7 @@ pub const All = struct {
         countdown: JSValue,
         arguments: JSValue,
     ) callconv(.C) JSValue {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         const id = globalThis.bunVM().timer.last_id;
         globalThis.bunVM().timer.last_id +%= 1;
 
@@ -268,7 +268,7 @@ pub const All = struct {
         countdown: JSValue,
         arguments: JSValue,
     ) callconv(.C) JSValue {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         const id = globalThis.bunVM().timer.last_id;
         globalThis.bunVM().timer.last_id +%= 1;
 
@@ -285,7 +285,7 @@ pub const All = struct {
     }
 
     pub fn clearTimer(timer_id_value: JSValue, globalThis: *JSGlobalObject, repeats: bool) void {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
 
         const kind: Kind = if (repeats) .setInterval else .setTimeout;
         var vm = globalThis.bunVM();
@@ -319,7 +319,7 @@ pub const All = struct {
         globalThis: *JSGlobalObject,
         id: JSValue,
     ) callconv(.C) JSValue {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         clearTimer(id, globalThis, false);
         return JSValue.jsUndefined();
     }
@@ -327,7 +327,7 @@ pub const All = struct {
         globalThis: *JSGlobalObject,
         id: JSValue,
     ) callconv(.C) JSValue {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         clearTimer(id, globalThis, true);
         return JSValue.jsUndefined();
     }
@@ -348,7 +348,7 @@ pub const All = struct {
     });
 
     comptime {
-        if (!JSC.is_bindgen) {
+        if (!jsc.is_bindgen) {
             @export(setTimeout, .{ .name = Export[0].symbol_name });
             @export(setInterval, .{ .name = Export[1].symbol_name });
             @export(clearTimeout, .{ .name = Export[2].symbol_name });
@@ -371,7 +371,7 @@ pub const TimerObject = struct {
     // if they never access the timer by integer, don't create a hashmap entry.
     has_accessed_primitive: bool = false,
 
-    strong_this: JSC.Strong = .{},
+    strong_this: jsc.Strong = .{},
 
     has_js_ref: bool = true,
     ref_count: u32 = 1,
@@ -381,10 +381,10 @@ pub const TimerObject = struct {
         .tag = .TimerObject,
     },
 
-    pub usingnamespace JSC.Codegen.JSTimeout;
+    pub usingnamespace jsc.Codegen.JSTimeout;
     pub usingnamespace bun.NewRefCounted(@This(), deinit);
 
-    extern "C" fn Bun__JSTimeout__call(encodedTimeoutValue: JSValue, globalObject: *JSC.JSGlobalObject) void;
+    extern "C" fn Bun__JSTimeout__call(encodedTimeoutValue: JSValue, globalObject: *jsc.JSGlobalObject) void;
 
     pub fn runImmediateTask(this: *TimerObject, vm: *VirtualMachine) void {
         if (this.has_cleared_timer) {
@@ -420,7 +420,7 @@ pub const TimerObject = struct {
         return ID.asyncID(.{ .id = this.id, .kind = this.kind });
     }
 
-    pub fn fire(this: *TimerObject, _: *const timespec, vm: *JSC.VirtualMachine) EventLoopTimer.Arm {
+    pub fn fire(this: *TimerObject, _: *const timespec, vm: *jsc.VirtualMachine) EventLoopTimer.Arm {
         const id = this.id;
         const kind = this.kind;
         const has_been_cleared = this.event_loop_timer.state == .CANCELLED or this.has_cleared_timer or vm.scriptExecutionStatus() != .running;
@@ -517,7 +517,7 @@ pub const TimerObject = struct {
         return .disarm;
     }
 
-    pub fn run(this_object: JSC.JSValue, globalThis: *JSC.JSGlobalObject, async_id: u64, vm: *JSC.VirtualMachine) void {
+    pub fn run(this_object: jsc.JSValue, globalThis: *jsc.JSGlobalObject, async_id: u64, vm: *jsc.VirtualMachine) void {
         if (vm.isInspectorEnabled()) {
             Debugger.willDispatchAsyncCall(globalThis, .DOMTimer, async_id);
         }
@@ -551,7 +551,7 @@ pub const TimerObject = struct {
         return .{ timer, timer_js };
     }
 
-    pub fn doRef(this: *TimerObject, _: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSValue {
+    pub fn doRef(this: *TimerObject, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
         const this_value = callframe.this();
         this_value.ensureStillAlive();
 
@@ -559,13 +559,13 @@ pub const TimerObject = struct {
         this.has_js_ref = true;
 
         if (!did_have_js_ref) {
-            this.setEnableKeepingEventLoopAlive(JSC.VirtualMachine.get(), true);
+            this.setEnableKeepingEventLoopAlive(jsc.VirtualMachine.get(), true);
         }
 
         return this_value;
     }
 
-    pub fn doRefresh(this: *TimerObject, globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSValue {
+    pub fn doRefresh(this: *TimerObject, globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
         const this_value = callframe.this();
 
         // setImmediate does not support refreshing and we do not support refreshing after cleanup
@@ -579,7 +579,7 @@ pub const TimerObject = struct {
         return this_value;
     }
 
-    pub fn doUnref(this: *TimerObject, _: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSValue {
+    pub fn doUnref(this: *TimerObject, _: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
         const this_value = callframe.this();
         this_value.ensureStillAlive();
 
@@ -587,7 +587,7 @@ pub const TimerObject = struct {
         this.has_js_ref = false;
 
         if (did_have_js_ref) {
-            this.setEnableKeepingEventLoopAlive(JSC.VirtualMachine.get(), false);
+            this.setEnableKeepingEventLoopAlive(jsc.VirtualMachine.get(), false);
         }
 
         return this_value;
@@ -644,10 +644,10 @@ pub const TimerObject = struct {
         }
     }
 
-    pub fn hasRef(this: *TimerObject, _: *JSC.JSGlobalObject, _: *JSC.CallFrame) bun.JSError!JSValue {
+    pub fn hasRef(this: *TimerObject, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
         return JSValue.jsBoolean(this.is_keeping_event_loop_alive);
     }
-    pub fn toPrimitive(this: *TimerObject, _: *JSC.JSGlobalObject, _: *JSC.CallFrame) bun.JSError!JSValue {
+    pub fn toPrimitive(this: *TimerObject, _: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
         if (!this.has_accessed_primitive) {
             this.has_accessed_primitive = true;
             const vm = VirtualMachine.get();
@@ -740,13 +740,13 @@ pub const EventLoopTimer = struct {
             return switch (T) {
                 .TimerCallback => TimerCallback,
                 .TimerObject => TimerObject,
-                .TestRunner => JSC.Jest.TestRunner,
+                .TestRunner => jsc.Jest.TestRunner,
                 .StatWatcherScheduler => StatWatcherScheduler,
                 .UpgradedDuplex => uws.UpgradedDuplex,
                 .DNSResolver => DNSResolver,
                 .WindowsNamedPipe => uws.WindowsNamedPipe,
-                .PostgresSQLConnectionTimeout => JSC.Postgres.PostgresSQLConnection,
-                .PostgresSQLConnectionMaxLifetime => JSC.Postgres.PostgresSQLConnection,
+                .PostgresSQLConnectionTimeout => jsc.Postgres.PostgresSQLConnection,
+                .PostgresSQLConnectionMaxLifetime => jsc.Postgres.PostgresSQLConnection,
             };
         }
     } else enum {
@@ -763,12 +763,12 @@ pub const EventLoopTimer = struct {
             return switch (T) {
                 .TimerCallback => TimerCallback,
                 .TimerObject => TimerObject,
-                .TestRunner => JSC.Jest.TestRunner,
+                .TestRunner => jsc.Jest.TestRunner,
                 .StatWatcherScheduler => StatWatcherScheduler,
                 .UpgradedDuplex => uws.UpgradedDuplex,
                 .DNSResolver => DNSResolver,
-                .PostgresSQLConnectionTimeout => JSC.Postgres.PostgresSQLConnection,
-                .PostgresSQLConnectionMaxLifetime => JSC.Postgres.PostgresSQLConnection,
+                .PostgresSQLConnectionTimeout => jsc.Postgres.PostgresSQLConnection,
+                .PostgresSQLConnectionMaxLifetime => jsc.Postgres.PostgresSQLConnection,
             };
         }
     };
@@ -821,8 +821,8 @@ pub const EventLoopTimer = struct {
 
     pub fn fire(this: *EventLoopTimer, now: *const timespec, vm: *VirtualMachine) Arm {
         switch (this.tag) {
-            .PostgresSQLConnectionTimeout => return @as(*JSC.Postgres.PostgresSQLConnection, @alignCast(@fieldParentPtr("timer", this))).onConnectionTimeout(),
-            .PostgresSQLConnectionMaxLifetime => return @as(*JSC.Postgres.PostgresSQLConnection, @alignCast(@fieldParentPtr("max_lifetime_timer", this))).onMaxLifetimeTimeout(),
+            .PostgresSQLConnectionTimeout => return @as(*jsc.Postgres.PostgresSQLConnection, @alignCast(@fieldParentPtr("timer", this))).onConnectionTimeout(),
+            .PostgresSQLConnectionMaxLifetime => return @as(*jsc.Postgres.PostgresSQLConnection, @alignCast(@fieldParentPtr("max_lifetime_timer", this))).onMaxLifetimeTimeout(),
             inline else => |t| {
                 var container: *t.Type() = @alignCast(@fieldParentPtr("event_loop_timer", this));
                 if (comptime t.Type() == TimerObject) {
@@ -841,7 +841,7 @@ pub const EventLoopTimer = struct {
                     }
                 }
 
-                if (comptime t.Type() == JSC.Jest.TestRunner) {
+                if (comptime t.Type() == jsc.Jest.TestRunner) {
                     container.onTestTimeout(now, vm);
                     return .disarm;
                 }

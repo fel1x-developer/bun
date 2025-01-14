@@ -29,48 +29,48 @@ const js_ast = bun.JSAst;
 const NodeFallbackModules = @import("../../node_fallbacks.zig");
 const ImportKind = ast.ImportKind;
 const Analytics = @import("../../analytics/analytics_thread.zig");
-const ZigString = bun.JSC.ZigString;
+const ZigString = bun.jsc.ZigString;
 const Runtime = @import("../../runtime.zig");
 const ImportRecord = ast.ImportRecord;
 const DotEnv = @import("../../env_loader.zig");
 const ParseResult = bun.transpiler.ParseResult;
 const PackageJSON = @import("../../resolver/package_json.zig").PackageJSON;
 const MacroRemap = @import("../../resolver/package_json.zig").MacroMap;
-const WebCore = bun.JSC.WebCore;
+const WebCore = bun.jsc.WebCore;
 const Request = WebCore.Request;
 const Response = WebCore.Response;
 const Headers = WebCore.Headers;
 const Fetch = WebCore.Fetch;
 const FetchEvent = WebCore.FetchEvent;
-const js = bun.JSC.C;
-const JSC = bun.JSC;
+const js = bun.jsc.C;
+const jsc = bun.jsc;
 const JSError = @import("../base.zig").JSError;
 
 const MarkedArrayBuffer = @import("../base.zig").MarkedArrayBuffer;
 const getAllocator = @import("../base.zig").getAllocator;
-const JSValue = bun.JSC.JSValue;
+const JSValue = bun.jsc.JSValue;
 
-const JSGlobalObject = bun.JSC.JSGlobalObject;
-const ExceptionValueRef = bun.JSC.ExceptionValueRef;
-const JSPrivateDataPtr = bun.JSC.JSPrivateDataPtr;
-const ConsoleObject = bun.JSC.ConsoleObject;
-const Node = bun.JSC.Node;
-const ZigException = bun.JSC.ZigException;
-const ZigStackTrace = bun.JSC.ZigStackTrace;
-const ErrorableResolvedSource = bun.JSC.ErrorableResolvedSource;
-const ResolvedSource = bun.JSC.ResolvedSource;
-const JSPromise = bun.JSC.JSPromise;
-const JSInternalPromise = bun.JSC.JSInternalPromise;
-const JSModuleLoader = bun.JSC.JSModuleLoader;
-const JSPromiseRejectionOperation = bun.JSC.JSPromiseRejectionOperation;
-const ErrorableZigString = bun.JSC.ErrorableZigString;
-const ZigGlobalObject = bun.JSC.ZigGlobalObject;
-const VM = bun.JSC.VM;
-const JSFunction = bun.JSC.JSFunction;
+const JSGlobalObject = bun.jsc.JSGlobalObject;
+const ExceptionValueRef = bun.jsc.ExceptionValueRef;
+const JSPrivateDataPtr = bun.jsc.JSPrivateDataPtr;
+const ConsoleObject = bun.jsc.ConsoleObject;
+const Node = bun.jsc.Node;
+const ZigException = bun.jsc.ZigException;
+const ZigStackTrace = bun.jsc.ZigStackTrace;
+const ErrorableResolvedSource = bun.jsc.ErrorableResolvedSource;
+const ResolvedSource = bun.jsc.ResolvedSource;
+const JSPromise = bun.jsc.JSPromise;
+const JSInternalPromise = bun.jsc.JSInternalPromise;
+const JSModuleLoader = bun.jsc.JSModuleLoader;
+const JSPromiseRejectionOperation = bun.jsc.JSPromiseRejectionOperation;
+const ErrorableZigString = bun.jsc.ErrorableZigString;
+const ZigGlobalObject = bun.jsc.ZigGlobalObject;
+const VM = bun.jsc.VM;
+const JSFunction = bun.jsc.JSFunction;
 const Config = @import("../config.zig");
 const URL = @import("../../url.zig").URL;
-const VirtualMachine = JSC.VirtualMachine;
-const IOTask = JSC.IOTask;
+const VirtualMachine = jsc.VirtualMachine;
+const IOTask = jsc.IOTask;
 
 const TCC = @import("../../tcc.zig");
 extern fn pthread_jit_write_protect_np(enable: bool) callconv(.C) void;
@@ -100,7 +100,7 @@ pub const FFI = struct {
     closed: bool = false,
     shared_state: ?*TCC.TCCState = null,
 
-    pub usingnamespace JSC.Codegen.JSFFI;
+    pub usingnamespace jsc.Codegen.JSFFI;
 
     pub fn finalize(_: *FFI) callconv(.C) void {}
 
@@ -581,7 +581,7 @@ pub const FFI = struct {
                 bun.default_allocator.free(this.items);
         }
 
-        pub fn fromJSArray(globalThis: *JSC.JSGlobalObject, value: JSC.JSValue, comptime property: []const u8) bun.JSError!StringArray {
+        pub fn fromJSArray(globalThis: *jsc.JSGlobalObject, value: jsc.JSValue, comptime property: []const u8) bun.JSError!StringArray {
             var iter = value.arrayIterator(globalThis);
             var items = std.ArrayList([:0]const u8).init(bun.default_allocator);
 
@@ -601,7 +601,7 @@ pub const FFI = struct {
             return .{ .items = items.items };
         }
 
-        pub fn fromJSString(globalThis: *JSC.JSGlobalObject, value: JSC.JSValue, comptime property: []const u8) bun.JSError!StringArray {
+        pub fn fromJSString(globalThis: *jsc.JSGlobalObject, value: jsc.JSValue, comptime property: []const u8) bun.JSError!StringArray {
             if (value == .undefined) return .{};
             if (!value.isString()) {
                 return globalThis.throwInvalidArgumentTypeValue(property, "array of strings", value);
@@ -613,7 +613,7 @@ pub const FFI = struct {
             return .{ .items = items.items };
         }
 
-        pub fn fromJS(globalThis: *JSC.JSGlobalObject, value: JSC.JSValue, comptime property: []const u8) bun.JSError!StringArray {
+        pub fn fromJS(globalThis: *jsc.JSGlobalObject, value: jsc.JSValue, comptime property: []const u8) bun.JSError!StringArray {
             if (value.isArray()) {
                 return fromJSArray(globalThis, value, property);
             }
@@ -621,7 +621,7 @@ pub const FFI = struct {
         }
     };
 
-    pub fn Bun__FFI__cc(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn Bun__FFI__cc(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const arguments = callframe.arguments_old(1).slice();
         if (arguments.len == 0 or !arguments[0].isObject()) {
             return globalThis.throwInvalidArguments("Expected object", .{});
@@ -704,7 +704,7 @@ pub const FFI = struct {
 
         if (try object.getTruthy(globalThis, "define")) |define_value| {
             if (define_value.isObject()) {
-                const Iter = JSC.JSPropertyIterator(.{ .include_value = true, .skip_empty_name = true });
+                const Iter = jsc.JSPropertyIterator(.{ .include_value = true, .skip_empty_name = true });
                 var iter = try Iter.init(globalThis, define_value);
                 defer iter.deinit();
                 while (try iter.next()) |entry| {
@@ -790,14 +790,14 @@ pub const FFI = struct {
             // we are unable to free memory safely in certain cases here.
         }
 
-        var obj = JSC.JSValue.createEmptyObject(globalThis, compile_c.symbols.map.count());
+        var obj = jsc.JSValue.createEmptyObject(globalThis, compile_c.symbols.map.count());
         for (compile_c.symbols.map.values()) |*function| {
             const function_name = function.base_name.?;
             const allocator = bun.default_allocator;
 
             function.compile(allocator, globalThis) catch |err| {
                 if (!globalThis.hasException()) {
-                    const ret = JSC.toInvalidArguments("{s} when translating symbol \"{s}\"", .{
+                    const ret = jsc.toInvalidArguments("{s} when translating symbol \"{s}\"", .{
                         @errorName(err),
                         function_name,
                     }, globalThis);
@@ -815,11 +815,11 @@ pub const FFI = struct {
                 },
                 .compiled => |*compiled| {
                     const str = ZigString.init(bun.asByteSlice(function_name));
-                    const cb = JSC.NewRuntimeFunction(
+                    const cb = jsc.NewRuntimeFunction(
                         globalThis,
                         &str,
                         @as(u32, @intCast(function.arg_types.items.len)),
-                        bun.cast(JSC.JSHostFunctionPtr, compiled.ptr),
+                        bun.cast(jsc.JSHostFunctionPtr, compiled.ptr),
                         false,
                         true,
                         function.symbol_from_dynamic_library,
@@ -842,7 +842,7 @@ pub const FFI = struct {
         compile_c.symbols = .{};
 
         const js_object = lib.toJS(globalThis);
-        JSC.Codegen.JSFFI.symbolsValueSetCached(js_object, globalThis, obj);
+        jsc.Codegen.JSFFI.symbolsValueSetCached(js_object, globalThis, obj);
         return js_object;
     }
 
@@ -852,14 +852,14 @@ pub const FFI = struct {
         return JSValue.jsUndefined();
     }
 
-    pub fn callback(globalThis: *JSGlobalObject, interface: JSC.JSValue, js_callback: JSC.JSValue) JSValue {
-        JSC.markBinding(@src());
+    pub fn callback(globalThis: *JSGlobalObject, interface: jsc.JSValue, js_callback: jsc.JSValue) JSValue {
+        jsc.markBinding(@src());
         if (!interface.isObject()) {
-            return JSC.toInvalidArguments("Expected object", .{}, globalThis);
+            return jsc.toInvalidArguments("Expected object", .{}, globalThis);
         }
 
         if (js_callback.isEmptyOrUndefinedOrNull() or !js_callback.isCallable(globalThis.vm())) {
-            return JSC.toInvalidArguments("Expected callback function", .{}, globalThis);
+            return jsc.toInvalidArguments("Expected callback function", .{}, globalThis);
         }
 
         const allocator = VirtualMachine.get().allocator;
@@ -894,8 +894,8 @@ pub const FFI = struct {
                     globalThis,
                     ZigString.static("ptr"),
                     ZigString.static("ctx"),
-                    JSC.JSValue.fromPtrAddress(@intFromPtr(function_.step.compiled.ptr)),
-                    JSC.JSValue.fromPtrAddress(@intFromPtr(function_)),
+                    jsc.JSValue.fromPtrAddress(@intFromPtr(function_.step.compiled.ptr)),
+                    jsc.JSValue.fromPtrAddress(@intFromPtr(function_)),
                 );
             },
         }
@@ -903,10 +903,10 @@ pub const FFI = struct {
 
     pub fn close(
         this: *FFI,
-        globalThis: *JSC.JSGlobalObject,
-        _: *JSC.CallFrame,
+        globalThis: *jsc.JSGlobalObject,
+        _: *jsc.CallFrame,
     ) bun.JSError!JSValue {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         if (this.closed) {
             return .undefined;
         }
@@ -935,12 +935,12 @@ pub const FFI = struct {
         return .undefined;
     }
 
-    pub fn printCallback(global: *JSGlobalObject, object: JSC.JSValue) JSValue {
-        JSC.markBinding(@src());
+    pub fn printCallback(global: *JSGlobalObject, object: jsc.JSValue) JSValue {
+        jsc.markBinding(@src());
         const allocator = VirtualMachine.get().allocator;
 
         if (object.isEmptyOrUndefinedOrNull() or !object.isObject()) {
-            return JSC.toInvalidArguments("Expected an object", .{}, global);
+            return jsc.toInvalidArguments("Expected an object", .{}, global);
         }
 
         var function: Function = .{};
@@ -960,7 +960,7 @@ pub const FFI = struct {
         return ZigString.init(arraylist.items).toJS(global);
     }
 
-    pub fn print(global: *JSGlobalObject, object: JSC.JSValue, is_callback_val: ?JSC.JSValue) JSValue {
+    pub fn print(global: *JSGlobalObject, object: jsc.JSValue, is_callback_val: ?jsc.JSValue) JSValue {
         const allocator = VirtualMachine.get().allocator;
         if (is_callback_val) |is_callback| {
             if (is_callback.toBoolean()) {
@@ -969,11 +969,11 @@ pub const FFI = struct {
         }
 
         if (object.isEmptyOrUndefinedOrNull() or !object.isObject()) {
-            return JSC.toInvalidArguments("Expected an options object with symbol names", .{}, global);
+            return jsc.toInvalidArguments("Expected an options object with symbol names", .{}, global);
         }
 
         var symbols = bun.StringArrayHashMapUnmanaged(Function){};
-        if (generateSymbols(global, &symbols, object) catch JSC.JSValue.zero) |val| {
+        if (generateSymbols(global, &symbols, object) catch jsc.JSValue.zero) |val| {
             // an error while validating symbols
             for (symbols.keys()) |key| {
                 allocator.free(@constCast(key));
@@ -981,7 +981,7 @@ pub const FFI = struct {
             symbols.clearAndFree(allocator);
             return val;
         }
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         var strs = std.ArrayList(bun.String).initCapacity(allocator, symbols.count()) catch bun.outOfMemory();
         defer {
             for (strs.items) |str| {
@@ -1023,15 +1023,15 @@ pub const FFI = struct {
         return ret;
     }
 
-    // pub fn dlcompile(global: *JSGlobalObject, object: JSC.JSValue) JSValue {
+    // pub fn dlcompile(global: *JSGlobalObject, object: jsc.JSValue) JSValue {
     //     const allocator = VirtualMachine.get().allocator;
 
     //     if (object.isEmptyOrUndefinedOrNull() or !object.isObject()) {
-    //         return JSC.toInvalidArguments("Expected an options object with symbol names", .{}, global);
+    //         return jsc.toInvalidArguments("Expected an options object with symbol names", .{}, global);
     //     }
 
     //     var symbols = bun.StringArrayHashMapUnmanaged(Function){};
-    //     if (generateSymbols(global, &symbols, object) catch JSC.JSValue.zero) |val| {
+    //     if (generateSymbols(global, &symbols, object) catch jsc.JSValue.zero) |val| {
     //         // an error while validating symbols
     //         for (symbols.keys()) |key| {
     //             allocator.free(@constCast(key));
@@ -1042,20 +1042,20 @@ pub const FFI = struct {
 
     // }
 
-    pub fn open(global: *JSGlobalObject, name_str: ZigString, object: JSC.JSValue) JSC.JSValue {
-        JSC.markBinding(@src());
+    pub fn open(global: *JSGlobalObject, name_str: ZigString, object: jsc.JSValue) jsc.JSValue {
+        jsc.markBinding(@src());
         const vm = VirtualMachine.get();
         const allocator = bun.default_allocator;
         var name_slice = name_str.toSlice(allocator);
         defer name_slice.deinit();
 
         if (object.isEmptyOrUndefinedOrNull() or !object.isObject()) {
-            return JSC.toInvalidArguments("Expected an options object with symbol names", .{}, global);
+            return jsc.toInvalidArguments("Expected an options object with symbol names", .{}, global);
         }
 
         var filepath_buf: bun.PathBuffer = undefined;
         const name = brk: {
-            if (JSC.ModuleLoader.resolveEmbeddedFile(
+            if (jsc.ModuleLoader.resolveEmbeddedFile(
                 vm,
                 name_slice.slice(),
                 switch (Environment.os) {
@@ -1074,11 +1074,11 @@ pub const FFI = struct {
         };
 
         if (name.len == 0) {
-            return JSC.toInvalidArguments("Invalid library name", .{}, global);
+            return jsc.toInvalidArguments("Invalid library name", .{}, global);
         }
 
         var symbols = bun.StringArrayHashMapUnmanaged(Function){};
-        if (generateSymbols(global, &symbols, object) catch JSC.JSValue.zero) |val| {
+        if (generateSymbols(global, &symbols, object) catch jsc.JSValue.zero) |val| {
             // an error while validating symbols
             for (symbols.keys()) |key| {
                 allocator.free(@constCast(key));
@@ -1087,7 +1087,7 @@ pub const FFI = struct {
             return val;
         }
         if (symbols.count() == 0) {
-            return JSC.toInvalidArguments("Expected at least one symbol", .{}, global);
+            return jsc.toInvalidArguments("Expected at least one symbol", .{}, global);
         }
 
         var dylib: std.DynLib = brk: {
@@ -1097,7 +1097,7 @@ pub const FFI = struct {
                 // if that fails, try resolving the filepath relative to the current working directory
                 break :brk std.DynLib.open(backup_name) catch {
                     // Then, if that fails, report an error.
-                    const system_error = JSC.SystemError{
+                    const system_error = jsc.SystemError{
                         .code = bun.String.createUTF8(@tagName(.ERR_DLOPEN_FAILED)),
                         .message = bun.String.createUTF8("Failed to open library. This is usually caused by a missing library or an invalid library path."),
                         .syscall = bun.String.createUTF8("dlopen"),
@@ -1111,7 +1111,7 @@ pub const FFI = struct {
         if (size >= 63) {
             size = 0;
         }
-        var obj = JSC.JSValue.createEmptyObject(global, size);
+        var obj = jsc.JSValue.createEmptyObject(global, size);
         obj.protect();
         defer obj.unprotect();
         for (symbols.values()) |*function| {
@@ -1120,7 +1120,7 @@ pub const FFI = struct {
             // optional if the user passed "ptr"
             if (function.symbol_from_dynamic_library == null) {
                 const resolved_symbol = dylib.lookup(*anyopaque, function_name) orelse {
-                    const ret = JSC.toInvalidArguments("Symbol \"{s}\" not found in \"{s}\"", .{ bun.asByteSlice(function_name), name }, global);
+                    const ret = jsc.toInvalidArguments("Symbol \"{s}\" not found in \"{s}\"", .{ bun.asByteSlice(function_name), name }, global);
                     for (symbols.values()) |*value| {
                         allocator.free(@constCast(bun.asByteSlice(value.base_name.?)));
                         value.arg_types.clearAndFree(allocator);
@@ -1134,7 +1134,7 @@ pub const FFI = struct {
             }
 
             function.compile(allocator, global) catch |err| {
-                const ret = JSC.toInvalidArguments("{s} when compiling symbol \"{s}\" in \"{s}\"", .{
+                const ret = jsc.toInvalidArguments("{s} when compiling symbol \"{s}\" in \"{s}\"", .{
                     bun.asByteSlice(@errorName(err)),
                     bun.asByteSlice(function_name),
                     name,
@@ -1171,11 +1171,11 @@ pub const FFI = struct {
                 },
                 .compiled => |*compiled| {
                     const str = ZigString.init(bun.asByteSlice(function_name));
-                    const cb = JSC.NewRuntimeFunction(
+                    const cb = jsc.NewRuntimeFunction(
                         global,
                         &str,
                         @as(u32, @intCast(function.arg_types.items.len)),
-                        bun.cast(JSC.JSHostFunctionPtr, compiled.ptr),
+                        bun.cast(jsc.JSHostFunctionPtr, compiled.ptr),
                         false,
                         true,
                         function.symbol_from_dynamic_library,
@@ -1193,25 +1193,25 @@ pub const FFI = struct {
         };
 
         const js_object = lib.toJS(global);
-        JSC.Codegen.JSFFI.symbolsValueSetCached(js_object, global, obj);
+        jsc.Codegen.JSFFI.symbolsValueSetCached(js_object, global, obj);
         return js_object;
     }
 
-    pub fn getSymbols(_: *FFI, _: *JSC.JSGlobalObject) JSC.JSValue {
+    pub fn getSymbols(_: *FFI, _: *jsc.JSGlobalObject) jsc.JSValue {
         // This shouldn't be called. The cachedValue is what should be called.
         return .undefined;
     }
 
-    pub fn linkSymbols(global: *JSGlobalObject, object: JSC.JSValue) JSC.JSValue {
-        JSC.markBinding(@src());
+    pub fn linkSymbols(global: *JSGlobalObject, object: jsc.JSValue) jsc.JSValue {
+        jsc.markBinding(@src());
         const allocator = VirtualMachine.get().allocator;
 
         if (object.isEmptyOrUndefinedOrNull() or !object.isObject()) {
-            return JSC.toInvalidArguments("Expected an options object with symbol names", .{}, global);
+            return jsc.toInvalidArguments("Expected an options object with symbol names", .{}, global);
         }
 
         var symbols = bun.StringArrayHashMapUnmanaged(Function){};
-        if (generateSymbols(global, &symbols, object) catch JSC.JSValue.zero) |val| {
+        if (generateSymbols(global, &symbols, object) catch jsc.JSValue.zero) |val| {
             // an error while validating symbols
             for (symbols.keys()) |key| {
                 allocator.free(@constCast(key));
@@ -1220,7 +1220,7 @@ pub const FFI = struct {
             return val;
         }
         if (symbols.count() == 0) {
-            return JSC.toInvalidArguments("Expected at least one symbol", .{}, global);
+            return jsc.toInvalidArguments("Expected at least one symbol", .{}, global);
         }
 
         var obj = JSValue.createEmptyObject(global, symbols.count());
@@ -1230,7 +1230,7 @@ pub const FFI = struct {
             const function_name = function.base_name.?;
 
             if (function.symbol_from_dynamic_library == null) {
-                const ret = JSC.toInvalidArguments("Symbol for \"{s}\" not found", .{bun.asByteSlice(function_name)}, global);
+                const ret = jsc.toInvalidArguments("Symbol for \"{s}\" not found", .{bun.asByteSlice(function_name)}, global);
                 for (symbols.values()) |*value| {
                     allocator.free(@constCast(bun.asByteSlice(value.base_name.?)));
                     value.arg_types.clearAndFree(allocator);
@@ -1240,7 +1240,7 @@ pub const FFI = struct {
             }
 
             function.compile(allocator, global) catch |err| {
-                const ret = JSC.toInvalidArguments("{s} when compiling symbol \"{s}\"", .{
+                const ret = jsc.toInvalidArguments("{s} when compiling symbol \"{s}\"", .{
                     bun.asByteSlice(@errorName(err)),
                     bun.asByteSlice(function_name),
                 }, global);
@@ -1274,11 +1274,11 @@ pub const FFI = struct {
                 .compiled => |*compiled| {
                     const name = &ZigString.init(bun.asByteSlice(function_name));
 
-                    const cb = JSC.NewRuntimeFunction(
+                    const cb = jsc.NewRuntimeFunction(
                         global,
                         name,
                         @as(u32, @intCast(function.arg_types.items.len)),
-                        bun.cast(JSC.JSHostFunctionPtr, compiled.ptr),
+                        bun.cast(jsc.JSHostFunctionPtr, compiled.ptr),
                         false,
                         true,
                         function.symbol_from_dynamic_library,
@@ -1297,11 +1297,11 @@ pub const FFI = struct {
         };
 
         const js_object = lib.toJS(global);
-        JSC.Codegen.JSFFI.symbolsValueSetCached(js_object, global, obj);
+        jsc.Codegen.JSFFI.symbolsValueSetCached(js_object, global, obj);
         return js_object;
     }
-    pub fn generateSymbolForFunction(global: *JSGlobalObject, allocator: std.mem.Allocator, value: JSC.JSValue, function: *Function) bun.JSError!?JSValue {
-        JSC.markBinding(@src());
+    pub fn generateSymbolForFunction(global: *JSGlobalObject, allocator: std.mem.Allocator, value: jsc.JSValue, function: *Function) bun.JSError!?JSValue {
+        jsc.markBinding(@src());
 
         var abi_types = std.ArrayListUnmanaged(ABIType){};
 
@@ -1342,7 +1342,7 @@ pub const FFI = struct {
                 defer type_name.deinit();
                 abi_types.appendAssumeCapacity(ABIType.label.get(type_name.slice()) orelse {
                     abi_types.clearAndFree(allocator);
-                    return JSC.toTypeError(.ERR_INVALID_ARG_VALUE, "Unknown type {s}", .{type_name.slice()}, global);
+                    return jsc.toTypeError(.ERR_INVALID_ARG_VALUE, "Unknown type {s}", .{type_name.slice()}, global);
                 });
             }
         }
@@ -1374,7 +1374,7 @@ pub const FFI = struct {
             defer ret_slice.deinit();
             return_type = ABIType.label.get(ret_slice.slice()) orelse {
                 abi_types.clearAndFree(allocator);
-                return JSC.toTypeError(.ERR_INVALID_ARG_VALUE, "Unknown return type {s}", .{ret_slice.slice()}, global);
+                return jsc.toTypeError(.ERR_INVALID_ARG_VALUE, "Unknown return type {s}", .{ret_slice.slice()}, global);
             };
         }
 
@@ -1416,11 +1416,11 @@ pub const FFI = struct {
         return null;
     }
 
-    pub fn generateSymbols(global: *JSGlobalObject, symbols: *bun.StringArrayHashMapUnmanaged(Function), object: JSC.JSValue) bun.JSError!?JSValue {
-        JSC.markBinding(@src());
+    pub fn generateSymbols(global: *JSGlobalObject, symbols: *bun.StringArrayHashMapUnmanaged(Function), object: jsc.JSValue) bun.JSError!?JSValue {
+        jsc.markBinding(@src());
         const allocator = VirtualMachine.get().allocator;
 
-        var symbols_iter = try JSC.JSPropertyIterator(.{
+        var symbols_iter = try jsc.JSPropertyIterator(.{
             .skip_empty_name = true,
 
             .include_value = true,
@@ -1433,7 +1433,7 @@ pub const FFI = struct {
             const value = symbols_iter.value;
 
             if (value.isEmptyOrUndefinedOrNull()) {
-                return JSC.toTypeError(.ERR_INVALID_ARG_VALUE, "Expected an object for key \"{any}\"", .{prop}, global);
+                return jsc.toTypeError(.ERR_INVALID_ARG_VALUE, "Expected an object for key \"{any}\"", .{prop}, global);
             }
 
             var function: Function = .{};
@@ -1471,8 +1471,8 @@ pub const FFI = struct {
 
         extern "C" fn FFICallbackFunctionWrapper_destroy(*anyopaque) void;
 
-        pub fn deinit(val: *Function, globalThis: *JSC.JSGlobalObject, allocator: std.mem.Allocator) void {
-            JSC.markBinding(@src());
+        pub fn deinit(val: *Function, globalThis: *jsc.JSGlobalObject, allocator: std.mem.Allocator) void {
+            jsc.markBinding(@src());
 
             if (val.base_name) |base_name| {
                 if (bun.asByteSlice(base_name).len > 0) {
@@ -1491,7 +1491,7 @@ pub const FFI = struct {
                 // allocator.free(val.step.compiled.buf);
                 if (val.step.compiled.js_function != .zero) {
                     _ = globalThis;
-                    // _ = JSC.untrackFunction(globalThis, val.step.compiled.js_function);
+                    // _ = jsc.untrackFunction(globalThis, val.step.compiled.js_function);
                     val.step.compiled.js_function = .zero;
                 }
 
@@ -1549,7 +1549,7 @@ pub const FFI = struct {
         pub fn compile(
             this: *Function,
             allocator: std.mem.Allocator,
-            globalObject: *JSC.JSGlobalObject,
+            globalObject: *jsc.JSGlobalObject,
         ) !void {
             var source_code = std.ArrayList(u8).init(allocator);
             var source_code_writer = source_code.writer();
@@ -1647,11 +1647,11 @@ pub const FFI = struct {
         pub fn compileCallback(
             this: *Function,
             allocator: std.mem.Allocator,
-            js_context: *JSC.JSGlobalObject,
+            js_context: *jsc.JSGlobalObject,
             js_function: JSValue,
             is_threadsafe: bool,
         ) !void {
-            JSC.markBinding(@src());
+            jsc.markBinding(@src());
             var source_code = std.ArrayList(u8).init(allocator);
             var source_code_writer = source_code.writer();
             const ffi_wrapper = Bun__createFFICallbackFunction(js_context, js_function);
@@ -1949,11 +1949,11 @@ pub const FFI = struct {
         extern fn FFI_Callback_threadsafe_call(*anyopaque, usize, [*]JSValue) JSValue;
         extern fn FFI_Callback_call_6(*anyopaque, usize, [*]JSValue) JSValue;
         extern fn FFI_Callback_call_7(*anyopaque, usize, [*]JSValue) JSValue;
-        extern fn Bun__createFFICallbackFunction(*JSC.JSGlobalObject, JSValue) *anyopaque;
+        extern fn Bun__createFFICallbackFunction(*jsc.JSGlobalObject, JSValue) *anyopaque;
 
         pub fn printCallbackSourceCode(
             this: *Function,
-            globalObject: ?*JSC.JSGlobalObject,
+            globalObject: ?*jsc.JSGlobalObject,
             context_ptr: ?*anyopaque,
             writer: anytype,
         ) !void {
@@ -2431,19 +2431,19 @@ const CompilerRT = struct {
     }
 
     const MyFunctionSStructWorkAround = struct {
-        JSVALUE_TO_INT64: *const fn (JSValue0: JSC.JSValue) callconv(.C) i64,
-        JSVALUE_TO_UINT64: *const fn (JSValue0: JSC.JSValue) callconv(.C) u64,
-        INT64_TO_JSVALUE: *const fn (arg0: *JSC.JSGlobalObject, arg1: i64) callconv(.C) JSC.JSValue,
-        UINT64_TO_JSVALUE: *const fn (arg0: *JSC.JSGlobalObject, arg1: u64) callconv(.C) JSC.JSValue,
-        bun_call: *const @TypeOf(JSC.C.JSObjectCallAsFunction),
+        JSVALUE_TO_INT64: *const fn (JSValue0: jsc.JSValue) callconv(.C) i64,
+        JSVALUE_TO_UINT64: *const fn (JSValue0: jsc.JSValue) callconv(.C) u64,
+        INT64_TO_JSVALUE: *const fn (arg0: *jsc.JSGlobalObject, arg1: i64) callconv(.C) jsc.JSValue,
+        UINT64_TO_JSVALUE: *const fn (arg0: *jsc.JSGlobalObject, arg1: u64) callconv(.C) jsc.JSValue,
+        bun_call: *const @TypeOf(jsc.C.JSObjectCallAsFunction),
     };
     const headers = @import("../bindings/headers.zig");
-    var workaround: MyFunctionSStructWorkAround = if (!JSC.is_bindgen) .{
+    var workaround: MyFunctionSStructWorkAround = if (!jsc.is_bindgen) .{
         .JSVALUE_TO_INT64 = headers.JSC__JSValue__toInt64,
         .JSVALUE_TO_UINT64 = headers.JSC__JSValue__toUInt64NoTruncate,
         .INT64_TO_JSVALUE = headers.JSC__JSValue__fromInt64NoTruncate,
         .UINT64_TO_JSVALUE = headers.JSC__JSValue__fromUInt64NoTruncate,
-        .bun_call = &JSC.C.JSObjectCallAsFunction,
+        .bun_call = &jsc.C.JSObjectCallAsFunction,
     } else undefined;
 
     noinline fn memset(
@@ -2495,20 +2495,20 @@ const CompilerRT = struct {
         TCC.tcc_define_symbol(
             state,
             "JSTypeArrayBufferViewMin",
-            std.fmt.bufPrintZ(&symbol_buf, "{d}", .{@intFromEnum(JSC.JSValue.JSType.min_typed_array)}) catch unreachable,
+            std.fmt.bufPrintZ(&symbol_buf, "{d}", .{@intFromEnum(jsc.JSValue.JSType.min_typed_array)}) catch unreachable,
         );
         TCC.tcc_define_symbol(
             state,
             "JSTypeArrayBufferViewMax",
-            std.fmt.bufPrintZ(&symbol_buf, "{d}", .{@intFromEnum(JSC.JSValue.JSType.max_typed_array)}) catch unreachable,
+            std.fmt.bufPrintZ(&symbol_buf, "{d}", .{@intFromEnum(jsc.JSValue.JSType.max_typed_array)}) catch unreachable,
         );
     }
 
     pub fn inject(state: *TCC.TCCState) void {
         _ = TCC.tcc_add_symbol(state, "memset", &memset);
         _ = TCC.tcc_add_symbol(state, "memcpy", &memcpy);
-        _ = TCC.tcc_add_symbol(state, "NapiHandleScope__open", &bun.JSC.napi.NapiHandleScope.NapiHandleScope__open);
-        _ = TCC.tcc_add_symbol(state, "NapiHandleScope__close", &bun.JSC.napi.NapiHandleScope.NapiHandleScope__close);
+        _ = TCC.tcc_add_symbol(state, "NapiHandleScope__open", &bun.jsc.napi.NapiHandleScope.NapiHandleScope__open);
+        _ = TCC.tcc_add_symbol(state, "NapiHandleScope__close", &bun.jsc.napi.NapiHandleScope.NapiHandleScope__close);
 
         _ = TCC.tcc_add_symbol(
             state,
@@ -2520,7 +2520,7 @@ const CompilerRT = struct {
             "JSVALUE_TO_UINT64_SLOW",
             workaround.JSVALUE_TO_UINT64,
         );
-        if (!comptime JSC.is_bindgen) {
+        if (!comptime jsc.is_bindgen) {
             std.mem.doNotOptimizeAway(headers.JSC__JSValue__toUInt64NoTruncate);
             std.mem.doNotOptimizeAway(headers.JSC__JSValue__toInt64);
             std.mem.doNotOptimizeAway(headers.JSC__JSValue__fromInt64NoTruncate);

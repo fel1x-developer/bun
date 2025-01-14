@@ -726,8 +726,8 @@ pub const OperatingSystem = enum(u16) {
         return .{ .added = this, .removed = .none };
     }
 
-    const JSC = bun.JSC;
-    pub fn jsFunctionOperatingSystemIsMatch(globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    const jsc = bun.jsc;
+    pub fn jsFunctionOperatingSystemIsMatch(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const args = callframe.arguments_old(1);
         var operating_system = negatable(.none);
         var iter = args.ptr[0].arrayIterator(globalObject);
@@ -738,7 +738,7 @@ pub const OperatingSystem = enum(u16) {
             if (globalObject.hasException()) return .zero;
         }
         if (globalObject.hasException()) return .zero;
-        return JSC.JSValue.jsBoolean(operating_system.combine().isMatch());
+        return jsc.JSValue.jsBoolean(operating_system.combine().isMatch());
     }
 };
 
@@ -768,8 +768,8 @@ pub const Libc = enum(u8) {
     // TODO:
     pub const current: Libc = @intFromEnum(glibc);
 
-    const JSC = bun.JSC;
-    pub fn jsFunctionLibcIsMatch(globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    const jsc = bun.jsc;
+    pub fn jsFunctionLibcIsMatch(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const args = callframe.arguments_old(1);
         var libc = negatable(.none);
         var iter = args.ptr[0].arrayIterator(globalObject);
@@ -780,7 +780,7 @@ pub const Libc = enum(u8) {
             if (globalObject.hasException()) return .zero;
         }
         if (globalObject.hasException()) return .zero;
-        return JSC.JSValue.jsBoolean(libc.combine().isMatch());
+        return jsc.JSValue.jsBoolean(libc.combine().isMatch());
     }
 };
 
@@ -843,8 +843,8 @@ pub const Architecture = enum(u16) {
         return .{ .added = this, .removed = .none };
     }
 
-    const JSC = bun.JSC;
-    pub fn jsFunctionArchitectureIsMatch(globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    const jsc = bun.jsc;
+    pub fn jsFunctionArchitectureIsMatch(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const args = callframe.arguments_old(1);
         var architecture = negatable(.none);
         var iter = args.ptr[0].arrayIterator(globalObject);
@@ -855,7 +855,7 @@ pub const Architecture = enum(u16) {
             if (globalObject.hasException()) return .zero;
         }
         if (globalObject.hasException()) return .zero;
-        return JSC.JSValue.jsBoolean(architecture.combine().isMatch());
+        return jsc.JSValue.jsBoolean(architecture.combine().isMatch());
     }
 };
 
@@ -1350,16 +1350,16 @@ pub const PackageManifest = struct {
     };
 
     pub const bindings = struct {
-        const JSC = bun.JSC;
-        const JSValue = JSC.JSValue;
-        const JSGlobalObject = JSC.JSGlobalObject;
-        const CallFrame = JSC.CallFrame;
-        const ZigString = JSC.ZigString;
+        const jsc = bun.jsc;
+        const JSValue = jsc.JSValue;
+        const JSGlobalObject = jsc.JSGlobalObject;
+        const CallFrame = jsc.CallFrame;
+        const ZigString = jsc.ZigString;
 
         pub fn generate(global: *JSGlobalObject) JSValue {
             const obj = JSValue.createEmptyObject(global, 1);
             const parseManifestString = ZigString.static("parseManifest");
-            obj.put(global, parseManifestString, JSC.createCallback(global, parseManifestString, 2, jsParseManifest));
+            obj.put(global, parseManifestString, jsc.createCallback(global, parseManifestString, 2, jsParseManifest));
             return obj;
         }
 

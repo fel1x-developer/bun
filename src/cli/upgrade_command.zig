@@ -685,7 +685,7 @@ pub const UpgradeCommand = struct {
                         .stdin = .inherit,
 
                         .windows = if (Environment.isWindows) .{
-                            .loop = bun.JSC.EventLoopHandle.init(bun.JSC.MiniEventLoop.initGlobal(null)),
+                            .loop = bun.jsc.EventLoopHandle.init(bun.jsc.MiniEventLoop.initGlobal(null)),
                         } else {},
                     }) catch |err| {
                         Output.prettyErrorln("<r><red>error:<r> Failed to spawn Expand-Archive on {s} due to error {s}", .{ tmpname, @errorName(err) });
@@ -972,24 +972,24 @@ pub const UpgradeCommand = struct {
 };
 
 pub const upgrade_js_bindings = struct {
-    const JSC = bun.JSC;
-    const JSValue = JSC.JSValue;
-    const ZigString = JSC.ZigString;
+    const jsc = bun.jsc;
+    const JSValue = jsc.JSValue;
+    const ZigString = jsc.ZigString;
 
     var tempdir_fd: ?bun.FileDescriptor = null;
 
-    pub fn generate(global: *JSC.JSGlobalObject) JSC.JSValue {
+    pub fn generate(global: *jsc.JSGlobalObject) jsc.JSValue {
         const obj = JSValue.createEmptyObject(global, 3);
         const open = ZigString.static("openTempDirWithoutSharingDelete");
-        obj.put(global, open, JSC.createCallback(global, open, 1, jsOpenTempDirWithoutSharingDelete));
+        obj.put(global, open, jsc.createCallback(global, open, 1, jsOpenTempDirWithoutSharingDelete));
         const close = ZigString.static("closeTempDirHandle");
-        obj.put(global, close, JSC.createCallback(global, close, 1, jsCloseTempDirHandle));
+        obj.put(global, close, jsc.createCallback(global, close, 1, jsCloseTempDirHandle));
         return obj;
     }
 
     /// For testing upgrades when the temp directory has an open handle without FILE_SHARE_DELETE.
     /// Windows only
-    pub fn jsOpenTempDirWithoutSharingDelete(_: *JSC.JSGlobalObject, _: *JSC.CallFrame) bun.JSError!bun.JSC.JSValue {
+    pub fn jsOpenTempDirWithoutSharingDelete(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!bun.jsc.JSValue {
         if (comptime !Environment.isWindows) return .undefined;
         const w = std.os.windows;
 
@@ -1043,7 +1043,7 @@ pub const upgrade_js_bindings = struct {
         return .undefined;
     }
 
-    pub fn jsCloseTempDirHandle(_: *JSC.JSGlobalObject, _: *JSC.CallFrame) bun.JSError!JSValue {
+    pub fn jsCloseTempDirHandle(_: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
         if (comptime !Environment.isWindows) return .undefined;
 
         if (tempdir_fd) |fd| {

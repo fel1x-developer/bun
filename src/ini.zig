@@ -507,12 +507,12 @@ pub const Parser = struct {
 
 /// Used in JS tests, see `internal-for-testing.ts` and shell tests.
 pub const IniTestingAPIs = struct {
-    const JSC = bun.JSC;
+    const jsc = bun.jsc;
 
     pub fn loadNpmrcFromJS(
-        globalThis: *JSC.JSGlobalObject,
-        callframe: *JSC.CallFrame,
-    ) bun.JSError!JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+        callframe: *jsc.CallFrame,
+    ) bun.JSError!jsc.JSValue {
         const arg = callframe.argument(0);
         const npmrc_contents = arg.toBunString(globalThis);
         defer npmrc_contents.deref();
@@ -530,7 +530,7 @@ pub const IniTestingAPIs = struct {
         const envjs = callframe.argument(1);
         const env = if (envjs.isEmptyOrUndefinedOrNull()) globalThis.bunVM().transpiler.env else brk: {
             var envmap = bun.DotEnv.Map.HashTable.init(allocator);
-            var object_iter = try JSC.JSPropertyIterator(.{
+            var object_iter = try jsc.JSPropertyIterator(.{
                 .skip_empty_name = false,
                 .include_value = true,
             }).init(globalThis, envjs);
@@ -593,7 +593,7 @@ pub const IniTestingAPIs = struct {
             default_registry_password.deref();
         }
 
-        return JSC.JSObject.create(.{
+        return jsc.JSObject.create(.{
             .default_registry_url = default_registry_url,
             .default_registry_token = default_registry_token,
             .default_registry_username = default_registry_username,
@@ -601,7 +601,7 @@ pub const IniTestingAPIs = struct {
         }, globalThis).toJS();
     }
 
-    pub fn parse(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn parse(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const arguments_ = callframe.arguments_old(1);
         const arguments = arguments_.slice();
 

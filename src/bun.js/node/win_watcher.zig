@@ -6,13 +6,13 @@ const Path = @import("../../resolver/resolve_path.zig");
 const Fs = @import("../../fs.zig");
 const Mutex = bun.Mutex;
 const string = bun.string;
-const JSC = bun.JSC;
-const VirtualMachine = JSC.VirtualMachine;
+const jsc = bun.jsc;
+const VirtualMachine = jsc.VirtualMachine;
 const StoredFileDescriptorType = bun.StoredFileDescriptorType;
 const Output = bun.Output;
 const Watcher = @import("../../watcher.zig");
 
-const FSWatcher = bun.JSC.Node.FSWatcher;
+const FSWatcher = bun.jsc.Node.FSWatcher;
 const EventType = @import("./path_watcher.zig").PathWatcher.EventType;
 const Event = FSWatcher.Event;
 
@@ -25,12 +25,12 @@ pub const PathWatcherManager = struct {
     const log = Output.scoped(.PathWatcherManager, false);
 
     watchers: bun.StringArrayHashMapUnmanaged(*PathWatcher) = .{},
-    vm: *JSC.VirtualMachine,
+    vm: *jsc.VirtualMachine,
     deinit_on_last_watcher: bool = false,
 
     pub usingnamespace bun.New(PathWatcherManager);
 
-    pub fn init(vm: *JSC.VirtualMachine) *PathWatcherManager {
+    pub fn init(vm: *jsc.VirtualMachine) *PathWatcherManager {
         return PathWatcherManager.new(.{
             .watchers = .{},
             .vm = vm,
@@ -80,8 +80,8 @@ pub const PathWatcherManager = struct {
     }
 };
 
-const onPathUpdateFn = JSC.Node.FSWatcher.onPathUpdate;
-const onUpdateEndFn = JSC.Node.FSWatcher.onUpdateEnd;
+const onPathUpdateFn = jsc.Node.FSWatcher.onPathUpdate;
+const onUpdateEndFn = jsc.Node.FSWatcher.onUpdateEnd;
 
 pub const PathWatcher = struct {
     handle: uv.uv_fs_event_t,
@@ -179,7 +179,7 @@ pub const PathWatcher = struct {
         this.maybeDeinit();
     }
 
-    pub fn init(manager: *PathWatcherManager, path: [:0]const u8, recursive: bool) bun.JSC.Maybe(*PathWatcher) {
+    pub fn init(manager: *PathWatcherManager, path: [:0]const u8, recursive: bool) bun.jsc.Maybe(*PathWatcher) {
         var outbuf: bun.PathBuffer = undefined;
         const event_path = switch (bun.sys.readlink(path, &outbuf)) {
             .err => |err| brk: {
@@ -281,7 +281,7 @@ pub fn watch(
     comptime callback: PathWatcher.Callback,
     comptime updateEnd: PathWatcher.UpdateEndCallback,
     ctx: *anyopaque,
-) bun.JSC.Maybe(*PathWatcher) {
+) bun.jsc.Maybe(*PathWatcher) {
     comptime {
         if (callback != onPathUpdateFn) {
             @compileError("callback must be onPathUpdateFn");

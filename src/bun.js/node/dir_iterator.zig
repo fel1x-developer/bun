@@ -10,14 +10,14 @@ const std = @import("std");
 const posix = std.posix;
 
 const Dir = std.fs.Dir;
-const JSC = bun.JSC;
-const PathString = JSC.PathString;
+const jsc = bun.jsc;
+const PathString = jsc.PathString;
 const bun = @import("root").bun;
 
 const IteratorError = error{ AccessDenied, SystemResources } || posix.UnexpectedError;
 const mem = std.mem;
 const strings = bun.strings;
-const Maybe = JSC.Maybe;
+const Maybe = jsc.Maybe;
 const File = std.fs.File;
 
 pub const IteratorResult = struct {
@@ -43,7 +43,7 @@ const IteratorResultW = struct {
 };
 const ResultW = Maybe(?IteratorResultW);
 
-const Entry = JSC.Node.Dirent;
+const Entry = jsc.Node.Dirent;
 
 pub const Iterator = NewIterator(false);
 pub const IteratorW = NewIterator(true);

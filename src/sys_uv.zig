@@ -16,10 +16,10 @@ const E = C.E;
 const Environment = bun.Environment;
 const FDImpl = bun.FDImpl;
 const FileDescriptor = bun.FileDescriptor;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const MAX_PATH_BYTES = bun.MAX_PATH_BYTES;
-const Maybe = JSC.Maybe;
-const SystemError = JSC.SystemError;
+const Maybe = jsc.Maybe;
+const SystemError = jsc.SystemError;
 
 comptime {
     bun.assert(Environment.isWindows);

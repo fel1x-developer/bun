@@ -3,10 +3,10 @@ const bun = @import("root").bun;
 const string = bun.string;
 const strings = bun.strings;
 const String = bun.String;
-const JSC = bun.JSC;
-const JSValue = JSC.JSValue;
-const JSGlobalObject = JSC.JSGlobalObject;
-const ZigString = JSC.ZigString;
+const jsc = bun.jsc;
+const JSValue = jsc.JSValue;
+const JSGlobalObject = jsc.JSGlobalObject;
+const ZigString = jsc.ZigString;
 
 const validators = @import("./validators.zig");
 const validateArray = validators.validateArray;
@@ -162,7 +162,7 @@ fn getDefaultArgs(globalThis: *JSGlobalObject) !ArgsSlice {
     // Work out where to slice process.argv for user supplied arguments
 
     // Check options for scenarios where user CLI args follow executable
-    const argv: JSValue = JSC.Node.Process.getArgv(globalThis);
+    const argv: JSValue = jsc.Node.Process.getArgv(globalThis);
 
     //var found = false;
     //var iter = argv.arrayIterator(globalThis);
@@ -190,7 +190,7 @@ fn checkOptionLikeValue(globalThis: *JSGlobalObject, token: OptionToken) bun.JSE
         // Only show short example if user used short option.
         var err: JSValue = undefined;
         if (token.raw.asBunString(globalThis).hasPrefixComptime("--")) {
-            err = JSC.toTypeError(
+            err = jsc.toTypeError(
                 .ERR_PARSE_ARGS_INVALID_OPTION_VALUE,
                 "Option '{}' argument is ambiguous.\nDid you forget to specify the option argument for '{}'?\nTo specify an option argument starting with a dash use '{}=-XYZ'.",
                 .{ raw_name, raw_name, raw_name },
@@ -198,7 +198,7 @@ fn checkOptionLikeValue(globalThis: *JSGlobalObject, token: OptionToken) bun.JSE
             );
         } else {
             const token_name = token.name.asBunString(globalThis);
-            err = JSC.toTypeError(
+            err = jsc.toTypeError(
                 .ERR_PARSE_ARGS_INVALID_OPTION_VALUE,
                 "Option '{}' argument is ambiguous.\nDid you forget to specify the option argument for '{}'?\nTo specify an option argument starting with a dash use '--{}=-XYZ' or '{}-XYZ'.",
                 .{ raw_name, raw_name, token_name, raw_name },
@@ -215,7 +215,7 @@ fn checkOptionUsage(globalThis: *JSGlobalObject, options: []const OptionDefiniti
         const option = options[option_idx];
         switch (option.type) {
             .string => if (token.value == .jsvalue and !token.value.jsvalue.isString()) {
-                const err = JSC.toTypeError(
+                const err = jsc.toTypeError(
                     .ERR_PARSE_ARGS_INVALID_OPTION_VALUE,
                     "Option '{s}{s}{s}--{s} <value>' argument missing",
                     .{
@@ -229,7 +229,7 @@ fn checkOptionUsage(globalThis: *JSGlobalObject, options: []const OptionDefiniti
                 return globalThis.throwValue(err);
             },
             .boolean => if (token.value != .jsvalue or !token.value.jsvalue.isUndefined()) {
-                const err = JSC.toTypeError(
+                const err = jsc.toTypeError(
                     .ERR_PARSE_ARGS_INVALID_OPTION_VALUE,
                     "Option '{s}{s}{s}--{s}' does not take an argument",
                     .{
@@ -246,12 +246,12 @@ fn checkOptionUsage(globalThis: *JSGlobalObject, options: []const OptionDefiniti
     } else {
         const raw_name = OptionToken.RawNameFormatter{ .token = token, .globalThis = globalThis };
 
-        const err = if (allow_positionals) (JSC.toTypeError(
+        const err = if (allow_positionals) (jsc.toTypeError(
             .ERR_PARSE_ARGS_UNKNOWN_OPTION,
             "Unknown option '{}'. To specify a positional argument starting with a '-', place it at the end of the command after '--', as in '-- \"{}\"",
             .{ raw_name, raw_name },
             globalThis,
-        )) else (JSC.toTypeError(
+        )) else (jsc.toTypeError(
             .ERR_PARSE_ARGS_UNKNOWN_OPTION,
             "Unknown option '{}'",
             .{raw_name},
@@ -300,7 +300,7 @@ fn storeOption(globalThis: *JSGlobalObject, option_name: ValueRef, option_value:
 fn parseOptionDefinitions(globalThis: *JSGlobalObject, options_obj: JSValue, option_definitions: *std.ArrayList(OptionDefinition)) bun.JSError!void {
     try validateObject(globalThis, options_obj, "options", .{}, .{});
 
-    var iter = try JSC.JSPropertyIterator(.{
+    var iter = try jsc.JSPropertyIterator(.{
         .skip_empty_name = false,
         .include_value = true,
     }).init(globalThis, options_obj);
@@ -322,7 +322,7 @@ fn parseOptionDefinitions(globalThis: *JSGlobalObject, options_obj: JSValue, opt
             try validateString(globalThis, short_option, "options.{s}.short", .{option.long_name});
             var short_option_str = short_option.toBunString(globalThis);
             if (short_option_str.length() != 1) {
-                const err = JSC.toTypeError(.ERR_INVALID_ARG_VALUE, "options.{s}.short must be a single character", .{option.long_name}, globalThis);
+                const err = jsc.toTypeError(.ERR_INVALID_ARG_VALUE, "options.{s}.short must be a single character", .{option.long_name}, globalThis);
                 return globalThis.throwValue(err);
             }
             option.short_name = short_option_str;
@@ -584,7 +584,7 @@ const ParseArgsState = struct {
             },
             .positional => |token| {
                 if (!this.allow_positionals) {
-                    const err = JSC.toTypeError(
+                    const err = jsc.toTypeError(
                         .ERR_PARSE_ARGS_UNEXPECTED_POSITIONAL,
                         "Unexpected argument '{s}'. This command does not take positional arguments",
                         .{token.value.asBunString(globalThis)},
@@ -643,15 +643,15 @@ const ParseArgsState = struct {
 
 pub fn parseArgs(
     globalThis: *JSGlobalObject,
-    callframe: *JSC.CallFrame,
+    callframe: *jsc.CallFrame,
 ) bun.JSError!JSValue {
-    JSC.markBinding(@src());
+    jsc.markBinding(@src());
     const arguments = callframe.argumentsAsArray(1);
     return parseArgsImpl(globalThis, arguments[0]);
 }
 
 comptime {
-    const parseArgsFn = JSC.toJSHostFunction(parseArgs);
+    const parseArgsFn = jsc.toJSHostFunction(parseArgs);
     @export(parseArgsFn, .{ .name = "Bun__NodeUtil__jsParseArgs" });
 }
 
@@ -714,8 +714,8 @@ pub fn parseArgsImpl(globalThis: *JSGlobalObject, config_obj: JSValue) bun.JSErr
 
     // note that "values" needs to have a null prototype instead of Object, to avoid issues such as "values.toString"` being defined
     const values = JSValue.createEmptyObjectWithNullPrototype(globalThis);
-    const positionals = JSC.JSValue.createEmptyArray(globalThis, 0);
-    const tokens = if (return_tokens) JSC.JSValue.createEmptyArray(globalThis, 0) else JSValue.undefined;
+    const positionals = jsc.JSValue.createEmptyArray(globalThis, 0);
+    const tokens = if (return_tokens) jsc.JSValue.createEmptyArray(globalThis, 0) else JSValue.undefined;
 
     var state = ParseArgsState{
         .globalThis = globalThis,

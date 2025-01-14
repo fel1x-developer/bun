@@ -207,8 +207,8 @@ pub fn checkServerIdentity(
     return false;
 }
 
-const JSC = bun.JSC;
-pub fn ERR_toJS(globalThis: *JSC.JSGlobalObject, err_code: u32) JSC.JSValue {
+const jsc = bun.jsc;
+pub fn ERR_toJS(globalThis: *jsc.JSGlobalObject, err_code: u32) jsc.JSValue {
     var outbuf: [128 + 1 + "BoringSSL ".len]u8 = undefined;
     @memset(&outbuf, 0);
     outbuf[0.."BoringSSL ".len].* = "BoringSSL ".*;

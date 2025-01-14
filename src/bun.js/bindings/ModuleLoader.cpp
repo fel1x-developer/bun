@@ -619,7 +619,7 @@ JSValue fetchCommonJSModule(
     }
 
     // The JSONForObjectLoader tag is source code returned from Bun that needs
-    // to go through the JSON parser in JSC.
+    // to go through the JSON parser in jsc.
     //
     // We don't use JSON.parse directly in JS because we want the top-level keys of the JSON
     // object to be accessible as named imports.
@@ -811,7 +811,7 @@ static JSValue fetchESMSourceCode(
     }
 
     // The JSONForObjectLoader tag is source code returned from Bun that needs
-    // to go through the JSON parser in JSC.
+    // to go through the JSON parser in jsc.
     //
     // We don't use JSON.parse directly in JS because we want the top-level keys of the JSON
     // object to be accessible as named imports.

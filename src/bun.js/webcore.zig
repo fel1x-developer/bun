@@ -7,7 +7,7 @@ pub usingnamespace @import("./webcore/S3Client.zig");
 pub usingnamespace @import("./webcore/request.zig");
 pub usingnamespace @import("./webcore/body.zig");
 pub const ObjectURLRegistry = @import("./webcore/ObjectURLRegistry.zig");
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const std = @import("std");
 const bun = @import("root").bun;
 const string = bun.string;
@@ -25,7 +25,7 @@ pub const Lifetime = enum {
 };
 
 /// https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#dom-alert
-fn alert(globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+fn alert(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(1).slice();
     var output = bun.Output.writer();
     const has_message = arguments.len != 0;
@@ -75,7 +75,7 @@ fn alert(globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSErr
     return .undefined;
 }
 
-fn confirm(globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+fn confirm(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(1).slice();
     var output = bun.Output.writer();
     const has_message = arguments.len != 0;
@@ -211,9 +211,9 @@ pub const Prompt = struct {
 
     /// https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#dom-prompt
     pub fn call(
-        globalObject: *JSC.JSGlobalObject,
-        callframe: *JSC.CallFrame,
-    ) bun.JSError!JSC.JSValue {
+        globalObject: *jsc.JSGlobalObject,
+        callframe: *jsc.CallFrame,
+    ) bun.JSError!jsc.JSValue {
         const arguments = callframe.arguments_old(3).slice();
         var state = std.heap.stackFallback(2048, bun.default_allocator);
         const allocator = state.get();
@@ -348,7 +348,7 @@ pub const Prompt = struct {
 
         // 8. Let result be null if the user aborts, or otherwise the string
         //    that the user responded with.
-        var result = JSC.ZigString.init(input.items);
+        var result = jsc.ZigString.init(input.items);
         result.markUTF8();
 
         // 9. Invoke WebDriver BiDi user prompt closed with this, false if
@@ -364,15 +364,15 @@ pub const Crypto = struct {
     garbage: i32 = 0,
     const BoringSSL = bun.BoringSSL;
 
-    pub const doScryptSync = JSC.wrapInstanceMethod(Crypto, "scryptSync", false);
+    pub const doScryptSync = jsc.wrapInstanceMethod(Crypto, "scryptSync", false);
 
     pub fn scryptSync(
-        globalThis: *JSC.JSGlobalObject,
-        password: JSC.Node.StringOrBuffer,
-        salt: JSC.Node.StringOrBuffer,
-        keylen_value: JSC.JSValue,
-        options: ?JSC.JSValue,
-    ) bun.JSError!JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+        password: jsc.Node.StringOrBuffer,
+        salt: jsc.Node.StringOrBuffer,
+        keylen_value: jsc.JSValue,
+        options: ?jsc.JSValue,
+    ) bun.JSError!jsc.JSValue {
         const password_string = password.slice();
         const salt_string = salt.slice();
 
@@ -495,7 +495,7 @@ pub const Crypto = struct {
                 return throwInvalidParams(globalThis, .RangeError, "Invalid scrypt params\n", .{});
             }
 
-            return JSC.ArrayBuffer.createEmpty(globalThis, .ArrayBuffer);
+            return jsc.ArrayBuffer.createEmpty(globalThis, .ArrayBuffer);
         }
 
         var stackbuf: [1024]u8 = undefined;
@@ -527,20 +527,20 @@ pub const Crypto = struct {
             return throwInvalidParams(globalThis, .RangeError, "Invalid scrypt params\n", .{});
         }
 
-        return JSC.ArrayBuffer.create(globalThis, buf, .ArrayBuffer);
+        return jsc.ArrayBuffer.create(globalThis, buf, .ArrayBuffer);
     }
 
-    fn throwInvalidParameter(globalThis: *JSC.JSGlobalObject) bun.JSError {
+    fn throwInvalidParameter(globalThis: *jsc.JSGlobalObject) bun.JSError {
         return globalThis.ERR_CRYPTO_SCRYPT_INVALID_PARAMETER("Invalid scrypt parameters", .{}).throw();
     }
 
-    fn throwInvalidParams(globalThis: *JSC.JSGlobalObject, comptime error_type: @Type(.EnumLiteral), comptime message: [:0]const u8, fmt: anytype) bun.JSError {
+    fn throwInvalidParams(globalThis: *jsc.JSGlobalObject, comptime error_type: @Type(.EnumLiteral), comptime message: [:0]const u8, fmt: anytype) bun.JSError {
         if (error_type != .RangeError) @compileError("Error type not added!");
         BoringSSL.ERR_clear_error();
         return globalThis.ERR_CRYPTO_INVALID_SCRYPT_PARAMS(message, fmt).throw();
     }
 
-    pub fn timingSafeEqual(_: *@This(), globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn timingSafeEqual(_: *@This(), globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const arguments = callframe.arguments_old(2).slice();
 
         if (arguments.len < 2) {
@@ -561,15 +561,15 @@ pub const Crypto = struct {
         if (b.len != len) {
             return globalThis.throw("Input buffers must have the same byte length", .{});
         }
-        return JSC.jsBoolean(len == 0 or bun.BoringSSL.CRYPTO_memcmp(a.ptr, b.ptr, len) == 0);
+        return jsc.jsBoolean(len == 0 or bun.BoringSSL.CRYPTO_memcmp(a.ptr, b.ptr, len) == 0);
     }
 
     pub fn timingSafeEqualWithoutTypeChecks(
         _: *@This(),
-        globalThis: *JSC.JSGlobalObject,
-        array_a: *JSC.JSUint8Array,
-        array_b: *JSC.JSUint8Array,
-    ) JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+        array_a: *jsc.JSUint8Array,
+        array_b: *jsc.JSUint8Array,
+    ) jsc.JSValue {
         const a = array_a.slice();
         const b = array_b.slice();
 
@@ -578,14 +578,14 @@ pub const Crypto = struct {
             return globalThis.throw("Input buffers must have the same byte length", .{});
         }
 
-        return JSC.jsBoolean(len == 0 or bun.BoringSSL.CRYPTO_memcmp(a.ptr, b.ptr, len) == 0);
+        return jsc.jsBoolean(len == 0 or bun.BoringSSL.CRYPTO_memcmp(a.ptr, b.ptr, len) == 0);
     }
 
     pub fn getRandomValues(
         _: *@This(),
-        globalThis: *JSC.JSGlobalObject,
-        callframe: *JSC.CallFrame,
-    ) bun.JSError!JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+        callframe: *jsc.CallFrame,
+    ) bun.JSError!jsc.JSValue {
         const arguments = callframe.arguments_old(1).slice();
         if (arguments.len == 0) {
             return globalThis.throwInvalidArguments("Expected typed array but got nothing", .{});
@@ -603,16 +603,16 @@ pub const Crypto = struct {
 
     pub fn getRandomValuesWithoutTypeChecks(
         _: *@This(),
-        globalThis: *JSC.JSGlobalObject,
-        array: *JSC.JSUint8Array,
-    ) JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+        array: *jsc.JSUint8Array,
+    ) jsc.JSValue {
         const slice = array.slice();
         randomData(globalThis, slice.ptr, slice.len);
-        return @as(JSC.JSValue, @enumFromInt(@as(i64, @bitCast(@intFromPtr(array)))));
+        return @as(jsc.JSValue, @enumFromInt(@as(i64, @bitCast(@intFromPtr(array)))));
     }
 
     fn randomData(
-        globalThis: *JSC.JSGlobalObject,
+        globalThis: *jsc.JSGlobalObject,
         ptr: [*]u8,
         len: usize,
     ) void {
@@ -621,7 +621,7 @@ pub const Crypto = struct {
         switch (slice.len) {
             0 => {},
             // 512 bytes or less we reuse from the same cache as UUID generation.
-            1...JSC.RareData.EntropyCache.size / 8 => {
+            1...jsc.RareData.EntropyCache.size / 8 => {
                 bun.copy(u8, slice, globalThis.bunVM().rareData().entropySlice(slice.len));
             },
             else => {
@@ -632,9 +632,9 @@ pub const Crypto = struct {
 
     pub fn randomUUID(
         _: *@This(),
-        globalThis: *JSC.JSGlobalObject,
-        _: *JSC.CallFrame,
-    ) bun.JSError!JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+        _: *jsc.CallFrame,
+    ) bun.JSError!jsc.JSValue {
         const str, var bytes = bun.String.createUninitialized(.latin1, 36);
         defer str.deref();
 
@@ -645,31 +645,31 @@ pub const Crypto = struct {
     }
 
     comptime {
-        const Bun__randomUUIDv7 = JSC.toJSHostFunction(Bun__randomUUIDv7_);
+        const Bun__randomUUIDv7 = jsc.toJSHostFunction(Bun__randomUUIDv7_);
         @export(Bun__randomUUIDv7, .{ .name = "Bun__randomUUIDv7" });
     }
-    pub fn Bun__randomUUIDv7_(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn Bun__randomUUIDv7_(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const arguments = callframe.argumentsUndef(2).slice();
 
-        var encoding_value: JSC.JSValue = .undefined;
+        var encoding_value: jsc.JSValue = .undefined;
 
-        const encoding: JSC.Node.Encoding = brk: {
+        const encoding: jsc.Node.Encoding = brk: {
             if (arguments.len > 0) {
                 if (arguments[0] != .undefined) {
                     if (arguments[0].isString()) {
                         encoding_value = arguments[0];
-                        break :brk JSC.Node.Encoding.fromJS(encoding_value, globalThis) orelse {
+                        break :brk jsc.Node.Encoding.fromJS(encoding_value, globalThis) orelse {
                             return globalThis.ERR_UNKNOWN_ENCODING("Encoding must be one of base64, base64url, hex, or buffer", .{}).throw();
                         };
                     }
                 }
             }
 
-            break :brk JSC.Node.Encoding.hex;
+            break :brk jsc.Node.Encoding.hex;
         };
 
         const timestamp: u64 = brk: {
-            const timestamp_value: JSC.JSValue = if (encoding_value != .undefined and arguments.len > 1)
+            const timestamp_value: jsc.JSValue = if (encoding_value != .undefined and arguments.len > 1)
                 arguments[1]
             else if (arguments.len == 1 and encoding_value == .undefined)
                 arguments[0]
@@ -702,8 +702,8 @@ pub const Crypto = struct {
 
     pub fn randomUUIDWithoutTypeChecks(
         _: *Crypto,
-        globalThis: *JSC.JSGlobalObject,
-    ) JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+    ) jsc.JSValue {
         const str, var bytes = bun.String.createUninitialized(.latin1, 36);
         defer str.deref();
 
@@ -715,12 +715,12 @@ pub const Crypto = struct {
         return str.toJS(globalThis);
     }
 
-    pub fn constructor(globalThis: *JSC.JSGlobalObject, _: *JSC.CallFrame) bun.JSError!*Crypto {
+    pub fn constructor(globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!*Crypto {
         return globalThis.throw("Crypto is not constructable", .{});
     }
 
-    pub export fn CryptoObject__create(globalThis: *JSC.JSGlobalObject) JSC.JSValue {
-        JSC.markBinding(@src());
+    pub export fn CryptoObject__create(globalThis: *jsc.JSGlobalObject) jsc.JSValue {
+        jsc.markBinding(@src());
 
         var ptr = bun.default_allocator.create(Crypto) catch {
             return globalThis.throwOutOfMemoryValue();
@@ -729,22 +729,22 @@ pub const Crypto = struct {
         return ptr.toJS(globalThis);
     }
 
-    pub usingnamespace JSC.Codegen.JSCrypto;
+    pub usingnamespace jsc.Codegen.JSCrypto;
 
     comptime {
-        if (!JSC.is_bindgen) {
+        if (!jsc.is_bindgen) {
             _ = CryptoObject__create;
         }
     }
 };
 
 comptime {
-    if (!JSC.is_bindgen) {
-        const js_alert = JSC.toJSHostFunction(alert);
+    if (!jsc.is_bindgen) {
+        const js_alert = jsc.toJSHostFunction(alert);
         @export(js_alert, .{ .name = "WebCore__alert" });
-        const js_prompt = JSC.toJSHostFunction(Prompt.call);
+        const js_prompt = jsc.toJSHostFunction(Prompt.call);
         @export(js_prompt, .{ .name = "WebCore__prompt" });
-        const js_confirm = JSC.toJSHostFunction(confirm);
+        const js_confirm = jsc.toJSHostFunction(confirm);
         @export(js_confirm, .{ .name = "WebCore__confirm" });
     }
 }

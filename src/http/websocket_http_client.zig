@@ -14,7 +14,7 @@ const default_allocator = bun.default_allocator;
 const C = bun.C;
 const BoringSSL = bun.BoringSSL;
 const uws = bun.uws;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const PicoHTTP = bun.picohttp;
 const ObjectPool = @import("../pool.zig").ObjectPool;
 const WebsocketHeader = @import("./websocket.zig").WebsocketHeader;
@@ -27,8 +27,8 @@ const Async = bun.Async;
 const log = Output.scoped(.WebSocketClient, false);
 
 const NonUTF8Headers = struct {
-    names: []const JSC.ZigString,
-    values: []const JSC.ZigString,
+    names: []const jsc.ZigString,
+    values: []const jsc.ZigString,
 
     pub fn format(self: NonUTF8Headers, comptime _: []const u8, _: std.fmt.FormatOptions, writer: anytype) !void {
         const count = self.names.len;
@@ -38,11 +38,11 @@ const NonUTF8Headers = struct {
         }
     }
 
-    pub fn init(names: ?[*]const JSC.ZigString, values: ?[*]const JSC.ZigString, len: usize) NonUTF8Headers {
+    pub fn init(names: ?[*]const jsc.ZigString, values: ?[*]const jsc.ZigString, len: usize) NonUTF8Headers {
         if (len == 0) {
             return .{
-                .names = &[_]JSC.ZigString{},
-                .values = &[_]JSC.ZigString{},
+                .names = &[_]jsc.ZigString{},
+                .values = &[_]jsc.ZigString{},
             };
         }
 
@@ -54,12 +54,12 @@ const NonUTF8Headers = struct {
 };
 
 fn buildRequestBody(
-    vm: *JSC.VirtualMachine,
-    pathname: *const JSC.ZigString,
+    vm: *jsc.VirtualMachine,
+    pathname: *const jsc.ZigString,
     is_https: bool,
-    host: *const JSC.ZigString,
+    host: *const jsc.ZigString,
     port: u16,
-    client_protocol: *const JSC.ZigString,
+    client_protocol: *const jsc.ZigString,
     client_protocol_hash: *u64,
     extra_headers: NonUTF8Headers,
 ) std.mem.Allocator.Error![]u8 {
@@ -152,41 +152,41 @@ const CppWebSocket = opaque {
     ) void;
     extern fn WebSocket__didAbruptClose(websocket_context: *CppWebSocket, reason: ErrorCode) void;
     extern fn WebSocket__didClose(websocket_context: *CppWebSocket, code: u16, reason: *const bun.String) void;
-    extern fn WebSocket__didReceiveText(websocket_context: *CppWebSocket, clone: bool, text: *const JSC.ZigString) void;
+    extern fn WebSocket__didReceiveText(websocket_context: *CppWebSocket, clone: bool, text: *const jsc.ZigString) void;
     extern fn WebSocket__didReceiveBytes(websocket_context: *CppWebSocket, bytes: [*]const u8, byte_len: usize, opcode: u8) void;
     extern fn WebSocket__rejectUnauthorized(websocket_context: *CppWebSocket) bool;
     pub fn didAbruptClose(this: *CppWebSocket, reason: ErrorCode) void {
-        const loop = JSC.VirtualMachine.get().eventLoop();
+        const loop = jsc.VirtualMachine.get().eventLoop();
         loop.enter();
         defer loop.exit();
         WebSocket__didAbruptClose(this, reason);
     }
     pub fn didClose(this: *CppWebSocket, code: u16, reason: *const bun.String) void {
-        const loop = JSC.VirtualMachine.get().eventLoop();
+        const loop = jsc.VirtualMachine.get().eventLoop();
         loop.enter();
         defer loop.exit();
         WebSocket__didClose(this, code, reason);
     }
-    pub fn didReceiveText(this: *CppWebSocket, clone: bool, text: *const JSC.ZigString) void {
-        const loop = JSC.VirtualMachine.get().eventLoop();
+    pub fn didReceiveText(this: *CppWebSocket, clone: bool, text: *const jsc.ZigString) void {
+        const loop = jsc.VirtualMachine.get().eventLoop();
         loop.enter();
         defer loop.exit();
         WebSocket__didReceiveText(this, clone, text);
     }
     pub fn didReceiveBytes(this: *CppWebSocket, bytes: [*]const u8, byte_len: usize, opcode: u8) void {
-        const loop = JSC.VirtualMachine.get().eventLoop();
+        const loop = jsc.VirtualMachine.get().eventLoop();
         loop.enter();
         defer loop.exit();
         WebSocket__didReceiveBytes(this, bytes, byte_len, opcode);
     }
     pub fn rejectUnauthorized(this: *CppWebSocket) bool {
-        const loop = JSC.VirtualMachine.get().eventLoop();
+        const loop = jsc.VirtualMachine.get().eventLoop();
         loop.enter();
         defer loop.exit();
         return WebSocket__rejectUnauthorized(this);
     }
     pub fn didConnect(this: *CppWebSocket, socket: *uws.Socket, buffered_data: ?[*]u8, buffered_len: usize) void {
-        const loop = JSC.VirtualMachine.get().eventLoop();
+        const loop = jsc.VirtualMachine.get().eventLoop();
         loop.enter();
         defer loop.exit();
         WebSocket__didConnect(this, socket, buffered_data, buffered_len);
@@ -194,12 +194,12 @@ const CppWebSocket = opaque {
     extern fn WebSocket__incrementPendingActivity(websocket_context: *CppWebSocket) void;
     extern fn WebSocket__decrementPendingActivity(websocket_context: *CppWebSocket) void;
     pub fn ref(this: *CppWebSocket) void {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         WebSocket__incrementPendingActivity(this);
     }
 
     pub fn unref(this: *CppWebSocket) void {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         WebSocket__decrementPendingActivity(this);
     }
 };
@@ -225,11 +225,11 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
 
         pub const name = if (ssl) "WebSocketHTTPSClient" else "WebSocketHTTPClient";
 
-        pub const shim = JSC.Shimmer("Bun", name, @This());
+        pub const shim = jsc.Shimmer("Bun", name, @This());
         pub usingnamespace bun.NewRefCounted(@This(), deinit);
 
         const HTTPClient = @This();
-        pub fn register(_: *JSC.JSGlobalObject, _: *anyopaque, ctx: *uws.SocketContext) callconv(.C) void {
+        pub fn register(_: *jsc.JSGlobalObject, _: *anyopaque, ctx: *uws.SocketContext) callconv(.C) void {
             Socket.configure(
                 ctx,
                 true,
@@ -257,15 +257,15 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
         /// On error, this returns null.
         /// Returning null signals to the parent function that the connection failed.
         pub fn connect(
-            global: *JSC.JSGlobalObject,
+            global: *jsc.JSGlobalObject,
             socket_ctx: *anyopaque,
             websocket: *CppWebSocket,
-            host: *const JSC.ZigString,
+            host: *const jsc.ZigString,
             port: u16,
-            pathname: *const JSC.ZigString,
-            client_protocol: *const JSC.ZigString,
-            header_names: ?[*]const JSC.ZigString,
-            header_values: ?[*]const JSC.ZigString,
+            pathname: *const jsc.ZigString,
+            client_protocol: *const jsc.ZigString,
+            header_names: ?[*]const jsc.ZigString,
+            header_values: ?[*]const jsc.ZigString,
             header_count: usize,
         ) callconv(.C) ?*HTTPClient {
             const vm = global.bunVM();
@@ -341,7 +341,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
             this.input_body_buf.len = 0;
         }
         pub fn clearData(this: *HTTPClient) void {
-            this.poll_ref.unref(JSC.VirtualMachine.get());
+            this.poll_ref.unref(jsc.VirtualMachine.get());
 
             this.clearInput();
             this.body.clearAndFree(bun.default_allocator);
@@ -370,7 +370,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
 
         pub fn fail(this: *HTTPClient, code: ErrorCode) void {
             log("onFail: {s}", .{@tagName(code)});
-            JSC.markBinding(@src());
+            jsc.markBinding(@src());
 
             this.ref();
             defer this.deref();
@@ -394,7 +394,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
 
         pub fn handleClose(this: *HTTPClient, _: Socket, _: c_int, _: ?*anyopaque) void {
             log("onClose", .{});
-            JSC.markBinding(@src());
+            jsc.markBinding(@src());
             this.clearData();
             this.tcp.detach();
             this.dispatchAbruptClose(ErrorCode.ended);
@@ -634,7 +634,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
             }
 
             this.clearData();
-            JSC.markBinding(@src());
+            jsc.markBinding(@src());
             if (!this.tcp.isClosed() and this.outgoing_websocket != null) {
                 this.tcp.timeout(0);
                 log("onDidConnect", .{});
@@ -713,7 +713,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
         });
 
         comptime {
-            if (!JSC.is_bindgen) {
+            if (!jsc.is_bindgen) {
                 @export(connect, .{
                     .name = Export[0].symbol_name,
                 });
@@ -732,7 +732,7 @@ pub fn NewHTTPUpgradeClient(comptime ssl: bool) type {
 }
 
 pub const Mask = struct {
-    pub fn fill(globalThis: *JSC.JSGlobalObject, mask_buf: *[4]u8, output_: []u8, input_: []const u8) void {
+    pub fn fill(globalThis: *jsc.JSGlobalObject, mask_buf: *[4]u8, output_: []u8, input_: []const u8) void {
         mask_buf.* = globalThis.bunVM().rareData().entropySlice(4)[0..4].*;
         const mask = mask_buf.*;
 
@@ -922,7 +922,7 @@ const Copy = union(enum) {
         }
     }
 
-    pub fn copy(this: @This(), globalThis: *JSC.JSGlobalObject, buf: []u8, content_byte_len: usize, opcode: Opcode) void {
+    pub fn copy(this: @This(), globalThis: *jsc.JSGlobalObject, buf: []u8, content_byte_len: usize, opcode: Opcode) void {
         if (this == .raw) {
             bun.assert(buf.len >= this.raw.len);
             bun.assert(buf.ptr != this.raw.ptr);
@@ -1015,7 +1015,7 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
 
         send_buffer: bun.LinearFifo(u8, .Dynamic),
 
-        globalThis: *JSC.JSGlobalObject,
+        globalThis: *jsc.JSGlobalObject,
         poll_ref: Async.KeepAlive = Async.KeepAlive.init(),
 
         header_fragment: ?u8 = null,
@@ -1024,18 +1024,18 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
         payload_length_frame_len: u8 = 0,
 
         initial_data_handler: ?*InitialDataHandler = null,
-        event_loop: *JSC.EventLoop = undefined,
+        event_loop: *jsc.EventLoop = undefined,
         ref_count: u32 = 1,
 
         pub const name = if (ssl) "WebSocketClientTLS" else "WebSocketClient";
 
-        pub const shim = JSC.Shimmer("Bun", name, @This());
+        pub const shim = jsc.Shimmer("Bun", name, @This());
         const stack_frame_size = 1024;
 
         const WebSocket = @This();
 
         pub usingnamespace bun.NewRefCounted(@This(), deinit);
-        pub fn register(global: *JSC.JSGlobalObject, loop_: *anyopaque, ctx_: *anyopaque) callconv(.C) void {
+        pub fn register(global: *jsc.JSGlobalObject, loop_: *anyopaque, ctx_: *anyopaque) callconv(.C) void {
             const vm = global.bunVM();
             const loop = @as(*uws.Loop, @ptrCast(@alignCast(loop_)));
 
@@ -1087,7 +1087,7 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
         }
 
         pub fn fail(this: *WebSocket, code: ErrorCode) void {
-            JSC.markBinding(@src());
+            jsc.markBinding(@src());
             if (this.outgoing_websocket) |ws| {
                 this.outgoing_websocket = null;
                 log("fail ({s})", .{@tagName(code)});
@@ -1099,7 +1099,7 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
         }
 
         pub fn handleHandshake(this: *WebSocket, socket: Socket, success: i32, ssl_error: uws.us_bun_verify_error_t) void {
-            JSC.markBinding(@src());
+            jsc.markBinding(@src());
 
             const authorized = if (success == 1) true else false;
 
@@ -1129,7 +1129,7 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
         }
         pub fn handleClose(this: *WebSocket, _: Socket, _: c_int, _: ?*anyopaque) void {
             log("onClose", .{});
-            JSC.markBinding(@src());
+            jsc.markBinding(@src());
             this.clearData();
             this.tcp.detach();
 
@@ -1181,20 +1181,20 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
                         this.terminate(ErrorCode.invalid_utf8);
                         return;
                     };
-                    var outstring = JSC.ZigString.Empty;
+                    var outstring = jsc.ZigString.Empty;
                     if (utf16_bytes_) |utf16| {
-                        outstring = JSC.ZigString.from16Slice(utf16);
+                        outstring = jsc.ZigString.from16Slice(utf16);
                         outstring.mark();
-                        JSC.markBinding(@src());
+                        jsc.markBinding(@src());
                         out.didReceiveText(false, &outstring);
                     } else {
-                        outstring = JSC.ZigString.init(data_);
-                        JSC.markBinding(@src());
+                        outstring = jsc.ZigString.init(data_);
+                        jsc.markBinding(@src());
                         out.didReceiveText(true, &outstring);
                     }
                 },
                 .Binary, .Ping, .Pong => {
-                    JSC.markBinding(@src());
+                    jsc.markBinding(@src());
                     out.didReceiveBytes(data_.ptr, data_.len, @as(u8, @intFromEnum(kind)));
                 },
                 else => {
@@ -1789,7 +1789,7 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
 
         pub fn writeString(
             this: *WebSocket,
-            str_: *const JSC.ZigString,
+            str_: *const jsc.ZigString,
             op: u8,
         ) callconv(.C) void {
             const str = str_.*;
@@ -1840,7 +1840,7 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
         fn dispatchAbruptClose(this: *WebSocket, code: ErrorCode) void {
             var out = this.outgoing_websocket orelse return;
             this.poll_ref.unref(this.globalThis.bunVM());
-            JSC.markBinding(@src());
+            jsc.markBinding(@src());
             this.outgoing_websocket = null;
             out.didAbruptClose(code);
             this.deref();
@@ -1849,13 +1849,13 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
         fn dispatchClose(this: *WebSocket, code: u16, reason: *const bun.String) void {
             var out = this.outgoing_websocket orelse return;
             this.poll_ref.unref(this.globalThis.bunVM());
-            JSC.markBinding(@src());
+            jsc.markBinding(@src());
             this.outgoing_websocket = null;
             out.didClose(code, reason);
             this.deref();
         }
 
-        pub fn close(this: *WebSocket, code: u16, reason: ?*const JSC.ZigString) callconv(.C) void {
+        pub fn close(this: *WebSocket, code: u16, reason: ?*const jsc.ZigString) callconv(.C) void {
             if (!this.hasTCP())
                 return;
             const tcp = this.tcp;
@@ -1878,7 +1878,7 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
             ws: *CppWebSocket,
             slice: []u8,
 
-            pub const Handle = JSC.AnyTask.New(@This(), handle);
+            pub const Handle = jsc.AnyTask.New(@This(), handle);
 
             pub usingnamespace bun.New(@This());
 
@@ -1909,7 +1909,7 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
             outgoing: *CppWebSocket,
             input_socket: *anyopaque,
             socket_ctx: *anyopaque,
-            globalThis: *JSC.JSGlobalObject,
+            globalThis: *jsc.JSGlobalObject,
             buffered_data: [*]u8,
             buffered_data_len: usize,
         ) callconv(.C) ?*anyopaque {
@@ -2009,7 +2009,7 @@ pub fn NewWebSocketClient(comptime ssl: bool) type {
         });
 
         comptime {
-            if (!JSC.is_bindgen) {
+            if (!jsc.is_bindgen) {
                 @export(writeBinaryData, .{ .name = Export[0].symbol_name });
                 @export(writeString, .{ .name = Export[1].symbol_name });
                 @export(close, .{ .name = Export[2].symbol_name });

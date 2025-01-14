@@ -22,7 +22,7 @@ pub fn buildCommand(ctx: bun.CLI.Command.Context) !void {
 
     // Create a VM + global for loading the config file, plugins, and
     // performing build time prerendering.
-    bun.JSC.initialize(false);
+    bun.jsc.initialize(false);
     bun.JSAst.Expr.Data.Store.create();
     bun.JSAst.Stmt.Data.Store.create();
 
@@ -78,7 +78,7 @@ pub fn buildCommand(ctx: bun.CLI.Command.Context) !void {
     bun.http.AsyncHTTP.loadEnv(vm.allocator, vm.log, b.env);
     vm.loadExtraEnvAndSourceCodePrinter();
     vm.is_main_thread = true;
-    JSC.VirtualMachine.is_main_thread_vm = true;
+    jsc.VirtualMachine.is_main_thread_vm = true;
 
     const api_lock = vm.jsc.getAPILock();
     defer api_lock.release();
@@ -131,7 +131,7 @@ pub fn buildWithVm(ctx: bun.CLI.Command.Context, cwd: []const u8, vm: *VirtualMa
     const config_entry_point_string = bun.String.createUTF8(config_entry_point.pathConst().?.text);
     defer config_entry_point_string.deref();
 
-    const config_promise = bun.JSC.JSModuleLoader.loadAndEvaluateModule(global, &config_entry_point_string) orelse {
+    const config_promise = bun.jsc.JSModuleLoader.loadAndEvaluateModule(global, &config_entry_point_string) orelse {
         bun.assert(global.hasException());
         return error.JSError;
     };
@@ -565,7 +565,7 @@ pub fn buildWithVm(ctx: bun.CLI.Command.Context, cwd: []const u8, vm: *VirtualMa
 
 /// unsafe function, must be run outside of the event loop
 /// quits the process on exception
-fn loadModule(vm: *VirtualMachine, global: *JSC.JSGlobalObject, key: JSValue) !JSValue {
+fn loadModule(vm: *VirtualMachine, global: *jsc.JSGlobalObject, key: JSValue) !JSValue {
     const promise = BakeLoadModuleByKey(global, key).asAnyPromise().?.internal;
     promise.setHandled(vm.jsc);
     vm.waitForPromise(.{ .internal = promise });
@@ -584,12 +584,12 @@ fn loadModule(vm: *VirtualMachine, global: *JSC.JSGlobalObject, key: JSValue) !J
 // extern apis:
 
 // TODO: Dedupe
-extern fn BakeGetDefaultExportFromModule(global: *JSC.JSGlobalObject, key: JSValue) JSValue;
-extern fn BakeGetModuleNamespace(global: *JSC.JSGlobalObject, key: JSValue) JSValue;
-extern fn BakeLoadModuleByKey(global: *JSC.JSGlobalObject, key: JSValue) JSValue;
+extern fn BakeGetDefaultExportFromModule(global: *jsc.JSGlobalObject, key: JSValue) JSValue;
+extern fn BakeGetModuleNamespace(global: *jsc.JSGlobalObject, key: JSValue) JSValue;
+extern fn BakeLoadModuleByKey(global: *jsc.JSGlobalObject, key: JSValue) JSValue;
 
-fn BakeGetOnModuleNamespace(global: *JSC.JSGlobalObject, module: JSValue, property: []const u8) ?JSValue {
-    const f = @extern(*const fn (*JSC.JSGlobalObject, JSValue, [*]const u8, usize) callconv(.C) JSValue, .{
+fn BakeGetOnModuleNamespace(global: *jsc.JSGlobalObject, module: JSValue, property: []const u8) ?JSValue {
+    const f = @extern(*const fn (*jsc.JSGlobalObject, JSValue, [*]const u8, usize) callconv(.C) JSValue, .{
         .name = "BakeGetOnModuleNamespace",
     });
     const result: JSValue = f(global, module, property.ptr, property.len);
@@ -598,7 +598,7 @@ fn BakeGetOnModuleNamespace(global: *JSC.JSGlobalObject, module: JSValue, proper
 }
 
 extern fn BakeRenderRoutesForProdStatic(
-    *JSC.JSGlobalObject,
+    *jsc.JSGlobalObject,
     out_base: bun.String,
     all_server_files: JSValue,
     render_static: JSValue,
@@ -610,14 +610,14 @@ extern fn BakeRenderRoutesForProdStatic(
     src_route_files: JSValue,
     param_information: JSValue,
     styles: JSValue,
-) *JSC.JSPromise;
+) *jsc.JSPromise;
 
-extern fn BakeCreateProdGlobal(console_ptr: *anyopaque) *JSC.JSGlobalObject;
+extern fn BakeCreateProdGlobal(console_ptr: *anyopaque) *jsc.JSGlobalObject;
 
 /// The result of this function is a JSValue that wont be garbage collected, as
 /// it will always have at least one reference by the module loader.
-fn BakeRegisterProductionChunk(global: *JSC.JSGlobalObject, key: bun.String, source_code: bun.String) bun.JSError!JSValue {
-    const f = @extern(*const fn (*JSC.JSGlobalObject, bun.String, bun.String) callconv(.C) JSValue, .{
+fn BakeRegisterProductionChunk(global: *jsc.JSGlobalObject, key: bun.String, source_code: bun.String) bun.JSError!JSValue {
+    const f = @extern(*const fn (*jsc.JSGlobalObject, bun.String, bun.String) callconv(.C) JSValue, .{
         .name = "BakeRegisterProductionChunk",
     });
     const result: JSValue = f(global, key, source_code);
@@ -626,14 +626,14 @@ fn BakeRegisterProductionChunk(global: *JSC.JSGlobalObject, key: bun.String, sou
     return result;
 }
 
-export fn BakeProdResolve(global: *JSC.JSGlobalObject, a_str: bun.String, specifier_str: bun.String) callconv(.C) bun.String {
+export fn BakeProdResolve(global: *jsc.JSGlobalObject, a_str: bun.String, specifier_str: bun.String) callconv(.C) bun.String {
     var sfa = std.heap.stackFallback(@sizeOf(bun.PathBuffer) * 2, bun.default_allocator);
     const alloc = sfa.get();
 
     const specifier = specifier_str.toUTF8(alloc);
     defer specifier.deinit();
 
-    if (JSC.HardcodedModule.Aliases.get(specifier.slice(), .bun)) |alias| {
+    if (jsc.HardcodedModule.Aliases.get(specifier.slice(), .bun)) |alias| {
         return bun.String.static(alias.path);
     }
 
@@ -744,11 +744,11 @@ pub const PerThread = struct {
     module_map: bun.StringArrayHashMapUnmanaged(OutputFile.Index),
 
     // Thread-local
-    vm: *JSC.VirtualMachine,
+    vm: *jsc.VirtualMachine,
     /// Indexed by entry point index (OpaqueFileId)
     loaded_files: bun.bit_set.AutoBitSet,
     /// JSArray of JSString, indexed by entry point index (OpaqueFileId)
-    all_server_files: JSC.JSValue,
+    all_server_files: jsc.JSValue,
 
     /// Sent to other threads for rendering
     pub const Options = struct {
@@ -762,7 +762,7 @@ pub const PerThread = struct {
         module_map: bun.StringArrayHashMapUnmanaged(OutputFile.Index),
     };
 
-    extern fn BakeGlobalObject__attachPerThreadData(global: *JSC.JSGlobalObject, pt: ?*PerThread) void;
+    extern fn BakeGlobalObject__attachPerThreadData(global: *jsc.JSGlobalObject, pt: ?*PerThread) void;
 
     /// After initializing, call `attach`
     pub fn init(vm: *VirtualMachine, opts: Options) !PerThread {
@@ -866,6 +866,6 @@ const bake = bun.bake;
 const FrameworkRouter = bake.FrameworkRouter;
 const OpaqueFileId = FrameworkRouter.OpaqueFileId;
 
-const JSC = bun.JSC;
-const JSValue = JSC.JSValue;
-const VirtualMachine = JSC.VirtualMachine;
+const jsc = bun.jsc;
+const JSValue = jsc.JSValue;
+const VirtualMachine = jsc.VirtualMachine;

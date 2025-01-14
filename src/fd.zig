@@ -3,8 +3,8 @@ const posix = std.posix;
 
 const bun = @import("root").bun;
 const env = bun.Environment;
-const JSC = bun.JSC;
-const JSValue = JSC.JSValue;
+const jsc = bun.jsc;
+const JSValue = jsc.JSValue;
 const libuv = bun.windows.libuv;
 
 const allow_assert = env.allow_assert;
@@ -320,10 +320,10 @@ pub const FDImpl = packed struct {
 
     // If a non-number is given, returns null.
     // If the given number is not an fd (negative), an error is thrown and error.JSException is returned.
-    pub fn fromJSValidated(value: JSValue, global: *JSC.JSGlobalObject) bun.JSError!?FDImpl {
+    pub fn fromJSValidated(value: JSValue, global: *jsc.JSGlobalObject) bun.JSError!?FDImpl {
         if (!value.isAnyInt()) return null;
         const fd64 = value.toInt64();
-        try JSC.Node.Valid.fileDescriptor(fd64, global);
+        try jsc.Node.Valid.fileDescriptor(fd64, global);
         const fd: i32 = @intCast(fd64);
 
         if (comptime env.isWindows) {
@@ -340,10 +340,10 @@ pub const FDImpl = packed struct {
 
     /// After calling, the input file descriptor is no longer valid and must not be used.
     /// If an error is thrown, the file descriptor is cleaned up for you.
-    pub fn toJS(value: FDImpl, global: *JSC.JSGlobalObject) JSValue {
+    pub fn toJS(value: FDImpl, global: *jsc.JSGlobalObject) JSValue {
         const fd = value.makeLibUVOwned() catch {
             _ = value.close();
-            return global.throwValue((JSC.SystemError{
+            return global.throwValue((jsc.SystemError{
                 .message = bun.String.static("EMFILE, too many open files"),
                 .code = bun.String.static("EMFILE"),
             }).toErrorInstance(global)) catch .zero;

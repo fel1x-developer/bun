@@ -26,7 +26,7 @@ const debug = bun.Output.scoped(.uws, false);
 const uws = @This();
 const SSLWrapper = @import("../bun.js/api/bun/ssl_wrapper.zig").SSLWrapper;
 const TextEncoder = @import("../bun.js/webcore/encoding.zig").Encoder;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const EventLoopTimer = @import("../bun.js//api//Timer.zig").EventLoopTimer;
 
 pub const CloseCode = enum(i32) {
@@ -66,13 +66,13 @@ pub const InternalLoopData = extern struct {
     parent_ptr: ?*anyopaque,
     parent_tag: c_char,
     iteration_nr: usize,
-    jsc_vm: ?*JSC.VM,
+    jsc_vm: ?*jsc.VM,
 
     pub fn recvSlice(this: *InternalLoopData) []u8 {
         return this.recv_buf[0..LIBUS_RECV_BUFFER_LENGTH];
     }
 
-    pub fn setParentEventLoop(this: *InternalLoopData, parent: JSC.EventLoopHandle) void {
+    pub fn setParentEventLoop(this: *InternalLoopData, parent: jsc.EventLoopHandle) void {
         switch (parent) {
             .js => |ptr| {
                 this.parent_tag = 1;
@@ -85,12 +85,12 @@ pub const InternalLoopData = extern struct {
         }
     }
 
-    pub fn getParent(this: *InternalLoopData) JSC.EventLoopHandle {
+    pub fn getParent(this: *InternalLoopData) jsc.EventLoopHandle {
         const parent = this.parent_ptr orelse @panic("Parent loop not set - pointer is null");
         return switch (this.parent_tag) {
             0 => @panic("Parent loop not set - tag is zero"),
-            1 => .{ .js = bun.cast(*JSC.EventLoop, parent) },
-            2 => .{ .mini = bun.cast(*JSC.MiniEventLoop, parent) },
+            1 => .{ .js = bun.cast(*jsc.EventLoop, parent) },
+            2 => .{ .mini = bun.cast(*jsc.MiniEventLoop, parent) },
             else => @panic("Parent loop data corrupted - tag is invalid"),
         };
     }
@@ -115,15 +115,15 @@ pub const UpgradedDuplex = struct {
     const WrapperType = SSLWrapper(*UpgradedDuplex);
 
     wrapper: ?WrapperType,
-    origin: JSC.Strong = .{}, // any duplex
+    origin: jsc.Strong = .{}, // any duplex
     ssl_error: CertError = .{},
-    vm: *JSC.VirtualMachine,
+    vm: *jsc.VirtualMachine,
     handlers: Handlers,
 
-    onDataCallback: JSC.Strong = .{},
-    onEndCallback: JSC.Strong = .{},
-    onWritableCallback: JSC.Strong = .{},
-    onCloseCallback: JSC.Strong = .{},
+    onDataCallback: jsc.Strong = .{},
+    onEndCallback: jsc.Strong = .{},
+    onWritableCallback: jsc.Strong = .{},
+    onCloseCallback: jsc.Strong = .{},
     event_loop_timer: EventLoopTimer = .{
         .next = .{},
         .tag = .UpgradedDuplex,
@@ -138,7 +138,7 @@ pub const UpgradedDuplex = struct {
         onClose: *const fn (*anyopaque) void,
         onEnd: *const fn (*anyopaque) void,
         onWritable: *const fn (*anyopaque) void,
-        onError: *const fn (*anyopaque, JSC.JSValue) void,
+        onError: *const fn (*anyopaque, jsc.JSValue) void,
         onTimeout: *const fn (*anyopaque) void,
     };
 
@@ -181,7 +181,7 @@ pub const UpgradedDuplex = struct {
             const globalThis = this.origin.globalThis.?;
             const writeOrEnd = if (msg_more) duplex.getFunction(globalThis, "write") catch return orelse return else duplex.getFunction(globalThis, "end") catch return orelse return;
             if (data) |data_| {
-                const buffer = JSC.BinaryType.toJS(.Buffer, data_, globalThis);
+                const buffer = jsc.BinaryType.toJS(.Buffer, data_, globalThis);
                 buffer.ensureStillAlive();
 
                 _ = writeOrEnd.call(globalThis, duplex, &.{buffer}) catch |err| {
@@ -220,21 +220,21 @@ pub const UpgradedDuplex = struct {
     }
 
     fn onReceivedData(
-        globalObject: *JSC.JSGlobalObject,
-        callframe: *JSC.CallFrame,
-    ) bun.JSError!JSC.JSValue {
+        globalObject: *jsc.JSGlobalObject,
+        callframe: *jsc.CallFrame,
+    ) bun.JSError!jsc.JSValue {
         log("onReceivedData", .{});
 
         const function = callframe.callee();
         const args = callframe.arguments_old(1);
 
-        if (JSC.getFunctionData(function)) |self| {
+        if (jsc.getFunctionData(function)) |self| {
             const this = @as(*UpgradedDuplex, @ptrCast(@alignCast(self)));
             if (args.len >= 1) {
                 const data_arg = args.ptr[0];
                 if (this.origin.has()) {
                     if (data_arg.isEmptyOrUndefinedOrNull()) {
-                        return JSC.JSValue.jsUndefined();
+                        return jsc.JSValue.jsUndefined();
                     }
                     if (data_arg.asArrayBuffer(globalObject)) |array_buffer| {
                         // yay we can read the data
@@ -249,18 +249,18 @@ pub const UpgradedDuplex = struct {
                 }
             }
         }
-        return JSC.JSValue.jsUndefined();
+        return jsc.JSValue.jsUndefined();
     }
 
     fn onEnd(
-        globalObject: *JSC.JSGlobalObject,
-        callframe: *JSC.CallFrame,
+        globalObject: *jsc.JSGlobalObject,
+        callframe: *jsc.CallFrame,
     ) void {
         log("onEnd", .{});
         _ = globalObject;
         const function = callframe.callee();
 
-        if (JSC.getFunctionData(function)) |self| {
+        if (jsc.getFunctionData(function)) |self| {
             const this = @as(*UpgradedDuplex, @ptrCast(@alignCast(self)));
 
             if (this.wrapper != null) {
@@ -270,15 +270,15 @@ pub const UpgradedDuplex = struct {
     }
 
     fn onWritable(
-        globalObject: *JSC.JSGlobalObject,
-        callframe: *JSC.CallFrame,
-    ) bun.JSError!JSC.JSValue {
+        globalObject: *jsc.JSGlobalObject,
+        callframe: *jsc.CallFrame,
+    ) bun.JSError!jsc.JSValue {
         log("onWritable", .{});
 
         _ = globalObject;
         const function = callframe.callee();
 
-        if (JSC.getFunctionData(function)) |self| {
+        if (jsc.getFunctionData(function)) |self| {
             const this = @as(*UpgradedDuplex, @ptrCast(@alignCast(self)));
             // flush pending data
             if (this.wrapper) |*wrapper| {
@@ -288,19 +288,19 @@ pub const UpgradedDuplex = struct {
             this.handlers.onWritable(this.handlers.ctx);
         }
 
-        return JSC.JSValue.jsUndefined();
+        return jsc.JSValue.jsUndefined();
     }
 
     fn onCloseJS(
-        globalObject: *JSC.JSGlobalObject,
-        callframe: *JSC.CallFrame,
-    ) bun.JSError!JSC.JSValue {
+        globalObject: *jsc.JSGlobalObject,
+        callframe: *jsc.CallFrame,
+    ) bun.JSError!jsc.JSValue {
         log("onCloseJS", .{});
 
         _ = globalObject;
         const function = callframe.callee();
 
-        if (JSC.getFunctionData(function)) |self| {
+        if (jsc.getFunctionData(function)) |self| {
             const this = @as(*UpgradedDuplex, @ptrCast(@alignCast(self)));
             // flush pending data
             if (this.wrapper) |*wrapper| {
@@ -308,7 +308,7 @@ pub const UpgradedDuplex = struct {
             }
         }
 
-        return JSC.JSValue.jsUndefined();
+        return jsc.JSValue.jsUndefined();
     }
 
     pub fn onTimeout(this: *UpgradedDuplex) EventLoopTimer.Arm {
@@ -329,25 +329,25 @@ pub const UpgradedDuplex = struct {
     }
 
     pub fn from(
-        globalThis: *JSC.JSGlobalObject,
-        origin: JSC.JSValue,
+        globalThis: *jsc.JSGlobalObject,
+        origin: jsc.JSValue,
         handlers: UpgradedDuplex.Handlers,
     ) UpgradedDuplex {
         return UpgradedDuplex{
             .vm = globalThis.bunVM(),
-            .origin = JSC.Strong.create(origin, globalThis),
+            .origin = jsc.Strong.create(origin, globalThis),
             .wrapper = null,
             .handlers = handlers,
         };
     }
 
-    pub fn getJSHandlers(this: *UpgradedDuplex, globalThis: *JSC.JSGlobalObject) JSC.JSValue {
-        const array = JSC.JSValue.createEmptyArray(globalThis, 4);
+    pub fn getJSHandlers(this: *UpgradedDuplex, globalThis: *jsc.JSGlobalObject) jsc.JSValue {
+        const array = jsc.JSValue.createEmptyArray(globalThis, 4);
         array.ensureStillAlive();
 
         {
             const callback = this.onDataCallback.get() orelse brk: {
-                const dataCallback = JSC.NewFunctionWithData(
+                const dataCallback = jsc.NewFunctionWithData(
                     globalThis,
                     null,
                     0,
@@ -357,9 +357,9 @@ pub const UpgradedDuplex = struct {
                 );
                 dataCallback.ensureStillAlive();
 
-                JSC.setFunctionData(dataCallback, this);
+                jsc.setFunctionData(dataCallback, this);
 
-                this.onDataCallback = JSC.Strong.create(dataCallback, globalThis);
+                this.onDataCallback = jsc.Strong.create(dataCallback, globalThis);
                 break :brk dataCallback;
             };
             array.putIndex(globalThis, 0, callback);
@@ -367,7 +367,7 @@ pub const UpgradedDuplex = struct {
 
         {
             const callback = this.onEndCallback.get() orelse brk: {
-                const endCallback = JSC.NewFunctionWithData(
+                const endCallback = jsc.NewFunctionWithData(
                     globalThis,
                     null,
                     0,
@@ -377,9 +377,9 @@ pub const UpgradedDuplex = struct {
                 );
                 endCallback.ensureStillAlive();
 
-                JSC.setFunctionData(endCallback, this);
+                jsc.setFunctionData(endCallback, this);
 
-                this.onEndCallback = JSC.Strong.create(endCallback, globalThis);
+                this.onEndCallback = jsc.Strong.create(endCallback, globalThis);
                 break :brk endCallback;
             };
             array.putIndex(globalThis, 1, callback);
@@ -387,7 +387,7 @@ pub const UpgradedDuplex = struct {
 
         {
             const callback = this.onWritableCallback.get() orelse brk: {
-                const writableCallback = JSC.NewFunctionWithData(
+                const writableCallback = jsc.NewFunctionWithData(
                     globalThis,
                     null,
                     0,
@@ -397,8 +397,8 @@ pub const UpgradedDuplex = struct {
                 );
                 writableCallback.ensureStillAlive();
 
-                JSC.setFunctionData(writableCallback, this);
-                this.onWritableCallback = JSC.Strong.create(writableCallback, globalThis);
+                jsc.setFunctionData(writableCallback, this);
+                this.onWritableCallback = jsc.Strong.create(writableCallback, globalThis);
                 break :brk writableCallback;
             };
             array.putIndex(globalThis, 2, callback);
@@ -406,7 +406,7 @@ pub const UpgradedDuplex = struct {
 
         {
             const callback = this.onCloseCallback.get() orelse brk: {
-                const closeCallback = JSC.NewFunctionWithData(
+                const closeCallback = jsc.NewFunctionWithData(
                     globalThis,
                     null,
                     0,
@@ -416,8 +416,8 @@ pub const UpgradedDuplex = struct {
                 );
                 closeCallback.ensureStillAlive();
 
-                JSC.setFunctionData(closeCallback, this);
-                this.onCloseCallback = JSC.Strong.create(closeCallback, globalThis);
+                jsc.setFunctionData(closeCallback, this);
+                this.onCloseCallback = jsc.Strong.create(closeCallback, globalThis);
                 break :brk closeCallback;
             };
             array.putIndex(globalThis, 3, callback);
@@ -426,7 +426,7 @@ pub const UpgradedDuplex = struct {
         return array;
     }
 
-    pub fn startTLS(this: *UpgradedDuplex, ssl_options: JSC.API.ServerConfig.SSLConfig, is_client: bool) !void {
+    pub fn startTLS(this: *UpgradedDuplex, ssl_options: jsc.API.ServerConfig.SSLConfig, is_client: bool) !void {
         this.wrapper = try WrapperType.init(ssl_options, is_client, .{
             .ctx = this,
             .onOpen = UpgradedDuplex.onOpen,
@@ -538,19 +538,19 @@ pub const UpgradedDuplex = struct {
 
         this.origin.deinit();
         if (this.onDataCallback.get()) |callback| {
-            JSC.setFunctionData(callback, null);
+            jsc.setFunctionData(callback, null);
             this.onDataCallback.deinit();
         }
         if (this.onEndCallback.get()) |callback| {
-            JSC.setFunctionData(callback, null);
+            jsc.setFunctionData(callback, null);
             this.onEndCallback.deinit();
         }
         if (this.onWritableCallback.get()) |callback| {
-            JSC.setFunctionData(callback, null);
+            jsc.setFunctionData(callback, null);
             this.onWritableCallback.deinit();
         }
         if (this.onCloseCallback.get()) |callback| {
-            JSC.setFunctionData(callback, null);
+            jsc.setFunctionData(callback, null);
             this.onCloseCallback.deinit();
         }
         var ssl_error = this.ssl_error;
@@ -566,7 +566,7 @@ pub const WindowsNamedPipe = if (Environment.isWindows) struct {
     const uv = bun.windows.libuv;
     wrapper: ?WrapperType,
     pipe: if (Environment.isWindows) ?*uv.Pipe else void, // any duplex
-    vm: *bun.JSC.VirtualMachine, //TODO: create a timeout version that dont need the JSC VM
+    vm: *bun.jsc.VirtualMachine, //TODO: create a timeout version that dont need the JSC VM
 
     writer: bun.io.StreamingWriter(WindowsNamedPipe, onWrite, onError, onWritable, onPipeClose) = .{},
 
@@ -802,7 +802,7 @@ pub const WindowsNamedPipe = if (Environment.isWindows) struct {
     pub fn from(
         pipe: *uv.Pipe,
         handlers: WindowsNamedPipe.Handlers,
-        vm: *JSC.VirtualMachine,
+        vm: *jsc.VirtualMachine,
     ) WindowsNamedPipe {
         if (Environment.isPosix) {
             @compileError("WindowsNamedPipe is not supported on POSIX systems");
@@ -839,7 +839,7 @@ pub const WindowsNamedPipe = if (Environment.isWindows) struct {
         this.flush();
     }
 
-    pub fn getAcceptedBy(this: *WindowsNamedPipe, server: *uv.Pipe, ssl_ctx: ?*BoringSSL.SSL_CTX) JSC.Maybe(void) {
+    pub fn getAcceptedBy(this: *WindowsNamedPipe, server: *uv.Pipe, ssl_ctx: ?*BoringSSL.SSL_CTX) jsc.Maybe(void) {
         bun.assert(this.pipe != null);
         this.flags.disconnected = true;
 
@@ -887,7 +887,7 @@ pub const WindowsNamedPipe = if (Environment.isWindows) struct {
         }
         return .{ .result = {} };
     }
-    pub fn open(this: *WindowsNamedPipe, fd: bun.FileDescriptor, ssl_options: ?JSC.API.ServerConfig.SSLConfig) JSC.Maybe(void) {
+    pub fn open(this: *WindowsNamedPipe, fd: bun.FileDescriptor, ssl_options: ?jsc.API.ServerConfig.SSLConfig) jsc.Maybe(void) {
         bun.assert(this.pipe != null);
         this.flags.disconnected = true;
 
@@ -923,7 +923,7 @@ pub const WindowsNamedPipe = if (Environment.isWindows) struct {
         return .{ .result = {} };
     }
 
-    pub fn connect(this: *WindowsNamedPipe, path: []const u8, ssl_options: ?JSC.API.ServerConfig.SSLConfig) JSC.Maybe(void) {
+    pub fn connect(this: *WindowsNamedPipe, path: []const u8, ssl_options: ?jsc.API.ServerConfig.SSLConfig) jsc.Maybe(void) {
         bun.assert(this.pipe != null);
         this.flags.disconnected = true;
         // ref because we are connecting
@@ -955,7 +955,7 @@ pub const WindowsNamedPipe = if (Environment.isWindows) struct {
         this.connect_req.data = this;
         return this.pipe.?.connect(&this.connect_req, path, this, onConnect);
     }
-    pub fn startTLS(this: *WindowsNamedPipe, ssl_options: JSC.API.ServerConfig.SSLConfig, is_client: bool) !void {
+    pub fn startTLS(this: *WindowsNamedPipe, ssl_options: jsc.API.ServerConfig.SSLConfig, is_client: bool) !void {
         this.flags.is_ssl = true;
         if (this.start(is_client)) {
             this.wrapper = try WrapperType.init(ssl_options, is_client, .{
@@ -2649,7 +2649,7 @@ pub const create_bun_socket_error_t = enum(i32) {
     invalid_ca_file,
     invalid_ca,
 
-    pub fn toJS(this: create_bun_socket_error_t, globalObject: *JSC.JSGlobalObject) JSC.JSValue {
+    pub fn toJS(this: create_bun_socket_error_t, globalObject: *jsc.JSGlobalObject) jsc.JSValue {
         return switch (this) {
             .none => brk: {
                 bun.debugAssert(false);
@@ -2667,11 +2667,11 @@ pub const us_bun_verify_error_t = extern struct {
     code: [*c]const u8 = null,
     reason: [*c]const u8 = null,
 
-    pub fn toJS(this: *const us_bun_verify_error_t, globalObject: *JSC.JSGlobalObject) JSC.JSValue {
+    pub fn toJS(this: *const us_bun_verify_error_t, globalObject: *jsc.JSGlobalObject) jsc.JSValue {
         const code = if (this.code == null) "" else this.code[0..bun.len(this.code)];
         const reason = if (this.reason == null) "" else this.reason[0..bun.len(this.reason)];
 
-        const fallback = JSC.SystemError{
+        const fallback = jsc.SystemError{
             .code = bun.String.createUTF8(code),
             .message = bun.String.createUTF8(reason),
         };

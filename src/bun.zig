@@ -260,7 +260,7 @@ pub const FileDescriptor = enum(FileDescriptorInt) {
         };
     }
 
-    pub fn toJS(value: FileDescriptor, global: *JSC.JSGlobalObject) JSC.JSValue {
+    pub fn toJS(value: FileDescriptor, global: *jsc.JSGlobalObject) jsc.JSValue {
         return FDImpl.decode(value).toJS(global);
     }
 
@@ -789,7 +789,7 @@ pub const invalid_fd: FileDescriptor = FDImpl.invalid.encode();
 
 pub const simdutf = @import("./bun.js/bindings/bun-simdutf.zig");
 
-pub const JSC = @import("./jsc.zig");
+pub const jsc = @import("./jsc.zig");
 pub const AsyncIO = @import("async_io");
 
 pub const logger = @import("./logger.zig");
@@ -1177,7 +1177,7 @@ pub fn parseDouble(input: []const u8) !f64 {
     if (comptime Environment.isWasm) {
         return try std.fmt.parseFloat(f64, input);
     }
-    return JSC.WTF.parseDouble(input);
+    return jsc.WTF.parseDouble(input);
 }
 
 pub const SignalCode = enum(u8) {
@@ -3241,10 +3241,10 @@ pub fn exitThread() noreturn {
 
 pub fn deleteAllPoolsForThreadExit() void {
     const pools_to_delete = .{
-        JSC.WebCore.ByteListPool,
+        jsc.WebCore.ByteListPool,
         bun.WPathBufferPool,
         bun.PathBufferPool,
-        bun.JSC.ConsoleObject.Formatter.Visited.Pool,
+        bun.jsc.ConsoleObject.Formatter.Visited.Pool,
         bun.js_parser.StringVoidMap.Pool,
     };
     inline for (pools_to_delete) |pool| {

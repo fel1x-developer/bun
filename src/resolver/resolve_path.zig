@@ -2048,7 +2048,7 @@ pub const PosixToWinNormalizer = struct {
 /// Used in PathInlines.h
 /// gets cwd off of the global object
 export fn ResolvePath__joinAbsStringBufCurrentPlatformBunString(
-    globalObject: *bun.JSC.JSGlobalObject,
+    globalObject: *bun.jsc.JSGlobalObject,
     in: bun.String,
 ) bun.String {
     const str = in.toUTF8WithoutRef(bun.default_allocator);

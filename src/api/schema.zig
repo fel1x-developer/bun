@@ -426,7 +426,7 @@ pub const Api = struct {
         }
     };
 
-    pub const StackFramePosition = bun.JSC.ZigStackFramePosition;
+    pub const StackFramePosition = bun.jsc.ZigStackFramePosition;
 
     pub const SourceLine = struct {
         /// line

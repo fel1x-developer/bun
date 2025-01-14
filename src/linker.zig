@@ -39,7 +39,7 @@ const ResolverType = Resolver.Resolver;
 const ESModule = @import("./resolver/package_json.zig").ESModule;
 const Runtime = @import("./runtime.zig").Runtime;
 const URL = @import("url.zig").URL;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const PluginRunner = bun.transpiler.PluginRunner;
 pub const CSSResolveError = error{ResolveMessage};
 
@@ -229,7 +229,7 @@ pub const Linker = struct {
                     }
 
                     if (comptime is_bun) {
-                        if (JSC.HardcodedModule.Aliases.get(import_record.path.text, linker.options.target)) |replacement| {
+                        if (jsc.HardcodedModule.Aliases.get(import_record.path.text, linker.options.target)) |replacement| {
                             import_record.path.text = replacement.path;
                             import_record.tag = replacement.tag;
                             import_record.is_external_without_side_effects = true;
@@ -295,11 +295,11 @@ pub const Linker = struct {
                                 linker.log,
                                 import_record.range.loc,
                                 if (is_bun)
-                                    JSC.JSGlobalObject.BunPluginTarget.bun
+                                    jsc.JSGlobalObject.BunPluginTarget.bun
                                 else if (linker.options.target == .browser)
-                                    JSC.JSGlobalObject.BunPluginTarget.browser
+                                    jsc.JSGlobalObject.BunPluginTarget.browser
                                 else
-                                    JSC.JSGlobalObject.BunPluginTarget.node,
+                                    jsc.JSGlobalObject.BunPluginTarget.node,
                             )) |path| {
                                 import_record.path = try linker.generateImportPath(
                                     source_dir,

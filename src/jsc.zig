@@ -95,7 +95,7 @@ pub const ResourceUsage = API.Bun.ResourceUsage;
 ///        - C++: ZigGeneratedClasses.h, ZigGeneratedClasses.cpp
 ///  4. For the Zig code to successfully compile:
 ///        - Add it to generated_classes_list.zig
-///        - pub usingnamespace JSC.Codegen.JSMyClassName;
+///        - pub usingnamespace jsc.Codegen.JSMyClassName;
 ///  5. make clean-bindings && make bindings -j10
 ///
 pub const Codegen = struct {

@@ -5,9 +5,9 @@ const default_allocator = bun.default_allocator;
 const bun = @import("root").bun;
 const Environment = bun.Environment;
 const Async = bun.Async;
-const JSC = bun.JSC;
-const JSValue = JSC.JSValue;
-const JSGlobalObject = JSC.JSGlobalObject;
+const jsc = bun.jsc;
+const JSValue = jsc.JSValue;
+const JSGlobalObject = jsc.JSGlobalObject;
 const posix = std.posix;
 const Output = bun.Output;
 const os = std.os;
@@ -19,12 +19,12 @@ pub const Stdio = union(enum) {
     ignore: void,
     fd: bun.FileDescriptor,
     dup2: struct {
-        out: bun.JSC.Subprocess.StdioKind,
-        to: bun.JSC.Subprocess.StdioKind,
+        out: bun.jsc.Subprocess.StdioKind,
+        to: bun.jsc.Subprocess.StdioKind,
     },
-    path: JSC.Node.PathLike,
-    blob: JSC.WebCore.AnyBlob,
-    array_buffer: JSC.ArrayBuffer.Strong,
+    path: jsc.Node.PathLike,
+    blob: jsc.WebCore.AnyBlob,
+    array_buffer: jsc.ArrayBuffer.Strong,
     memfd: bun.FileDescriptor,
     pipe: void,
     ipc: void,
@@ -58,7 +58,7 @@ pub const Stdio = union(enum) {
             };
         }
 
-        pub fn throwJS(this: *const @This(), globalThis: *JSC.JSGlobalObject) bun.JSError {
+        pub fn throwJS(this: *const @This(), globalThis: *jsc.JSGlobalObject) bun.JSError {
             return globalThis.throw("{s}", .{this.toStr()});
         }
     };
@@ -289,7 +289,7 @@ pub const Stdio = union(enum) {
         };
     }
 
-    pub fn extract(out_stdio: *Stdio, globalThis: *JSC.JSGlobalObject, i: u32, value: JSValue) bun.JSError!void {
+    pub fn extract(out_stdio: *Stdio, globalThis: *jsc.JSGlobalObject, i: u32, value: JSValue) bun.JSError!void {
         switch (value) {
             // undefined: default
             .undefined, .zero => return,
@@ -323,7 +323,7 @@ pub const Stdio = union(enum) {
             }
 
             if (file_fd >= std.math.maxInt(i32)) {
-                var formatter = JSC.ConsoleObject.Formatter{ .globalThis = globalThis };
+                var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis };
                 return globalThis.throwInvalidArguments("file descriptor must be a valid integer, received: {}", .{value.toFmt(&formatter)});
             }
 
@@ -353,15 +353,15 @@ pub const Stdio = union(enum) {
 
             out_stdio.* = Stdio{ .fd = fd };
             return;
-        } else if (value.as(JSC.WebCore.Blob)) |blob| {
+        } else if (value.as(jsc.WebCore.Blob)) |blob| {
             return out_stdio.extractBlob(globalThis, .{ .Blob = blob.dupe() }, i);
-        } else if (value.as(JSC.WebCore.Request)) |req| {
+        } else if (value.as(jsc.WebCore.Request)) |req| {
             req.getBodyValue().toBlobIfPossible();
             return out_stdio.extractBlob(globalThis, req.getBodyValue().useAsAnyBlob(), i);
-        } else if (value.as(JSC.WebCore.Response)) |req| {
+        } else if (value.as(jsc.WebCore.Response)) |req| {
             req.getBodyValue().toBlobIfPossible();
             return out_stdio.extractBlob(globalThis, req.getBodyValue().useAsAnyBlob(), i);
-        } else if (JSC.WebCore.ReadableStream.fromJS(value, globalThis)) |req_const| {
+        } else if (jsc.WebCore.ReadableStream.fromJS(value, globalThis)) |req_const| {
             var req = req_const;
             if (i == 0) {
                 if (req.toAnyBlob(globalThis)) |blob| {
@@ -391,9 +391,9 @@ pub const Stdio = union(enum) {
             }
 
             out_stdio.* = .{
-                .array_buffer = JSC.ArrayBuffer.Strong{
+                .array_buffer = jsc.ArrayBuffer.Strong{
                     .array_buffer = array_buffer,
-                    .held = JSC.Strong.create(array_buffer.value, globalThis),
+                    .held = jsc.Strong.create(array_buffer.value, globalThis),
                 },
             };
             return;
@@ -402,7 +402,7 @@ pub const Stdio = union(enum) {
         return globalThis.throwInvalidArguments("stdio must be an array of 'inherit', 'ignore', or null", .{});
     }
 
-    pub fn extractBlob(stdio: *Stdio, globalThis: *JSC.JSGlobalObject, blob: JSC.WebCore.AnyBlob, i: u32) bun.JSError!void {
+    pub fn extractBlob(stdio: *Stdio, globalThis: *jsc.JSGlobalObject, blob: jsc.WebCore.AnyBlob, i: u32) bun.JSError!void {
         const fd = bun.stdio(i);
 
         if (blob.needsToReadFile()) {

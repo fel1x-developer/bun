@@ -1,15 +1,15 @@
 const std = @import("std");
 const bun = @import("root").bun;
-const postgres = bun.JSC.Postgres;
+const postgres = bun.jsc.Postgres;
 const Data = postgres.Data;
 const protocol = @This();
 const PostgresInt32 = postgres.PostgresInt32;
 const PostgresShort = postgres.PostgresShort;
 const String = bun.String;
 const debug = postgres.debug;
-const Crypto = JSC.API.Bun.Crypto;
-const JSValue = JSC.JSValue;
-const JSC = bun.JSC;
+const Crypto = jsc.API.Bun.Crypto;
+const JSValue = jsc.JSValue;
+const jsc = bun.jsc;
 const short = postgres.short;
 const int4 = postgres.int4;
 const int8 = postgres.int8;
@@ -716,7 +716,7 @@ pub const ErrorResponse = struct {
 
     pub const decode = decoderWrap(ErrorResponse, decodeInternal).decode;
 
-    pub fn toJS(this: ErrorResponse, globalObject: *JSC.JSGlobalObject) JSValue {
+    pub fn toJS(this: ErrorResponse, globalObject: *jsc.JSGlobalObject) JSValue {
         var b = bun.StringBuilder{};
         defer b.deinit(bun.default_allocator);
 
@@ -806,12 +806,12 @@ pub const ErrorResponse = struct {
             .{ "where", where, void },
         };
 
-        const error_code: JSC.Error =
+        const error_code: jsc.Error =
             // https://www.postgresql.org/docs/8.1/errcodes-appendix.html
             if (code.toInt32() orelse 0 == 42601)
-            JSC.Error.ERR_POSTGRES_SYNTAX_ERROR
+            jsc.Error.ERR_POSTGRES_SYNTAX_ERROR
         else
-            JSC.Error.ERR_POSTGRES_SERVER_ERROR;
+            jsc.Error.ERR_POSTGRES_SERVER_ERROR;
         const err = error_code.fmt(globalObject, "{s}", .{b.allocatedSlice()[0..b.len]});
 
         inline for (possible_fields) |field| {
@@ -819,14 +819,14 @@ pub const ErrorResponse = struct {
                 const value = brk: {
                     if (field.@"2" == i32) {
                         if (field.@"1".toInt32()) |val| {
-                            break :brk JSC.JSValue.jsNumberFromInt32(val);
+                            break :brk jsc.JSValue.jsNumberFromInt32(val);
                         }
                     }
 
                     break :brk field.@"1".toJS(globalObject);
                 };
 
-                err.put(globalObject, JSC.ZigString.static(field.@"0"), value);
+                err.put(globalObject, jsc.ZigString.static(field.@"0"), value);
             }
         }
 
@@ -1487,7 +1487,7 @@ pub const NoticeResponse = struct {
     }
     pub const decode = decoderWrap(NoticeResponse, decodeInternal).decode;
 
-    pub fn toJS(this: NoticeResponse, globalObject: *JSC.JSGlobalObject) JSValue {
+    pub fn toJS(this: NoticeResponse, globalObject: *jsc.JSGlobalObject) JSValue {
         var b = bun.StringBuilder{};
         defer b.deinit(bun.default_allocator);
 
@@ -1507,7 +1507,7 @@ pub const NoticeResponse = struct {
             _ = b.append("\n");
         }
 
-        return JSC.ZigString.init(b.allocatedSlice()[0..b.len]).toJS(globalObject);
+        return jsc.ZigString.init(b.allocatedSlice()[0..b.len]).toJS(globalObject);
     }
 };
 

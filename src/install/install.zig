@@ -19,7 +19,7 @@ const default_allocator = bun.default_allocator;
 const C = bun.C;
 const std = @import("std");
 const uws = @import("../deps/uws.zig");
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const DirInfo = @import("../resolver/dir_info.zig");
 const File = bun.sys.File;
 const JSLexer = bun.js_lexer;
@@ -345,7 +345,7 @@ const NetworkTask = struct {
                 encoded_name = try std.mem.replaceOwned(u8, stack_fallback_allocator.get(), name, "/", "%2f");
             }
 
-            const tmp = bun.JSC.URL.join(
+            const tmp = bun.jsc.URL.join(
                 bun.String.fromUTF8(scope.url.href),
                 bun.String.fromUTF8(encoded_name),
             );
@@ -1508,7 +1508,7 @@ pub fn NewPackageInstall(comptime kind: PkgInstallKind) type {
             }
         };
 
-        threadlocal var node_fs_for_package_installer: bun.JSC.Node.NodeFS = .{};
+        threadlocal var node_fs_for_package_installer: bun.jsc.Node.NodeFS = .{};
 
         fn initInstallDir(this: *@This(), state: *InstallDirState, destination_dir: std.fs.Dir, method: Method) Result {
             const destbase = destination_dir;
@@ -1758,7 +1758,7 @@ pub fn NewPackageInstall(comptime kind: PkgInstallKind) type {
             src: [:0]bun.OSPathChar,
             dest: [:0]bun.OSPathChar,
             basename: u16,
-            task: bun.JSC.WorkPoolTask = .{ .callback = &runFromThreadPool },
+            task: bun.jsc.WorkPoolTask = .{ .callback = &runFromThreadPool },
             err: ?anyerror = null,
 
             pub const Queue = NewTaskQueue(@This());
@@ -1794,7 +1794,7 @@ pub fn NewPackageInstall(comptime kind: PkgInstallKind) type {
                 });
             }
 
-            pub fn runFromThreadPool(task: *bun.JSC.WorkPoolTask) void {
+            pub fn runFromThreadPool(task: *bun.jsc.WorkPoolTask) void {
                 var iter: *@This() = @fieldParentPtr("task", task);
                 defer queue.completeOne();
                 if (iter.run()) |err| {
@@ -2147,8 +2147,8 @@ pub fn NewPackageInstall(comptime kind: PkgInstallKind) type {
 
                     const UninstallTask = struct {
                         absolute_path: []const u8,
-                        task: JSC.WorkPoolTask = .{ .callback = &run },
-                        pub fn run(task: *JSC.WorkPoolTask) void {
+                        task: jsc.WorkPoolTask = .{ .callback = &run },
+                        pub fn run(task: *jsc.WorkPoolTask) void {
                             var unintall_task: *@This() = @fieldParentPtr("task", task);
                             var debug_timer = bun.Output.DebugTimer.start();
                             defer {
@@ -2740,7 +2740,7 @@ pub const PackageManager = struct {
     // name hash from alias package name -> aliased package dependency version info
     known_npm_aliases: NpmAliasMap = .{},
 
-    event_loop: JSC.AnyEventLoop,
+    event_loop: jsc.AnyEventLoop,
 
     // During `installPackages` we learn exactly what dependencies from --trust
     // actually have scripts to run, and we add them to this list
@@ -8957,16 +8957,16 @@ pub const PackageManager = struct {
             .root_package_json_file = root_package_json_file,
             // .progress
             .event_loop = .{
-                .mini = JSC.MiniEventLoop.init(bun.default_allocator),
+                .mini = jsc.MiniEventLoop.init(bun.default_allocator),
             },
             .original_package_json_path = original_package_json_path,
             .workspace_package_json_cache = workspace_package_json_cache,
             .workspace_name_hash = workspace_name_hash,
             .subcommand = subcommand,
         };
-        manager.event_loop.loop().internal_loop_data.setParentEventLoop(bun.JSC.EventLoopHandle.init(&manager.event_loop));
+        manager.event_loop.loop().internal_loop_data.setParentEventLoop(bun.jsc.EventLoopHandle.init(&manager.event_loop));
         manager.lockfile = try ctx.allocator.create(Lockfile);
-        JSC.MiniEventLoop.global = &manager.event_loop.mini;
+        jsc.MiniEventLoop.global = &manager.event_loop.mini;
         if (!manager.options.enable.cache) {
             manager.options.enable.manifest_cache = false;
             manager.options.enable.manifest_cache_control = false;
@@ -9123,7 +9123,7 @@ pub const PackageManager = struct {
             .lockfile = undefined,
             .root_package_json_file = undefined,
             .event_loop = .{
-                .js = JSC.VirtualMachine.get().eventLoop(),
+                .js = jsc.VirtualMachine.get().eventLoop(),
             },
             .original_package_json_path = original_package_json_path[0..original_package_json_path.len :0],
             .subcommand = .install,
@@ -10311,7 +10311,7 @@ pub const PackageManager = struct {
                 lockfile.packages.items(.name)[this.package_id].slice(this.version_buf);
         }
 
-        pub fn fromJS(globalThis: *JSC.JSGlobalObject, input: JSC.JSValue) bun.JSError!JSC.JSValue {
+        pub fn fromJS(globalThis: *jsc.JSGlobalObject, input: jsc.JSValue) bun.JSError!jsc.JSValue {
             var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
             defer arena.deinit();
             var stack = std.heap.stackFallback(1024, arena.allocator());
@@ -10359,7 +10359,7 @@ pub const PackageManager = struct {
                 return globalThis.throw("Failed to parse dependencies", .{});
             }
 
-            var object = JSC.JSValue.createEmptyObject(globalThis, 2);
+            var object = jsc.JSValue.createEmptyObject(globalThis, 2);
             var name_str = bun.String.init(update_requests[0].name);
             object.put(globalThis, "name", name_str.transferToJS(globalThis));
             object.put(globalThis, "version", try update_requests[0].version.toJS(update_requests[0].version_buf, globalThis));
@@ -12139,8 +12139,8 @@ pub const PackageManager = struct {
             .posix,
         );
 
-        var nodefs = bun.JSC.Node.NodeFS{};
-        const args = bun.JSC.Node.Arguments.Mkdir{
+        var nodefs = bun.jsc.Node.NodeFS{};
+        const args = bun.jsc.Node.Arguments.Mkdir{
             .path = .{ .string = bun.PathString.init(manager.options.patch_features.commit.patches_dir) },
         };
         if (nodefs.mkdirRecursive(args, .sync).asErr()) |e| {
@@ -15513,18 +15513,18 @@ pub const PackageManifestError = error{
 pub const LifecycleScriptSubprocess = @import("./lifecycle_script_runner.zig").LifecycleScriptSubprocess;
 
 pub const bun_install_js_bindings = struct {
-    const JSValue = JSC.JSValue;
-    const ZigString = JSC.ZigString;
-    const JSGlobalObject = JSC.JSGlobalObject;
+    const JSValue = jsc.JSValue;
+    const ZigString = jsc.ZigString;
+    const JSGlobalObject = jsc.JSGlobalObject;
 
     pub fn generate(global: *JSGlobalObject) JSValue {
         const obj = JSValue.createEmptyObject(global, 2);
         const parseLockfile = ZigString.static("parseLockfile");
-        obj.put(global, parseLockfile, JSC.createCallback(global, parseLockfile, 1, jsParseLockfile));
+        obj.put(global, parseLockfile, jsc.createCallback(global, parseLockfile, 1, jsParseLockfile));
         return obj;
     }
 
-    pub fn jsParseLockfile(globalObject: *JSGlobalObject, callFrame: *JSC.CallFrame) bun.JSError!JSValue {
+    pub fn jsParseLockfile(globalObject: *JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!JSValue {
         const allocator = bun.default_allocator;
         var log = logger.Log.init(allocator);
         defer log.deinit();

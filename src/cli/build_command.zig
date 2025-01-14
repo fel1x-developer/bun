@@ -311,7 +311,7 @@ pub const BuildCommand = struct {
             break :brk (BundleV2.generateFromCLI(
                 &this_transpiler,
                 allocator,
-                bun.JSC.AnyEventLoop.init(ctx.allocator),
+                bun.jsc.AnyEventLoop.init(ctx.allocator),
                 ctx.debug.hot_reload == .watch,
                 &reachable_file_count,
                 &minify_duration,

@@ -6,10 +6,10 @@ const strings = bun.strings;
 const default_allocator = bun.default_allocator;
 const Output = bun.Output;
 const Async = bun.Async;
-const JSC = bun.JSC;
-const CallFrame = JSC.CallFrame;
-const JSGlobalObject = JSC.JSGlobalObject;
-const JSValue = JSC.JSValue;
+const jsc = bun.jsc;
+const CallFrame = jsc.CallFrame;
+const JSGlobalObject = jsc.JSGlobalObject;
+const JSValue = jsc.JSValue;
 
 const log = Output.scoped(.UdpSocket, false);
 
@@ -23,7 +23,7 @@ extern fn inet_pton(af: c_int, src: [*c]const u8, dst: ?*anyopaque) c_int;
 extern fn JSSocketAddress__create(global: *JSGlobalObject, address: JSValue, port: i32, v6: bool) JSValue;
 
 fn onClose(socket: *uws.udp.Socket) callconv(.C) void {
-    JSC.markBinding(@src());
+    jsc.markBinding(@src());
 
     const this: *UDPSocket = bun.cast(*UDPSocket, socket.user().?);
     this.closed = true;
@@ -32,13 +32,13 @@ fn onClose(socket: *uws.udp.Socket) callconv(.C) void {
 }
 
 fn onDrain(socket: *uws.udp.Socket) callconv(.C) void {
-    JSC.markBinding(@src());
+    jsc.markBinding(@src());
 
     const this: *UDPSocket = bun.cast(*UDPSocket, socket.user().?);
     const callback = this.config.on_drain;
     if (callback == .zero) return;
 
-    const vm = JSC.VirtualMachine.get();
+    const vm = jsc.VirtualMachine.get();
     const event_loop = vm.eventLoop();
     event_loop.enter();
     defer event_loop.exit();
@@ -48,7 +48,7 @@ fn onDrain(socket: *uws.udp.Socket) callconv(.C) void {
 }
 
 fn onData(socket: *uws.udp.Socket, buf: *uws.udp.PacketBuffer, packets: c_int) callconv(.C) void {
-    JSC.markBinding(@src());
+    jsc.markBinding(@src());
 
     const udpSocket: *UDPSocket = bun.cast(*UDPSocket, socket.user().?);
     const callback = udpSocket.config.on_data;
@@ -93,8 +93,8 @@ fn onData(socket: *uws.udp.Socket, buf: *uws.udp.PacketBuffer, packets: c_int) c
         _ = callback.call(globalThis, udpSocket.thisValue, &.{
             udpSocket.thisValue,
             udpSocket.config.binary_type.toJS(slice, globalThis),
-            JSC.jsNumber(port),
-            JSC.ZigString.init(std.mem.span(hostname.?)).toJS(globalThis),
+            jsc.jsNumber(port),
+            jsc.ZigString.init(std.mem.span(hostname.?)).toJS(globalThis),
         }) catch |err| {
             _ = udpSocket.callErrorHandler(.zero, &.{udpSocket.globalThis.takeException(err)});
         };
@@ -117,7 +117,7 @@ pub const UDPSocketConfig = struct {
     hostname: [:0]u8,
     connect: ?ConnectConfig = null,
     port: u16,
-    binary_type: JSC.BinaryType = .Buffer,
+    binary_type: jsc.BinaryType = .Buffer,
     on_data: JSValue = .zero,
     on_drain: JSValue = .zero,
     on_error: JSValue = .zero,
@@ -168,7 +168,7 @@ pub const UDPSocketConfig = struct {
                     return globalThis.throwInvalidArguments("Expected \"socket.binaryType\" to be a string", .{});
                 }
 
-                config.binary_type = try JSC.BinaryType.fromJSValue(globalThis, value) orelse {
+                config.binary_type = try jsc.BinaryType.fromJSValue(globalThis, value) orelse {
                     return globalThis.throwInvalidArguments("Expected \"socket.binaryType\" to be 'arraybuffer', 'uint8array', or 'buffer'", .{});
                 };
             }
@@ -256,19 +256,19 @@ pub const UDPSocket = struct {
     globalThis: *JSGlobalObject,
     thisValue: JSValue = .zero,
 
-    ref: JSC.Ref = JSC.Ref.init(),
+    ref: jsc.Ref = jsc.Ref.init(),
     poll_ref: Async.KeepAlive = Async.KeepAlive.init(),
     // if marked as closed the socket pointer may be stale
     closed: bool = false,
     connect_info: ?ConnectInfo = null,
-    vm: *JSC.VirtualMachine,
+    vm: *jsc.VirtualMachine,
     js_refcount: std.atomic.Value(usize) = std.atomic.Value(usize).init(1),
 
     const ConnectInfo = struct {
         port: u16,
     };
 
-    pub usingnamespace JSC.Codegen.JSUDPSocket;
+    pub usingnamespace jsc.Codegen.JSUDPSocket;
 
     pub fn hasPendingActivity(this: *This) callconv(.C) bool {
         return this.js_refcount.load(.monotonic) > 0;
@@ -314,7 +314,7 @@ pub const UDPSocket = struct {
         if (config.connect) |connect| {
             const ret = this.socket.connect(connect.address, connect.port);
             if (ret != 0) {
-                if (JSC.Maybe(void).errnoSys(ret, .connect)) |err| {
+                if (jsc.Maybe(void).errnoSys(ret, .connect)) |err| {
                     return globalThis.throwValue(err.toJS(globalThis));
                 }
 
@@ -329,7 +329,7 @@ pub const UDPSocket = struct {
         const thisValue = this.toJS(globalThis);
         thisValue.ensureStillAlive();
         this.thisValue = thisValue;
-        return JSC.JSPromise.resolvedPromiseValue(globalThis, thisValue);
+        return jsc.JSPromise.resolvedPromiseValue(globalThis, thisValue);
     }
 
     pub fn callErrorHandler(
@@ -424,7 +424,7 @@ pub const UDPSocket = struct {
             return globalThis.throwInvalidArguments("Mismatch between array length property and number of items", .{});
         }
         const res = this.socket.send(payloads, lens, addr_ptrs);
-        if (bun.JSC.Maybe(void).errnoSys(res, .send)) |err| {
+        if (bun.jsc.Maybe(void).errnoSys(res, .send)) |err| {
             return globalThis.throwValue(err.toJS(globalThis));
         }
         return JSValue.jsNumber(res);
@@ -456,7 +456,7 @@ pub const UDPSocket = struct {
         };
 
         const payload_arg = arguments.ptr[0];
-        var payload_str = JSC.ZigString.Slice.empty;
+        var payload_str = jsc.ZigString.Slice.empty;
         defer payload_str.deinit();
         const payload = brk: {
             if (payload_arg.asArrayBuffer(globalThis)) |array_buffer| {
@@ -482,7 +482,7 @@ pub const UDPSocket = struct {
         };
 
         const res = this.socket.send(&.{payload.ptr}, &.{payload.len}, &.{addr_ptr});
-        if (bun.JSC.Maybe(void).errnoSys(res, .send)) |err| {
+        if (bun.jsc.Maybe(void).errnoSys(res, .send)) |err| {
             return globalThis.throwValue(err.toJS(globalThis));
         }
         return JSValue.jsBoolean(res > 0);
@@ -526,7 +526,7 @@ pub const UDPSocket = struct {
         address: JSValue,
     };
 
-    pub fn ref(this: *This, globalThis: *JSC.JSGlobalObject, _: *JSC.CallFrame) bun.JSError!JSValue {
+    pub fn ref(this: *This, globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
         if (!this.closed) {
             this.poll_ref.ref(globalThis.bunVM());
         }
@@ -534,7 +534,7 @@ pub const UDPSocket = struct {
         return .undefined;
     }
 
-    pub fn unref(this: *This, globalThis: *JSC.JSGlobalObject, _: *JSC.CallFrame) bun.JSError!JSValue {
+    pub fn unref(this: *This, globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!JSValue {
         this.poll_ref.unref(globalThis.bunVM());
 
         return .undefined;
@@ -573,7 +573,7 @@ pub const UDPSocket = struct {
     }
 
     pub fn getHostname(this: *This, _: *JSGlobalObject) JSValue {
-        const hostname = JSC.ZigString.init(this.config.hostname);
+        const hostname = jsc.ZigString.init(this.config.hostname);
         return hostname.toJS(this.globalThis);
     }
 
@@ -611,7 +611,7 @@ pub const UDPSocket = struct {
         );
     }
 
-    pub fn getRemoteAddress(this: *This, globalThis: *JSC.JSGlobalObject) JSC.JSValue {
+    pub fn getRemoteAddress(this: *This, globalThis: *jsc.JSGlobalObject) jsc.JSValue {
         if (this.closed) return .undefined;
         const connect_info = this.connect_info orelse return .undefined;
         var buf: [64]u8 = [_]u8{0} ** 64;
@@ -653,7 +653,7 @@ pub const UDPSocket = struct {
         this.destroy();
     }
 
-    pub fn jsConnect(globalThis: *JSC.JSGlobalObject, callFrame: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn jsConnect(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const args = callFrame.arguments_old(2);
 
         const this = callFrame.this().as(UDPSocket) orelse {
@@ -697,7 +697,7 @@ pub const UDPSocket = struct {
         return .undefined;
     }
 
-    pub fn jsDisconnect(globalObject: *JSC.JSGlobalObject, callFrame: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn jsDisconnect(globalObject: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const this = callFrame.this().as(UDPSocket) orelse {
             return globalObject.throwInvalidArguments("Expected UDPSocket as 'this'", .{});
         };

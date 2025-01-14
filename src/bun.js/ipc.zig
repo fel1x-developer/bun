@@ -8,9 +8,9 @@ const Output = bun.Output;
 const MutableString = bun.MutableString;
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const JSC = bun.JSC;
-const JSValue = JSC.JSValue;
-const JSGlobalObject = JSC.JSGlobalObject;
+const jsc = bun.jsc;
+const JSValue = jsc.JSValue;
+const JSGlobalObject = jsc.JSGlobalObject;
 
 const node_cluster_binding = @import("./node/node_cluster_binding.zig");
 
@@ -75,7 +75,7 @@ const advanced = struct {
         version: u32 align(1) = version,
     };
 
-    pub fn decodeIPCMessage(data: []const u8, global: *JSC.JSGlobalObject) IPCDecodeError!DecodeIPCMessageResult {
+    pub fn decodeIPCMessage(data: []const u8, global: *jsc.JSGlobalObject) IPCDecodeError!DecodeIPCMessageResult {
         if (data.len < header_length) {
             log("Not enough bytes to decode IPC message header, have {d} bytes", .{data.len});
             return IPCDecodeError.NotEnoughBytes;
@@ -143,7 +143,7 @@ const advanced = struct {
         return comptime std.mem.asBytes(&VersionPacket{});
     }
 
-    pub fn serialize(_: *IPCData, writer: anytype, global: *JSC.JSGlobalObject, value: JSValue) !usize {
+    pub fn serialize(_: *IPCData, writer: anytype, global: *jsc.JSGlobalObject, value: JSValue) !usize {
         const serialized = value.serialize(global) orelse
             return IPCSerializationError.SerializationFailed;
         defer serialized.deinit();
@@ -161,7 +161,7 @@ const advanced = struct {
         return payload_length;
     }
 
-    pub fn serializeInternal(_: *IPCData, writer: anytype, global: *JSC.JSGlobalObject, value: JSValue) !usize {
+    pub fn serializeInternal(_: *IPCData, writer: anytype, global: *jsc.JSGlobalObject, value: JSValue) !usize {
         const serialized = value.serialize(global) orelse
             return IPCSerializationError.SerializationFailed;
         defer serialized.deinit();
@@ -194,7 +194,7 @@ const json = struct {
     // 1 is regular
     // 2 is internal
 
-    pub fn decodeIPCMessage(data: []const u8, globalThis: *JSC.JSGlobalObject) IPCDecodeError!DecodeIPCMessageResult {
+    pub fn decodeIPCMessage(data: []const u8, globalThis: *jsc.JSGlobalObject) IPCDecodeError!DecodeIPCMessageResult {
         if (bun.strings.indexOfChar(data, '\n')) |idx| {
             var kind = data[0];
             var json_data = data[0..idx];
@@ -245,7 +245,7 @@ const json = struct {
         return IPCDecodeError.NotEnoughBytes;
     }
 
-    pub fn serialize(_: *IPCData, writer: anytype, global: *JSC.JSGlobalObject, value: JSValue) !usize {
+    pub fn serialize(_: *IPCData, writer: anytype, global: *jsc.JSGlobalObject, value: JSValue) !usize {
         var out: bun.String = undefined;
         value.jsonStringify(global, 0, &out);
         defer out.deref();
@@ -266,7 +266,7 @@ const json = struct {
         return slice.len + 1;
     }
 
-    pub fn serializeInternal(_: *IPCData, writer: anytype, global: *JSC.JSGlobalObject, value: JSValue) !usize {
+    pub fn serializeInternal(_: *IPCData, writer: anytype, global: *jsc.JSGlobalObject, value: JSValue) !usize {
         var out: bun.String = undefined;
         value.jsonStringify(global, 0, &out);
         defer out.deref();
@@ -290,7 +290,7 @@ const json = struct {
 };
 
 /// Given potentially unfinished buffer `data`, attempt to decode and process a message from it.
-pub fn decodeIPCMessage(mode: Mode, data: []const u8, global: *JSC.JSGlobalObject) IPCDecodeError!DecodeIPCMessageResult {
+pub fn decodeIPCMessage(mode: Mode, data: []const u8, global: *jsc.JSGlobalObject) IPCDecodeError!DecodeIPCMessageResult {
     return switch (mode) {
         inline else => |t| @field(@This(), @tagName(t)).decodeIPCMessage(data, global),
     };
@@ -305,7 +305,7 @@ pub fn getVersionPacket(mode: Mode) []const u8 {
 
 /// Given a writer interface, serialize and write a value.
 /// Returns true if the value was written, false if it was not.
-pub fn serialize(data: *IPCData, writer: anytype, global: *JSC.JSGlobalObject, value: JSValue) !usize {
+pub fn serialize(data: *IPCData, writer: anytype, global: *jsc.JSGlobalObject, value: JSValue) !usize {
     return switch (data.mode) {
         inline else => |t| @field(@This(), @tagName(t)).serialize(data, writer, global, value),
     };
@@ -313,7 +313,7 @@ pub fn serialize(data: *IPCData, writer: anytype, global: *JSC.JSGlobalObject, v
 
 /// Given a writer interface, serialize and write a value.
 /// Returns true if the value was written, false if it was not.
-pub fn serializeInternal(data: *IPCData, writer: anytype, global: *JSC.JSGlobalObject, value: JSValue) !usize {
+pub fn serializeInternal(data: *IPCData, writer: anytype, global: *jsc.JSGlobalObject, value: JSValue) !usize {
     return switch (data.mode) {
         inline else => |t| @field(@This(), @tagName(t)).serializeInternal(data, writer, global, value),
     };
@@ -403,7 +403,7 @@ const SocketIPCData = struct {
         if (this.disconnected) return;
         this.disconnected = true;
         if (nextTick) {
-            JSC.VirtualMachine.get().enqueueTask(JSC.ManagedTask.New(SocketIPCData, closeTask).init(this));
+            jsc.VirtualMachine.get().enqueueTask(jsc.ManagedTask.New(SocketIPCData, closeTask).init(this));
         } else {
             this.closeTask();
         }
@@ -562,7 +562,7 @@ const NamedPipeIPCData = struct {
         if (this.disconnected) return;
         this.disconnected = true;
         if (nextTick) {
-            JSC.VirtualMachine.get().enqueueTask(JSC.ManagedTask.New(NamedPipeIPCData, closeTask).init(this));
+            jsc.VirtualMachine.get().enqueueTask(jsc.ManagedTask.New(NamedPipeIPCData, closeTask).init(this));
         } else {
             this.closeTask();
         }
@@ -582,7 +582,7 @@ const NamedPipeIPCData = struct {
         }
     }
 
-    pub fn configureServer(this: *NamedPipeIPCData, comptime Context: type, instance: *Context, ipc_pipe: *uv.Pipe) JSC.Maybe(void) {
+    pub fn configureServer(this: *NamedPipeIPCData, comptime Context: type, instance: *Context, ipc_pipe: *uv.Pipe) jsc.Maybe(void) {
         log("configureServer", .{});
         ipc_pipe.data = @ptrCast(instance);
         this.onClose = .{
@@ -601,7 +601,7 @@ const NamedPipeIPCData = struct {
 
         const stream = this.writer.getStream() orelse {
             this.close(false);
-            return JSC.Maybe(void).errno(bun.C.E.PIPE, .pipe);
+            return jsc.Maybe(void).errno(bun.C.E.PIPE, .pipe);
         };
 
         const readStartResult = stream.readStart(instance, NewNamedPipeIPCHandler(Context).onReadAlloc, NewNamedPipeIPCHandler(Context).onReadError, NewNamedPipeIPCHandler(Context).onRead);

@@ -26,7 +26,7 @@ pub const UserOptions = struct {
     }
 
     /// Currently, this function must run at the top of the event loop.
-    pub fn fromJS(config: JSValue, global: *JSC.JSGlobalObject) !UserOptions {
+    pub fn fromJS(config: JSValue, global: *jsc.JSGlobalObject) !UserOptions {
         if (!config.isObject()) {
             return global.throwInvalidArguments("'" ++ api_name ++ "' is not an object", .{});
         }
@@ -106,7 +106,7 @@ pub const SplitBundlerOptions = struct {
         .ssr = .{},
     };
 
-    pub fn parsePluginArray(opts: *SplitBundlerOptions, plugin_array: JSValue, global: *JSC.JSGlobalObject) !void {
+    pub fn parsePluginArray(opts: *SplitBundlerOptions, plugin_array: JSValue, global: *jsc.JSGlobalObject) !void {
         const plugin = opts.plugin orelse Plugin.create(global, .bun);
         opts.plugin = plugin;
         const empty_object = JSValue.createEmptyObject(global, 0);
@@ -308,7 +308,7 @@ pub const Framework = struct {
 
     fn fromJS(
         opts: JSValue,
-        global: *JSC.JSGlobalObject,
+        global: *jsc.JSGlobalObject,
         refs: *StringRefList,
         bundler_options: *SplitBundlerOptions,
         arena: Allocator,
@@ -631,7 +631,7 @@ pub const Framework = struct {
 
 fn getOptionalString(
     target: JSValue,
-    global: *JSC.JSGlobalObject,
+    global: *jsc.JSGlobalObject,
     property: []const u8,
     allocations: *StringRefList,
     arena: Allocator,
@@ -801,8 +801,8 @@ const Allocator = std.mem.Allocator;
 const bun = @import("root").bun;
 const Environment = bun.Environment;
 
-const JSC = bun.JSC;
-const JSValue = JSC.JSValue;
-const validators = bun.JSC.Node.validators;
-const ZigString = JSC.ZigString;
-const Plugin = JSC.API.JSBundler.Plugin;
+const jsc = bun.jsc;
+const JSValue = jsc.JSValue;
+const validators = bun.jsc.Node.validators;
+const ZigString = jsc.ZigString;
+const Plugin = jsc.API.JSBundler.Plugin;

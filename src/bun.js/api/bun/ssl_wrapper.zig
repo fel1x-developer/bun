@@ -2,7 +2,7 @@ const bun = @import("root").bun;
 
 const BoringSSL = bun.BoringSSL;
 const X509 = @import("./x509.zig");
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const uws = bun.uws;
 
 /// Mimics the behavior of openssl.c in uSockets, wrapping data that can be received from any where (network, DuplexStream, etc)
@@ -93,10 +93,10 @@ pub fn SSLWrapper(comptime T: type) type {
             };
         }
 
-        pub fn init(ssl_options: JSC.API.ServerConfig.SSLConfig, is_client: bool, handlers: Handlers) !This {
+        pub fn init(ssl_options: jsc.API.ServerConfig.SSLConfig, is_client: bool, handlers: Handlers) !This {
             BoringSSL.load();
 
-            const ctx_opts: uws.us_bun_socket_context_options_t = JSC.API.ServerConfig.SSLConfig.asUSockets(ssl_options);
+            const ctx_opts: uws.us_bun_socket_context_options_t = jsc.API.ServerConfig.SSLConfig.asUSockets(ssl_options);
             // Create SSL context using uSockets to match behavior of node.js
             const ctx = uws.create_ssl_context_from_bun_options(ctx_opts) orelse return error.InvalidOptions; // invalid options
             errdefer BoringSSL.SSL_CTX_free(ctx);

@@ -2560,7 +2560,7 @@ extern "C" napi_status napi_create_bigint_words(napi_env env,
 
     const uint64_t* current_word = words;
     // TODO: add fast path that uses memcpy here instead of setDigit
-    // we need to add this to JSC. V8 has this optimization
+    // we need to add this to jsc. V8 has this optimization
     for (size_t i = 0; i < word_count; i++) {
         bigint->setDigit(i, *current_word++);
     }

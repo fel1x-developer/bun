@@ -34,7 +34,7 @@
 //
 // WebCore, or any other downstream client of JSC, is allowed to include this file in headers.
 // In fact, it can make a lot of sense: outside of JSC, this file becomes a kind of umbrella
-// header that pulls in most (all?) of the interesting things in JSC.
+// header that pulls in most (all?) of the interesting things in jsc.
 
 #include <JavaScriptCore/ExceptionHelpers.h>
 #include <JavaScriptCore/GCIncomingRefCountedInlines.h>

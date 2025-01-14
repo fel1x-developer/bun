@@ -10,7 +10,7 @@ const string = bun.string;
 
 const PathWatcher = @import("./path_watcher.zig").PathWatcher;
 const EventType = PathWatcher.EventType;
-const Event = bun.JSC.Node.FSWatcher.Event;
+const Event = bun.jsc.Node.FSWatcher.Event;
 
 pub const CFAbsoluteTime = f64;
 pub const CFTimeInterval = f64;

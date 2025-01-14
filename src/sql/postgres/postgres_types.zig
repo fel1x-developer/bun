@@ -1,15 +1,15 @@
 const std = @import("std");
 const bun = @import("root").bun;
-const postgres = bun.JSC.Postgres;
+const postgres = bun.jsc.Postgres;
 const Data = postgres.Data;
 const protocol = @This();
 const PostgresInt32 = postgres.PostgresInt32;
 const PostgresShort = postgres.PostgresShort;
 const String = bun.String;
 const debug = postgres.debug;
-const Crypto = JSC.API.Bun.Crypto;
-const JSValue = JSC.JSValue;
-const JSC = bun.JSC;
+const Crypto = jsc.API.Bun.Crypto;
+const JSValue = jsc.JSValue;
+const jsc = bun.jsc;
 const short = postgres.short;
 const int4 = postgres.int4;
 const AnyPostgresError = postgres.AnyPostgresError;
@@ -289,7 +289,7 @@ pub const Tag = enum(short) {
 
     fn toJSWithType(
         tag: Tag,
-        globalObject: *JSC.JSGlobalObject,
+        globalObject: *jsc.JSGlobalObject,
         comptime Type: type,
         value: Type,
     ) AnyPostgresError!JSValue {
@@ -334,13 +334,13 @@ pub const Tag = enum(short) {
 
     pub fn toJS(
         tag: Tag,
-        globalObject: *JSC.JSGlobalObject,
+        globalObject: *jsc.JSGlobalObject,
         value: anytype,
     ) AnyPostgresError!JSValue {
         return toJSWithType(tag, globalObject, @TypeOf(value), value);
     }
 
-    pub fn fromJS(globalObject: *JSC.JSGlobalObject, value: JSValue) bun.JSError!Tag {
+    pub fn fromJS(globalObject: *jsc.JSGlobalObject, value: JSValue) bun.JSError!Tag {
         if (value.isEmptyOrUndefinedOrNull()) {
             return Tag.numeric;
         }
@@ -421,7 +421,7 @@ pub const string = struct {
     pub const from = [_]short{1002};
 
     pub fn toJSWithType(
-        globalThis: *JSC.JSGlobalObject,
+        globalThis: *jsc.JSGlobalObject,
         comptime Type: type,
         value: Type,
     ) AnyPostgresError!JSValue {
@@ -450,7 +450,7 @@ pub const string = struct {
     }
 
     pub fn toJS(
-        globalThis: *JSC.JSGlobalObject,
+        globalThis: *jsc.JSGlobalObject,
         value: anytype,
     ) !JSValue {
         var str = try toJSWithType(globalThis, @TypeOf(value), value);
@@ -464,7 +464,7 @@ pub const numeric = struct {
     pub const from = [_]short{ 21, 23, 26, 700, 701 };
 
     pub fn toJS(
-        _: *JSC.JSGlobalObject,
+        _: *jsc.JSGlobalObject,
         value: anytype,
     ) AnyPostgresError!JSValue {
         return JSValue.jsNumber(value);
@@ -476,7 +476,7 @@ pub const json = struct {
     pub const from = [_]short{ 114, 3802 };
 
     pub fn toJS(
-        globalObject: *JSC.JSGlobalObject,
+        globalObject: *jsc.JSGlobalObject,
         value: *Data,
     ) AnyPostgresError!JSValue {
         defer value.deinit();
@@ -496,7 +496,7 @@ pub const @"bool" = struct {
     pub const from = [_]short{16};
 
     pub fn toJS(
-        _: *JSC.JSGlobalObject,
+        _: *jsc.JSGlobalObject,
         value: bool,
     ) AnyPostgresError!JSValue {
         return JSValue.jsBoolean(value);
@@ -517,7 +517,7 @@ pub const date = struct {
         return (double_microseconds / std.time.us_per_ms) + POSTGRES_EPOCH_DATE;
     }
 
-    pub fn fromJS(globalObject: *JSC.JSGlobalObject, value: JSValue) i64 {
+    pub fn fromJS(globalObject: *jsc.JSGlobalObject, value: JSValue) i64 {
         const double_value = if (value.isDate())
             value.getUnixTimestamp()
         else if (value.isNumber())
@@ -533,7 +533,7 @@ pub const date = struct {
     }
 
     pub fn toJS(
-        globalObject: *JSC.JSGlobalObject,
+        globalObject: *jsc.JSGlobalObject,
         value: anytype,
     ) JSValue {
         switch (@TypeOf(value)) {
@@ -556,7 +556,7 @@ pub const bytea = struct {
     pub const from = [_]short{17};
 
     pub fn toJS(
-        globalObject: *JSC.JSGlobalObject,
+        globalObject: *jsc.JSGlobalObject,
         value: *Data,
     ) AnyPostgresError!JSValue {
         defer value.deinit();

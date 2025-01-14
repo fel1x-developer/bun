@@ -1,6 +1,6 @@
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const Fs = @import("../../fs.zig");
-const CAPI = JSC.C;
+const CAPI = jsc.C;
 const JS = @import("../javascript.zig");
 const JSBase = @import("../base.zig");
 const ZigURL = @import("../../url.zig").URL;
@@ -10,19 +10,19 @@ const std = @import("std");
 const Shimmer = @import("./shimmer.zig").Shimmer;
 const strings = bun.strings;
 const default_allocator = bun.default_allocator;
-const NewGlobalObject = JSC.NewGlobalObject;
-const JSGlobalObject = JSC.JSGlobalObject;
+const NewGlobalObject = jsc.NewGlobalObject;
+const JSGlobalObject = jsc.JSGlobalObject;
 const is_bindgen: bool = false;
-const ZigString = JSC.ZigString;
+const ZigString = jsc.ZigString;
 const string = bun.string;
-const JSValue = JSC.JSValue;
+const JSValue = jsc.JSValue;
 const Output = bun.Output;
 const Environment = bun.Environment;
 const ScriptArguments = opaque {};
-const JSPromise = JSC.JSPromise;
-const JSPromiseRejectionOperation = JSC.JSPromiseRejectionOperation;
-const JSModuleLoader = JSC.JSModuleLoader;
-const Microtask = JSC.Microtask;
+const JSPromise = jsc.JSPromise;
+const JSPromiseRejectionOperation = jsc.JSPromiseRejectionOperation;
+const JSModuleLoader = jsc.JSModuleLoader;
+const Microtask = jsc.Microtask;
 
 const JSPrinter = bun.js_printer;
 const JSLexer = bun.js_lexer;
@@ -75,27 +75,27 @@ pub const ZigGlobalObject = extern struct {
     }
 
     pub fn import(global: *JSGlobalObject, specifier: *bun.String, source: *bun.String) callconv(.C) ErrorableString {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
 
         return @call(bun.callmod_inline, Interface.import, .{ global, specifier, source });
     }
     pub fn resolve(res: *ErrorableString, global: *JSGlobalObject, specifier: *bun.String, source: *bun.String, query: *ZigString) callconv(.C) void {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         @call(bun.callmod_inline, Interface.resolve, .{ res, global, specifier, source, query });
     }
 
     pub fn promiseRejectionTracker(global: *JSGlobalObject, promise: *JSPromise, rejection: JSPromiseRejectionOperation) callconv(.C) JSValue {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         return @call(bun.callmod_inline, Interface.promiseRejectionTracker, .{ global, promise, rejection });
     }
 
     pub fn reportUncaughtException(global: *JSGlobalObject, exception: *Exception) callconv(.C) JSValue {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         return @call(bun.callmod_inline, Interface.reportUncaughtException, .{ global, exception });
     }
 
     pub fn onCrash() callconv(.C) void {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         return @call(bun.callmod_inline, Interface.onCrash, .{});
     }
 
@@ -148,14 +148,14 @@ pub const ZigErrorType = extern struct {
     ptr: ?*anyopaque,
 };
 
-pub const NodePath = JSC.Node.Path;
+pub const NodePath = jsc.Node.Path;
 
 // Sinks
-pub const JSArrayBufferSink = JSC.WebCore.ArrayBufferSink.JSSink;
-pub const JSHTTPSResponseSink = JSC.WebCore.HTTPSResponseSink.JSSink;
-pub const JSHTTPResponseSink = JSC.WebCore.HTTPResponseSink.JSSink;
-pub const JSFileSink = JSC.WebCore.FileSink.JSSink;
-pub const JSNetworkSink = JSC.WebCore.NetworkSink.JSSink;
+pub const JSArrayBufferSink = jsc.WebCore.ArrayBufferSink.JSSink;
+pub const JSHTTPSResponseSink = jsc.WebCore.HTTPSResponseSink.JSSink;
+pub const JSHTTPResponseSink = jsc.WebCore.HTTPResponseSink.JSSink;
+pub const JSFileSink = jsc.WebCore.FileSink.JSSink;
+pub const JSNetworkSink = jsc.WebCore.NetworkSink.JSSink;
 
 // WebSocket
 pub const WebSocketHTTPClient = @import("../../http/websocket_http_client.zig").WebSocketHTTPClient;
@@ -224,7 +224,7 @@ pub const ResolvedSource = extern struct {
 
     allocator: ?*anyopaque = null,
 
-    jsvalue_for_export: JSC.JSValue = .zero,
+    jsvalue_for_export: jsc.JSValue = .zero,
 
     tag: Tag = Tag.javascript,
 
@@ -391,13 +391,13 @@ pub const Process = extern struct {
         return newvalue.toJS(globalObject);
     }
 
-    pub const getArgv = JSC.Node.Process.getArgv;
-    pub const getCwd = JSC.Node.Process.getCwd;
-    pub const setCwd = JSC.Node.Process.setCwd;
-    pub const exit = JSC.Node.Process.exit;
-    pub const getArgv0 = JSC.Node.Process.getArgv0;
-    pub const getExecPath = JSC.Node.Process.getExecPath;
-    pub const getExecArgv = JSC.Node.Process.getExecArgv;
+    pub const getArgv = jsc.Node.Process.getArgv;
+    pub const getCwd = jsc.Node.Process.getCwd;
+    pub const setCwd = jsc.Node.Process.setCwd;
+    pub const exit = jsc.Node.Process.exit;
+    pub const getArgv0 = jsc.Node.Process.getArgv0;
+    pub const getExecPath = jsc.Node.Process.getExecPath;
+    pub const getExecArgv = jsc.Node.Process.getExecArgv;
 
     pub const Export = shim.exportFunctions(.{
         .getTitle = getTitle,
@@ -456,7 +456,7 @@ pub const ZigStackTrace = extern struct {
 
     /// Non-null if `source_lines_*` points into data owned by a JSC::SourceProvider.
     /// If so, then .deref must be called on it to release the memory.
-    referenced_source_provider: ?*JSC.SourceProvider = null,
+    referenced_source_provider: ?*jsc.SourceProvider = null,
 
     pub fn toAPI(
         this: *const ZigStackTrace,
@@ -871,7 +871,7 @@ pub const ZigException = extern struct {
             return Holder.Zero;
         }
 
-        pub fn deinit(this: *Holder, vm: *JSC.VirtualMachine) void {
+        pub fn deinit(this: *Holder, vm: *jsc.VirtualMachine) void {
             if (this.loaded) {
                 this.zig_exception.deinit();
             }
@@ -966,14 +966,14 @@ comptime {
     @export(ErrorCode.JSErrorObject, .{ .name = "Zig_ErrorCodeJSErrorObject" });
 }
 
-const Bun = JSC.API.Bun;
+const Bun = jsc.API.Bun;
 pub const BunTimer = Bun.Timer;
 pub const Formatter = ConsoleObject.Formatter;
-pub const HTTPServerRequestContext = JSC.API.HTTPServer.RequestContext;
-pub const HTTPSSLServerRequestContext = JSC.API.HTTPSServer.RequestContext;
-pub const HTTPDebugServerRequestContext = JSC.API.DebugHTTPServer.RequestContext;
-pub const HTTPDebugSSLServerRequestContext = JSC.API.DebugHTTPSServer.RequestContext;
-pub const BodyValueBuffererContext = JSC.WebCore.BodyValueBufferer;
+pub const HTTPServerRequestContext = jsc.API.HTTPServer.RequestContext;
+pub const HTTPSSLServerRequestContext = jsc.API.HTTPSServer.RequestContext;
+pub const HTTPDebugServerRequestContext = jsc.API.DebugHTTPServer.RequestContext;
+pub const HTTPDebugSSLServerRequestContext = jsc.API.DebugHTTPSServer.RequestContext;
+pub const BodyValueBuffererContext = jsc.WebCore.BodyValueBufferer;
 pub const TestScope = @import("../test/jest.zig").TestScope;
 comptime {
     if (!is_bindgen) {
@@ -1037,7 +1037,7 @@ pub export fn Bun__LoadLibraryBunString(str: *bun.String) ?*anyopaque {
 pub export fn NodeModuleModule__findPath(
     global: *JSGlobalObject,
     request_bun_str: bun.String,
-    paths_maybe: ?*JSC.JSArray,
+    paths_maybe: ?*jsc.JSArray,
 ) JSValue {
     var stack_buf = std.heap.stackFallback(8192, default_allocator);
     const alloc = stack_buf.get();
@@ -1082,7 +1082,7 @@ fn findPathInner(
     global: *JSGlobalObject,
 ) ?bun.String {
     var errorable: ErrorableString = undefined;
-    JSC.VirtualMachine.resolve(
+    jsc.VirtualMachine.resolve(
         &errorable,
         global,
         request,

@@ -48,7 +48,7 @@ const INotify = struct {
         }
     };
 
-    pub fn watchPath(this: *INotify, pathname: [:0]const u8) bun.JSC.Maybe(EventListIndex) {
+    pub fn watchPath(this: *INotify, pathname: [:0]const u8) bun.jsc.Maybe(EventListIndex) {
         bun.assert(this.loaded_inotify);
         const old_count = this.watch_count.fetchAdd(1, .release);
         defer if (old_count == 0) Futex.wake(&this.watch_count, 10);
@@ -72,7 +72,7 @@ const INotify = struct {
         };
     }
 
-    pub fn watchDir(this: *INotify, pathname: [:0]const u8) bun.JSC.Maybe(EventListIndex) {
+    pub fn watchDir(this: *INotify, pathname: [:0]const u8) bun.jsc.Maybe(EventListIndex) {
         bun.assert(this.loaded_inotify);
         const old_count = this.watch_count.fetchAdd(1, .release);
         defer if (old_count == 0) Futex.wake(&this.watch_count, 10);
@@ -113,7 +113,7 @@ const INotify = struct {
         this.inotify_fd = try std.posix.inotify_init1(std.os.linux.IN.CLOEXEC);
     }
 
-    pub fn read(this: *INotify) bun.JSC.Maybe([]*const INotifyEvent) {
+    pub fn read(this: *INotify) bun.jsc.Maybe([]*const INotifyEvent) {
         bun.assert(this.loaded_inotify);
 
         restart: while (true) {
@@ -269,7 +269,7 @@ const WindowsWatcher = struct {
         dirHandle: w.HANDLE,
 
         // invalidates any EventIterators
-        fn prepare(this: *DirWatcher) bun.JSC.Maybe(void) {
+        fn prepare(this: *DirWatcher) bun.jsc.Maybe(void) {
             const filter = w.FILE_NOTIFY_CHANGE_FILE_NAME | w.FILE_NOTIFY_CHANGE_DIR_NAME | w.FILE_NOTIFY_CHANGE_LAST_WRITE | w.FILE_NOTIFY_CHANGE_CREATION;
             if (w.kernel32.ReadDirectoryChangesW(this.dirHandle, &this.buf, this.buf.len, 1, filter, null, &this.overlapped, null) == 0) {
                 const err = w.kernel32.GetLastError();
@@ -364,7 +364,7 @@ const WindowsWatcher = struct {
     };
 
     // wait until new events are available
-    pub fn next(this: *WindowsWatcher, timeout: Timeout) bun.JSC.Maybe(?EventIterator) {
+    pub fn next(this: *WindowsWatcher, timeout: Timeout) bun.jsc.Maybe(?EventIterator) {
         switch (this.watcher.prepare()) {
             .err => |err| {
                 log("prepare() returned error", .{});
@@ -729,7 +729,7 @@ pub const NewWatcher = if (true)
             }
         }
 
-        fn _watchLoop(this: *Watcher) bun.JSC.Maybe(void) {
+        fn _watchLoop(this: *Watcher) bun.jsc.Maybe(void) {
             if (Environment.isMac) {
                 bun.assert(this.platform.fd.isValid());
                 const KEvent = std.c.Kevent;
@@ -980,7 +980,7 @@ pub const NewWatcher = if (true)
             parent_hash: HashType,
             package_json: ?*PackageJSON,
             comptime copy_file_path: bool,
-        ) bun.JSC.Maybe(void) {
+        ) bun.jsc.Maybe(void) {
             if (comptime Environment.isWindows) {
                 // on windows we can only watch items that are in the directory tree of the top level dir
                 const rel = bun.path.isParentOrEqual(this.fs.top_level_dir, file_path);
@@ -1062,7 +1062,7 @@ pub const NewWatcher = if (true)
             file_path: string,
             hash: HashType,
             comptime copy_file_path: bool,
-        ) bun.JSC.Maybe(WatchItemIndex) {
+        ) bun.jsc.Maybe(WatchItemIndex) {
             if (comptime Environment.isWindows) {
                 // on windows we can only watch items that are in the directory tree of the top level dir
                 const rel = bun.path.isParentOrEqual(this.fs.top_level_dir, file_path);
@@ -1165,7 +1165,7 @@ pub const NewWatcher = if (true)
             package_json: ?*PackageJSON,
             comptime copy_file_path: bool,
             comptime lock: bool,
-        ) bun.JSC.Maybe(void) {
+        ) bun.jsc.Maybe(void) {
             if (comptime lock) this.mutex.lock();
             defer if (comptime lock) this.mutex.unlock();
             bun.assert(file_path.len > 1);
@@ -1239,7 +1239,7 @@ pub const NewWatcher = if (true)
             dir_fd: bun.FileDescriptor,
             package_json: ?*PackageJSON,
             comptime copy_file_path: bool,
-        ) bun.JSC.Maybe(void) {
+        ) bun.jsc.Maybe(void) {
             return appendFileMaybeLock(this, fd, file_path, hash, loader, dir_fd, package_json, copy_file_path, true);
         }
 
@@ -1249,7 +1249,7 @@ pub const NewWatcher = if (true)
             file_path: string,
             hash: HashType,
             comptime copy_file_path: bool,
-        ) bun.JSC.Maybe(WatchItemIndex) {
+        ) bun.jsc.Maybe(WatchItemIndex) {
             this.mutex.lock();
             defer this.mutex.unlock();
 
@@ -1271,7 +1271,7 @@ pub const NewWatcher = if (true)
             dir_fd: bun.FileDescriptor,
             package_json: ?*PackageJSON,
             comptime copy_file_path: bool,
-        ) bun.JSC.Maybe(void) {
+        ) bun.jsc.Maybe(void) {
             // This must lock due to concurrent transpiler
             this.mutex.lock();
             defer this.mutex.unlock();

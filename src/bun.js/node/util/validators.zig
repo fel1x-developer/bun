@@ -1,10 +1,10 @@
 const std = @import("std");
 const bun = @import("root").bun;
 const string = bun.string;
-const JSC = bun.JSC;
-const JSValue = JSC.JSValue;
-const JSGlobalObject = JSC.JSGlobalObject;
-const ZigString = JSC.ZigString;
+const jsc = bun.jsc;
+const JSValue = jsc.JSValue;
+const JSGlobalObject = jsc.JSGlobalObject;
+const ZigString = jsc.ZigString;
 
 pub fn getTypeName(globalObject: *JSGlobalObject, value: JSValue) ZigString {
     var js_type = value.jsType();
@@ -54,8 +54,8 @@ pub fn throwRangeError(
 }
 
 pub fn validateInteger(globalThis: *JSGlobalObject, value: JSValue, comptime name_fmt: string, name_args: anytype, min_value: ?i64, max_value: ?i64) bun.JSError!i64 {
-    const min = min_value orelse JSC.MIN_SAFE_INTEGER;
-    const max = max_value orelse JSC.MAX_SAFE_INTEGER;
+    const min = min_value orelse jsc.MIN_SAFE_INTEGER;
+    const max = max_value orelse jsc.MAX_SAFE_INTEGER;
 
     if (!value.isNumber())
         return throwErrInvalidArgType(globalThis, name_fmt, name_args, "number", value);
@@ -78,12 +78,12 @@ pub fn validateInt32(globalThis: *JSGlobalObject, value: JSValue, comptime name_
         return throwErrInvalidArgType(globalThis, name_fmt, name_args, "number", value);
     }
     if (!value.isInt32()) {
-        var formatter = JSC.ConsoleObject.Formatter{ .globalThis = globalThis };
+        var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis };
         return throwRangeError(globalThis, "The value of \"" ++ name_fmt ++ "\" is out of range. It must be an integer. Received {}", name_args ++ .{value.toFmt(&formatter)});
     }
     const num = value.asInt32();
     if (num < min or num > max) {
-        var formatter = JSC.ConsoleObject.Formatter{ .globalThis = globalThis };
+        var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis };
         return throwRangeError(globalThis, "The value of \"" ++ name_fmt ++ "\" is out of range. It must be >= {d} and <= {d}. Received {}", name_args ++ .{ min, max, value.toFmt(&formatter) });
     }
     return num;
@@ -94,14 +94,14 @@ pub fn validateUint32(globalThis: *JSGlobalObject, value: JSValue, comptime name
         return throwErrInvalidArgType(globalThis, name_fmt, name_args, "number", value);
     }
     if (!value.isAnyInt()) {
-        var formatter = JSC.ConsoleObject.Formatter{ .globalThis = globalThis };
+        var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis };
         return throwRangeError(globalThis, "The value of \"" ++ name_fmt ++ "\" is out of range. It must be an integer. Received {}", name_args ++ .{value.toFmt(&formatter)});
     }
     const num: i64 = value.asInt52();
     const min: i64 = if (greater_than_zero) 1 else 0;
     const max: i64 = @intCast(std.math.maxInt(u32));
     if (num < min or num > max) {
-        var formatter = JSC.ConsoleObject.Formatter{ .globalThis = globalThis };
+        var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis };
         return throwRangeError(globalThis, "The value of \"" ++ name_fmt ++ "\" is out of range. It must be >= {d} and <= {d}. Received {}", name_args ++ .{ min, max, value.toFmt(&formatter) });
     }
     return @truncate(@as(u63, @intCast(num)));

@@ -10,7 +10,7 @@ const MutableString = bun.MutableString;
 const stringZ = bun.stringZ;
 const default_allocator = bun.default_allocator;
 const C = bun.C;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const IdentityContext = @import("../identity_context.zig").IdentityContext;
 const OOM = bun.OOM;
 const TruncatedPackageNameHash = bun.install.TruncatedPackageNameHash;
@@ -431,7 +431,7 @@ pub const String = extern struct {
         return @as(Pointer, @bitCast(@as(u64, @as(u63, @truncate(@as(u64, @bitCast(this)))))));
     }
 
-    pub fn toJS(this: *const String, buffer: []const u8, globalThis: *JSC.JSGlobalObject) JSC.JSValue {
+    pub fn toJS(this: *const String, buffer: []const u8, globalThis: *jsc.JSGlobalObject) jsc.JSValue {
         var str = bun.String.init(this.slice(buffer));
         return str.transferToJS(globalThis);
     }
@@ -2759,15 +2759,15 @@ pub const Query = struct {
 };
 
 pub const SemverObject = struct {
-    pub fn create(globalThis: *JSC.JSGlobalObject) JSC.JSValue {
-        const object = JSC.JSValue.createEmptyObject(globalThis, 2);
+    pub fn create(globalThis: *jsc.JSGlobalObject) jsc.JSValue {
+        const object = jsc.JSValue.createEmptyObject(globalThis, 2);
 
         object.put(
             globalThis,
-            JSC.ZigString.static("satisfies"),
-            JSC.NewFunction(
+            jsc.ZigString.static("satisfies"),
+            jsc.NewFunction(
                 globalThis,
-                JSC.ZigString.static("satisfies"),
+                jsc.ZigString.static("satisfies"),
                 2,
                 SemverObject.satisfies,
                 false,
@@ -2776,10 +2776,10 @@ pub const SemverObject = struct {
 
         object.put(
             globalThis,
-            JSC.ZigString.static("order"),
-            JSC.NewFunction(
+            jsc.ZigString.static("order"),
+            jsc.NewFunction(
                 globalThis,
-                JSC.ZigString.static("order"),
+                jsc.ZigString.static("order"),
                 2,
                 SemverObject.order,
                 false,
@@ -2790,9 +2790,9 @@ pub const SemverObject = struct {
     }
 
     pub fn order(
-        globalThis: *JSC.JSGlobalObject,
-        callFrame: *JSC.CallFrame,
-    ) bun.JSError!JSC.JSValue {
+        globalThis: *jsc.JSGlobalObject,
+        callFrame: *jsc.CallFrame,
+    ) bun.JSError!jsc.JSValue {
         var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
         defer arena.deinit();
         var stack_fallback = std.heap.stackFallback(512, arena.allocator());
@@ -2806,16 +2806,16 @@ pub const SemverObject = struct {
         const left_arg = arguments[0];
         const right_arg = arguments[1];
 
-        const left_string = left_arg.toStringOrNull(globalThis) orelse return JSC.jsNumber(0);
-        const right_string = right_arg.toStringOrNull(globalThis) orelse return JSC.jsNumber(0);
+        const left_string = left_arg.toStringOrNull(globalThis) orelse return jsc.jsNumber(0);
+        const right_string = right_arg.toStringOrNull(globalThis) orelse return jsc.jsNumber(0);
 
         const left = left_string.toSlice(globalThis, allocator);
         defer left.deinit();
         const right = right_string.toSlice(globalThis, allocator);
         defer right.deinit();
 
-        if (!strings.isAllASCII(left.slice())) return JSC.jsNumber(0);
-        if (!strings.isAllASCII(right.slice())) return JSC.jsNumber(0);
+        if (!strings.isAllASCII(left.slice())) return jsc.jsNumber(0);
+        if (!strings.isAllASCII(right.slice())) return jsc.jsNumber(0);
 
         const left_result = Version.parse(SlicedString.init(left.slice(), left.slice()));
         const right_result = Version.parse(SlicedString.init(right.slice(), right.slice()));
@@ -2832,13 +2832,13 @@ pub const SemverObject = struct {
         const right_version = right_result.version.max();
 
         return switch (left_version.orderWithoutBuild(right_version, left.slice(), right.slice())) {
-            .eq => JSC.jsNumber(0),
-            .gt => JSC.jsNumber(1),
-            .lt => JSC.jsNumber(-1),
+            .eq => jsc.jsNumber(0),
+            .gt => jsc.jsNumber(1),
+            .lt => jsc.jsNumber(-1),
         };
     }
 
-    pub fn satisfies(globalThis: *JSC.JSGlobalObject, callFrame: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn satisfies(globalThis: *jsc.JSGlobalObject, callFrame: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         var arena = std.heap.ArenaAllocator.init(bun.default_allocator);
         defer arena.deinit();
         var stack_fallback = std.heap.stackFallback(512, arena.allocator());
@@ -2880,10 +2880,10 @@ pub const SemverObject = struct {
         const right_version = right_group.getExactVersion();
 
         if (right_version != null) {
-            return JSC.jsBoolean(left_version.eql(right_version.?));
+            return jsc.jsBoolean(left_version.eql(right_version.?));
         }
 
-        return JSC.jsBoolean(right_group.satisfies(left_version, right.slice(), left.slice()));
+        return jsc.jsBoolean(right_group.satisfies(left_version, right.slice(), left.slice()));
     }
 };
 

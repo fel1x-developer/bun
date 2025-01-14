@@ -42,7 +42,7 @@ pub const ExprNodeList = js_ast.ExprNodeList;
 pub const StmtNodeList = js_ast.StmtNodeList;
 pub const BindingNodeList = js_ast.BindingNodeList;
 const DeclaredSymbol = js_ast.DeclaredSymbol;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const Index = @import("./ast/base.zig").Index;
 
 fn _disabledAssert(_: bool) void {
@@ -3255,7 +3255,7 @@ pub const Parser = struct {
         // We must check the cache only after we've consumed the hashbang and leading // @bun pragma
         // We don't want to ever put files with `// @bun` into this cache, as that would be wasteful.
         if (comptime Environment.isNative and bun.FeatureFlags.runtime_transpiler_cache) {
-            const runtime_transpiler_cache: ?*bun.JSC.RuntimeTranspilerCache = p.options.features.runtime_transpiler_cache;
+            const runtime_transpiler_cache: ?*bun.jsc.RuntimeTranspilerCache = p.options.features.runtime_transpiler_cache;
             if (runtime_transpiler_cache) |cache| {
                 if (cache.get(p.source, &p.options, p.options.jsx.parse and (!p.source.path.isNodeModule() or p.source.path.isJSXFile()))) {
                     return js_ast.Result{
@@ -4262,7 +4262,7 @@ pub const Parser = struct {
         // p.popScope();
 
         if (comptime Environment.isNative and bun.FeatureFlags.runtime_transpiler_cache) {
-            const runtime_transpiler_cache: ?*bun.JSC.RuntimeTranspilerCache = p.options.features.runtime_transpiler_cache;
+            const runtime_transpiler_cache: ?*bun.jsc.RuntimeTranspilerCache = p.options.features.runtime_transpiler_cache;
             if (runtime_transpiler_cache) |cache| {
                 if (p.macro_call_count != 0) {
                     // disable this for:

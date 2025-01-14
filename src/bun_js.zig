@@ -27,13 +27,13 @@ const Command = @import("cli.zig").Command;
 const transpiler = bun.transpiler;
 const DotEnv = @import("env_loader.zig");
 const which = @import("which.zig").which;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const AsyncHTTP = bun.http.AsyncHTTP;
 const Arena = @import("./allocators/mimalloc_arena.zig").Arena;
 const DNSResolver = @import("bun.js/api/bun/dns_resolver.zig").DNSResolver;
 
-const OpaqueWrap = JSC.OpaqueWrap;
-const VirtualMachine = JSC.VirtualMachine;
+const OpaqueWrap = jsc.OpaqueWrap;
+const VirtualMachine = jsc.VirtualMachine;
 
 var run: Run = undefined;
 pub const Run = struct {
@@ -44,8 +44,8 @@ pub const Run = struct {
     any_unhandled: bool = false,
 
     pub fn bootStandalone(ctx: Command.Context, entry_path: string, graph: bun.StandaloneModuleGraph) !void {
-        JSC.markBinding(@src());
-        bun.JSC.initialize(false);
+        jsc.markBinding(@src());
+        bun.jsc.initialize(false);
         bun.Analytics.Features.standalone_executable += 1;
 
         const graph_ptr = try bun.default_allocator.create(bun.StandaloneModuleGraph);
@@ -119,7 +119,7 @@ pub const Run = struct {
 
         vm.loadExtraEnvAndSourceCodePrinter();
         vm.is_main_thread = true;
-        JSC.VirtualMachine.is_main_thread_vm = true;
+        jsc.VirtualMachine.is_main_thread_vm = true;
 
         doPreconnect(ctx.runtime_options.preconnect);
 
@@ -164,19 +164,19 @@ pub const Run = struct {
             null,
         );
         try bundle.runEnvLoader(false);
-        const mini = JSC.MiniEventLoop.initGlobal(bundle.env);
+        const mini = jsc.MiniEventLoop.initGlobal(bundle.env);
         mini.top_level_dir = ctx.args.absolute_working_dir orelse "";
         return bun.shell.Interpreter.initAndRunFromFile(ctx, mini, entry_path);
     }
 
     pub fn boot(ctx: Command.Context, entry_path: string) !void {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
 
         if (!ctx.debug.loaded_bunfig) {
             try bun.CLI.Arguments.loadConfigPath(ctx.allocator, true, "bunfig.toml", ctx, .RunCommand);
         }
 
-        // The shell does not need to initialize JSC.
+        // The shell does not need to initialize jsc.
         // JSC initialization costs 1-3ms. We skip this if we know it's a shell script.
         if (strings.endsWithComptime(entry_path, ".sh")) {
             const exit_code = try bootBunShell(ctx, entry_path);
@@ -184,7 +184,7 @@ pub const Run = struct {
             return;
         }
 
-        bun.JSC.initialize(ctx.runtime_options.eval.eval_and_print);
+        bun.jsc.initialize(ctx.runtime_options.eval.eval_and_print);
 
         js_ast.Expr.Data.Store.create();
         js_ast.Stmt.Data.Store.create();
@@ -263,12 +263,12 @@ pub const Run = struct {
 
         vm.loadExtraEnvAndSourceCodePrinter();
         vm.is_main_thread = true;
-        JSC.VirtualMachine.is_main_thread_vm = true;
+        jsc.VirtualMachine.is_main_thread_vm = true;
 
         // Allow setting a custom timezone
         if (vm.transpiler.env.get("TZ")) |tz| {
             if (tz.len > 0) {
-                _ = vm.global.setTimeZone(&JSC.ZigString.init(tz));
+                _ = vm.global.setTimeZone(&jsc.ZigString.init(tz));
             }
         }
 
@@ -280,7 +280,7 @@ pub const Run = struct {
         vm.global.vm().holdAPILock(&run, callback);
     }
 
-    fn onUnhandledRejectionBeforeClose(this: *JSC.VirtualMachine, _: *JSC.JSGlobalObject, value: JSC.JSValue) void {
+    fn onUnhandledRejectionBeforeClose(this: *jsc.VirtualMachine, _: *jsc.JSGlobalObject, value: jsc.JSValue) void {
         this.runErrorHandler(value, this.onUnhandledRejectionExceptionList);
         run.any_unhandled = true;
     }
@@ -293,8 +293,8 @@ pub const Run = struct {
         this.addConditionalGlobals();
 
         switch (this.ctx.debug.hot_reload) {
-            .hot => JSC.HotReloader.enableHotModuleReloading(vm),
-            .watch => JSC.WatchReloader.enableHotModuleReloading(vm),
+            .hot => jsc.HotReloader.enableHotModuleReloading(vm),
+            .watch => jsc.WatchReloader.enableHotModuleReloading(vm),
             else => {},
         }
 
@@ -315,7 +315,7 @@ pub const Run = struct {
                     vm.onExit();
 
                     if (run.any_unhandled) {
-                        bun.JSC.SavedSourceMap.MissingSourceMapNoteInfo.print();
+                        bun.jsc.SavedSourceMap.MissingSourceMapNoteInfo.print();
 
                         Output.prettyErrorln(
                             "<r>\n<d>{s}<r>",
@@ -345,7 +345,7 @@ pub const Run = struct {
             vm.exit_handler.exit_code = 1;
             vm.onExit();
             if (run.any_unhandled) {
-                bun.JSC.SavedSourceMap.MissingSourceMapNoteInfo.print();
+                bun.jsc.SavedSourceMap.MissingSourceMapNoteInfo.print();
 
                 Output.prettyErrorln(
                     "<r>\n<d>{s}<r>",
@@ -435,7 +435,7 @@ pub const Run = struct {
         if (this.any_unhandled and this.vm.exit_handler.exit_code == 0) {
             this.vm.exit_handler.exit_code = 1;
 
-            bun.JSC.SavedSourceMap.MissingSourceMapNoteInfo.print();
+            bun.jsc.SavedSourceMap.MissingSourceMapNoteInfo.print();
 
             Output.prettyErrorln(
                 "<r>\n<d>{s}<r>",
@@ -443,13 +443,13 @@ pub const Run = struct {
             );
         }
 
-        if (!JSC.is_bindgen) JSC.napi.fixDeadCodeElimination();
+        if (!jsc.is_bindgen) jsc.napi.fixDeadCodeElimination();
         vm.globalExit();
     }
 
-    extern fn Bun__ExposeNodeModuleGlobals(*JSC.JSGlobalObject) void;
+    extern fn Bun__ExposeNodeModuleGlobals(*jsc.JSGlobalObject) void;
     /// add `gc()` to `globalThis`.
-    extern fn JSC__JSGlobalObject__addGc(*JSC.JSGlobalObject) void;
+    extern fn JSC__JSGlobalObject__addGc(*jsc.JSGlobalObject) void;
 
     fn addConditionalGlobals(this: *Run) void {
         const vm = this.vm;
@@ -464,7 +464,7 @@ pub const Run = struct {
     }
 };
 
-pub export fn Bun__onResolveEntryPointResult(global: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) callconv(JSC.conv) noreturn {
+pub export fn Bun__onResolveEntryPointResult(global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) callconv(jsc.conv) noreturn {
     const arguments = callframe.arguments_old(1).slice();
     const result = arguments[0];
     result.print(global, .Log, .Log);
@@ -472,7 +472,7 @@ pub export fn Bun__onResolveEntryPointResult(global: *JSC.JSGlobalObject, callfr
     return .undefined;
 }
 
-pub export fn Bun__onRejectEntryPointResult(global: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) callconv(JSC.conv) noreturn {
+pub export fn Bun__onRejectEntryPointResult(global: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) callconv(jsc.conv) noreturn {
     const arguments = callframe.arguments_old(1).slice();
     const result = arguments[0];
     result.print(global, .Log, .Log);
@@ -480,7 +480,7 @@ pub export fn Bun__onRejectEntryPointResult(global: *JSC.JSGlobalObject, callfra
     return .undefined;
 }
 
-noinline fn dumpBuildError(vm: *JSC.VirtualMachine) void {
+noinline fn dumpBuildError(vm: *jsc.VirtualMachine) void {
     @setCold(true);
 
     Output.flush();
@@ -496,7 +496,7 @@ noinline fn dumpBuildError(vm: *JSC.VirtualMachine) void {
     vm.log.print(writer) catch {};
 }
 
-pub noinline fn failWithBuildError(vm: *JSC.VirtualMachine) noreturn {
+pub noinline fn failWithBuildError(vm: *jsc.VirtualMachine) noreturn {
     @setCold(true);
     dumpBuildError(vm);
     Global.exit(1);

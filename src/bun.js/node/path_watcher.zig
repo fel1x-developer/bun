@@ -11,8 +11,8 @@ const Output = bun.Output;
 const Environment = bun.Environment;
 const StoredFileDescriptorType = bun.StoredFileDescriptorType;
 const string = bun.string;
-const JSC = bun.JSC;
-const VirtualMachine = JSC.VirtualMachine;
+const jsc = bun.jsc;
+const VirtualMachine = jsc.VirtualMachine;
 const GenericWatcher = @import("../../watcher.zig");
 
 const sync = @import("../../sync.zig");
@@ -21,7 +21,7 @@ const Semaphore = sync.Semaphore;
 var default_manager_mutex: Mutex = .{};
 var default_manager: ?*PathWatcherManager = null;
 
-const FSWatcher = bun.JSC.Node.FSWatcher;
+const FSWatcher = bun.jsc.Node.FSWatcher;
 const Event = FSWatcher.Event;
 const StringOrBytesToDecode = FSWatcher.FSWatchTaskWindows.StringOrBytesToDecode;
 
@@ -34,7 +34,7 @@ pub const PathWatcherManager = struct {
 
     watchers: bun.BabyList(?*PathWatcher) = .{},
     watcher_count: u32 = 0,
-    vm: *JSC.VirtualMachine,
+    vm: *jsc.VirtualMachine,
     file_paths: bun.StringHashMap(PathInfo),
     current_fd_task: bun.FDHashMap(*DirectoryRegisterTask),
     deinit_on_last_watcher: bool = false,
@@ -80,7 +80,7 @@ pub const PathWatcherManager = struct {
     fn _fdFromAbsolutePathZ(
         this: *PathWatcherManager,
         path: [:0]const u8,
-    ) bun.JSC.Maybe(PathInfo) {
+    ) bun.jsc.Maybe(PathInfo) {
         this.mutex.lock();
         defer this.mutex.unlock();
 
@@ -138,7 +138,7 @@ pub const PathWatcherManager = struct {
         std.posix.INotifyInitError ||
         std.Thread.SpawnError;
 
-    pub fn init(vm: *JSC.VirtualMachine) PathWatcherManagerError!*PathWatcherManager {
+    pub fn init(vm: *jsc.VirtualMachine) PathWatcherManagerError!*PathWatcherManager {
         const this = bun.default_allocator.create(PathWatcherManager) catch bun.outOfMemory();
         errdefer bun.default_allocator.destroy(this);
         var watchers = bun.BabyList(?*PathWatcher).initCapacity(bun.default_allocator, 1) catch bun.outOfMemory();
@@ -354,10 +354,10 @@ pub const PathWatcherManager = struct {
     pub const DirectoryRegisterTask = struct {
         manager: *PathWatcherManager,
         path: PathInfo,
-        task: JSC.WorkPoolTask = .{ .callback = callback },
+        task: jsc.WorkPoolTask = .{ .callback = callback },
         watcher_list: bun.BabyList(*PathWatcher) = .{},
 
-        pub fn callback(task: *JSC.WorkPoolTask) void {
+        pub fn callback(task: *jsc.WorkPoolTask) void {
             var routine: *@This() = @fieldParentPtr("task", task);
             defer routine.deinit();
             routine.run();
@@ -411,7 +411,7 @@ pub const PathWatcherManager = struct {
                 };
             }
             if (manager.refPendingTask()) {
-                JSC.WorkPool.schedule(&routine.task);
+                jsc.WorkPool.schedule(&routine.task);
                 return;
             }
             return error.UnexpectedFailure;
@@ -435,7 +435,7 @@ pub const PathWatcherManager = struct {
             this: *DirectoryRegisterTask,
             watcher: *PathWatcher,
             buf: *bun.PathBuffer,
-        ) bun.JSC.Maybe(void) {
+        ) bun.jsc.Maybe(void) {
             if (Environment.isWindows) @compileError("use win_watcher.zig");
 
             const manager = this.manager;
@@ -543,7 +543,7 @@ pub const PathWatcherManager = struct {
     };
 
     // this should only be called if thread pool is not null
-    fn _addDirectory(this: *PathWatcherManager, watcher: *PathWatcher, path: PathInfo) bun.JSC.Maybe(void) {
+    fn _addDirectory(this: *PathWatcherManager, watcher: *PathWatcher, path: PathInfo) bun.jsc.Maybe(void) {
         const fd = path.fd;
         switch (this.main_watcher.addDirectory(fd, path.path, path.hash, false)) {
             .err => |err| return .{ .err = err },
@@ -946,7 +946,7 @@ pub fn watch(
     comptime callback: PathWatcher.Callback,
     comptime updateEnd: PathWatcher.UpdateEndCallback,
     ctx: ?*anyopaque,
-) bun.JSC.Maybe(*PathWatcher) {
+) bun.jsc.Maybe(*PathWatcher) {
     const manager = default_manager orelse brk: {
         default_manager_mutex.lock();
         defer default_manager_mutex.unlock();

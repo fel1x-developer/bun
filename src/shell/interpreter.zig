@@ -24,10 +24,10 @@ const posix = std.posix;
 const Arena = std.heap.ArenaAllocator;
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
-const JSC = bun.JSC;
-const JSValue = bun.JSC.JSValue;
-const JSPromise = bun.JSC.JSPromise;
-const JSGlobalObject = bun.JSC.JSGlobalObject;
+const jsc = bun.jsc;
+const JSValue = bun.jsc.JSValue;
+const JSPromise = bun.jsc.JSPromise;
+const JSGlobalObject = bun.jsc.JSGlobalObject;
 const which = @import("../which.zig").which;
 const Braces = @import("./braces.zig");
 const Syscall = @import("../sys.zig");
@@ -40,7 +40,7 @@ pub const WorkPoolTask = @import("../work_pool.zig").Task;
 pub const WorkPool = @import("../work_pool.zig").WorkPool;
 const windows = bun.windows;
 const uv = windows.libuv;
-const Maybe = JSC.Maybe;
+const Maybe = jsc.Maybe;
 const WTFStringImplStruct = @import("../string.zig").WTFStringImplStruct;
 
 const Pipe = [2]bun.FileDescriptor;
@@ -658,7 +658,7 @@ pub const ShellArgs = struct {
 };
 
 pub const ParsedShellScript = struct {
-    pub usingnamespace JSC.Codegen.JSParsedShellScript;
+    pub usingnamespace jsc.Codegen.JSParsedShellScript;
     args: ?*ShellArgs = null,
     /// allocated with arena in jsobjs
     jsobjs: std.ArrayList(JSValue),
@@ -669,7 +669,7 @@ pub const ParsedShellScript = struct {
 
     fn take(
         this: *ParsedShellScript,
-        globalObject: *JSC.JSGlobalObject,
+        globalObject: *jsc.JSGlobalObject,
         out_args: **ShellArgs,
         out_jsobjs: *std.ArrayList(JSValue),
         out_quiet: *bool,
@@ -703,9 +703,9 @@ pub const ParsedShellScript = struct {
         bun.destroy(this);
     }
 
-    pub fn setCwd(this: *ParsedShellScript, globalThis: *JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn setCwd(this: *ParsedShellScript, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const arguments_ = callframe.arguments_old(2);
-        var arguments = JSC.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+        var arguments = jsc.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
         const str_js = arguments.nextEat() orelse {
             return globalThis.throw("$`...`.cwd(): expected a string argument", .{});
         };
@@ -714,19 +714,19 @@ pub const ParsedShellScript = struct {
         return .undefined;
     }
 
-    pub fn setQuiet(this: *ParsedShellScript, _: *JSGlobalObject, _: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn setQuiet(this: *ParsedShellScript, _: *JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         log("Interpreter(0x{x}) setQuiet()", .{@intFromPtr(this)});
         this.quiet = true;
         return .undefined;
     }
 
-    pub fn setEnv(this: *ParsedShellScript, globalThis: *JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn setEnv(this: *ParsedShellScript, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const value1 = callframe.argument(0);
         if (!value1.isObject()) {
             return globalThis.throwInvalidArguments("env must be an object", .{});
         }
 
-        var object_iter = try JSC.JSPropertyIterator(.{
+        var object_iter = try jsc.JSPropertyIterator(.{
             .skip_empty_name = false,
             .include_value = true,
         }).init(globalThis, value1);
@@ -759,7 +759,7 @@ pub const ParsedShellScript = struct {
         return .undefined;
     }
 
-    pub fn createParsedShellScript(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSValue {
+    pub fn createParsedShellScript(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
         var shargs = ShellArgs.init();
 
         const arguments_ = callframe.arguments_old(2);
@@ -816,7 +816,7 @@ pub const ParsedShellScript = struct {
             .args = shargs,
             .jsobjs = jsobjs,
         });
-        parsed_shell_script.this_jsvalue = JSC.Codegen.JSParsedShellScript.toJS(parsed_shell_script, globalThis);
+        parsed_shell_script.this_jsvalue = jsc.Codegen.JSParsedShellScript.toJS(parsed_shell_script, globalThis);
         log("ParsedShellScript(0x{x}) create", .{@intFromPtr(parsed_shell_script)});
 
         bun.Analytics.Features.shell += 1;
@@ -827,9 +827,9 @@ pub const ParsedShellScript = struct {
 /// This interpreter works by basically turning the AST into a state machine so
 /// that execution can be suspended and resumed to support async.
 pub const Interpreter = struct {
-    pub usingnamespace JSC.Codegen.JSShellInterpreter;
+    pub usingnamespace jsc.Codegen.JSShellInterpreter;
     command_ctx: bun.CLI.Command.Context,
-    event_loop: JSC.EventLoopHandle,
+    event_loop: jsc.EventLoopHandle,
     /// This is the allocator used to allocate interpreter state
     allocator: Allocator,
 
@@ -847,10 +847,10 @@ pub const Interpreter = struct {
     // Necessary for builtin commands.
     keep_alive: bun.Async.KeepAlive = .{},
 
-    vm_args_utf8: std.ArrayList(JSC.ZigString.Slice),
+    vm_args_utf8: std.ArrayList(jsc.ZigString.Slice),
     async_commands_executing: u32 = 0,
 
-    globalThis: *JSC.JSGlobalObject,
+    globalThis: *jsc.JSGlobalObject,
 
     flags: packed struct(u8) {
         done: bool = false,
@@ -1143,7 +1143,7 @@ pub const Interpreter = struct {
         }
     };
 
-    pub usingnamespace JSC.Codegen.JSShellInterpreter;
+    pub usingnamespace jsc.Codegen.JSShellInterpreter;
 
     const ThisInterpreter = @This();
 
@@ -1159,15 +1159,15 @@ pub const Interpreter = struct {
         fn toJSC(this: ShellErrorCtx, globalThis: *JSGlobalObject) JSValue {
             return switch (this) {
                 .syscall => |err| err.toJSC(globalThis),
-                .other => |err| bun.JSC.ZigString.fromBytes(@errorName(err)).toJS(globalThis),
+                .other => |err| bun.jsc.ZigString.fromBytes(@errorName(err)).toJS(globalThis),
             };
         }
     };
 
-    pub fn createShellInterpreter(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSValue {
+    pub fn createShellInterpreter(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
         const allocator = bun.default_allocator;
         const arguments_ = callframe.arguments_old(3);
-        var arguments = JSC.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
+        var arguments = jsc.Node.ArgumentsSlice.init(globalThis.bunVM(), arguments_.slice());
 
         const resolve = arguments.nextEat() orelse return globalThis.throw("shell: expected 3 arguments, got 0", .{});
 
@@ -1194,7 +1194,7 @@ pub const Interpreter = struct {
             &export_env,
         );
 
-        const cwd_string: ?bun.JSC.ZigString.Slice = if (cwd) |c| brk: {
+        const cwd_string: ?bun.jsc.ZigString.Slice = if (cwd) |c| brk: {
             break :brk c.toUTF8(bun.default_allocator);
         } else null;
         defer if (cwd_string) |c| c.deinit();
@@ -1229,11 +1229,11 @@ pub const Interpreter = struct {
 
         interpreter.flags.quiet = quiet;
         interpreter.globalThis = globalThis;
-        const js_value = JSC.Codegen.JSShellInterpreter.toJS(interpreter, globalThis);
+        const js_value = jsc.Codegen.JSShellInterpreter.toJS(interpreter, globalThis);
 
         interpreter.this_jsvalue = js_value;
-        JSC.Codegen.JSShellInterpreter.resolveSetCached(js_value, globalThis, resolve);
-        JSC.Codegen.JSShellInterpreter.rejectSetCached(js_value, globalThis, reject);
+        jsc.Codegen.JSShellInterpreter.resolveSetCached(js_value, globalThis, resolve);
+        jsc.Codegen.JSShellInterpreter.rejectSetCached(js_value, globalThis, reject);
         interpreter.keep_alive.ref(globalThis.bunVM());
         bun.Analytics.Features.shell += 1;
         return js_value;
@@ -1287,7 +1287,7 @@ pub const Interpreter = struct {
     /// into the interpreter struct, so it is not a stale reference and safe to call `arena.deinit()` on error.
     pub fn init(
         ctx: bun.CLI.Command.Context,
-        event_loop: JSC.EventLoopHandle,
+        event_loop: jsc.EventLoopHandle,
         allocator: Allocator,
         shargs: *ShellArgs,
         jsobjs: []JSValue,
@@ -1382,7 +1382,7 @@ pub const Interpreter = struct {
                 .stderr = .pipe,
             },
 
-            .vm_args_utf8 = std.ArrayList(JSC.ZigString.Slice).init(bun.default_allocator),
+            .vm_args_utf8 = std.ArrayList(jsc.ZigString.Slice).init(bun.default_allocator),
             .globalThis = undefined,
         };
 
@@ -1393,7 +1393,7 @@ pub const Interpreter = struct {
         return .{ .result = interpreter };
     }
 
-    pub fn initAndRunFromFile(ctx: bun.CLI.Command.Context, mini: *JSC.MiniEventLoop, path: []const u8) !bun.shell.ExitCode {
+    pub fn initAndRunFromFile(ctx: bun.CLI.Command.Context, mini: *jsc.MiniEventLoop, path: []const u8) !bun.shell.ExitCode {
         var shargs = ShellArgs.init();
         const src = src: {
             var file = try std.fs.cwd().openFile(path, .{});
@@ -1473,7 +1473,7 @@ pub const Interpreter = struct {
         return code;
     }
 
-    pub fn initAndRunFromSource(ctx: bun.CLI.Command.Context, mini: *JSC.MiniEventLoop, path_for_errors: []const u8, src: []const u8) !ExitCode {
+    pub fn initAndRunFromSource(ctx: bun.CLI.Command.Context, mini: *jsc.MiniEventLoop, path_for_errors: []const u8, src: []const u8) !ExitCode {
         bun.Analytics.Features.standalone_shell += 1;
         var shargs = ShellArgs.init();
         defer shargs.deinit();
@@ -1602,7 +1602,7 @@ pub const Interpreter = struct {
         return Maybe(void).success;
     }
 
-    pub fn runFromJS(this: *ThisInterpreter, globalThis: *JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSValue {
+    pub fn runFromJS(this: *ThisInterpreter, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!JSValue {
         _ = callframe; // autofix
 
         if (this.setupIOBeforeRun().asErr()) |e| {
@@ -1623,9 +1623,9 @@ pub const Interpreter = struct {
     fn ioToJSValue(globalThis: *JSGlobalObject, buf: *bun.ByteList) JSValue {
         const bytelist = buf.*;
         buf.* = .{};
-        const buffer: JSC.Buffer = .{
+        const buffer: jsc.Buffer = .{
             .allocator = bun.default_allocator,
-            .buffer = JSC.ArrayBuffer.fromBytes(@constCast(bytelist.slice()), .Uint8Array),
+            .buffer = jsc.ArrayBuffer.fromBytes(@constCast(bytelist.slice()), .Uint8Array),
         };
         return buffer.toNodeBuffer(globalThis);
     }
@@ -1659,7 +1659,7 @@ pub const Interpreter = struct {
             this.exit_code = exit_code;
             if (this.this_jsvalue != .zero) {
                 const this_jsvalue = this.this_jsvalue;
-                if (JSC.Codegen.JSShellInterpreter.resolveGetCached(this_jsvalue)) |resolve| {
+                if (jsc.Codegen.JSShellInterpreter.resolveGetCached(this_jsvalue)) |resolve| {
                     this.this_jsvalue = .zero;
                     const globalThis = this.globalThis;
                     const loop = this.event_loop.js;
@@ -1670,8 +1670,8 @@ pub const Interpreter = struct {
                         this.getBufferedStdout(globalThis),
                         this.getBufferedStderr(globalThis),
                     }) catch |err| globalThis.reportActiveExceptionAsUnhandled(err);
-                    JSC.Codegen.JSShellInterpreter.resolveSetCached(this_jsvalue, globalThis, .undefined);
-                    JSC.Codegen.JSShellInterpreter.rejectSetCached(this_jsvalue, globalThis, .undefined);
+                    jsc.Codegen.JSShellInterpreter.resolveSetCached(this_jsvalue, globalThis, .undefined);
+                    jsc.Codegen.JSShellInterpreter.rejectSetCached(this_jsvalue, globalThis, .undefined);
                     loop.exit();
                 }
             }
@@ -1688,7 +1688,7 @@ pub const Interpreter = struct {
         if (this.event_loop == .js) {
             const this_jsvalue = this.this_jsvalue;
             if (this_jsvalue != .zero) {
-                if (JSC.Codegen.JSShellInterpreter.rejectGetCached(this_jsvalue)) |reject| {
+                if (jsc.Codegen.JSShellInterpreter.rejectGetCached(this_jsvalue)) |reject| {
                     const loop = this.event_loop.js;
                     const globalThis = this.globalThis;
                     this.this_jsvalue = .zero;
@@ -1700,8 +1700,8 @@ pub const Interpreter = struct {
                         this.getBufferedStdout(globalThis),
                         this.getBufferedStderr(globalThis),
                     }) catch |err| globalThis.reportActiveExceptionAsUnhandled(err);
-                    JSC.Codegen.JSShellInterpreter.resolveSetCached(this_jsvalue, globalThis, .undefined);
-                    JSC.Codegen.JSShellInterpreter.rejectSetCached(this_jsvalue, globalThis, .undefined);
+                    jsc.Codegen.JSShellInterpreter.resolveSetCached(this_jsvalue, globalThis, .undefined);
+                    jsc.Codegen.JSShellInterpreter.rejectSetCached(this_jsvalue, globalThis, .undefined);
 
                     loop.exit();
                 }
@@ -1746,13 +1746,13 @@ pub const Interpreter = struct {
         this.allocator.destroy(this);
     }
 
-    pub fn setQuiet(this: *ThisInterpreter, _: *JSGlobalObject, _: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn setQuiet(this: *ThisInterpreter, _: *JSGlobalObject, _: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         log("Interpreter(0x{x}) setQuiet()", .{@intFromPtr(this)});
         this.flags.quiet = true;
         return .undefined;
     }
 
-    pub fn setCwd(this: *ThisInterpreter, globalThis: *JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn setCwd(this: *ThisInterpreter, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const value = callframe.argument(0);
         const str = bun.String.fromJS(value, globalThis);
 
@@ -1767,13 +1767,13 @@ pub const Interpreter = struct {
         return .undefined;
     }
 
-    pub fn setEnv(this: *ThisInterpreter, globalThis: *JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+    pub fn setEnv(this: *ThisInterpreter, globalThis: *JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
         const value1 = callframe.argument(0);
         if (!value1.isObject()) {
             return globalThis.throwInvalidArguments("env must be an object", .{});
         }
 
-        var object_iter = JSC.JSPropertyIterator(.{
+        var object_iter = jsc.JSPropertyIterator(.{
             .skip_empty_name = false,
             .include_value = true,
         }).init(globalThis, value1);
@@ -1806,36 +1806,36 @@ pub const Interpreter = struct {
     pub fn isRunning(
         this: *ThisInterpreter,
         globalThis: *JSGlobalObject,
-        callframe: *JSC.CallFrame,
-    ) bun.JSError!JSC.JSValue {
+        callframe: *jsc.CallFrame,
+    ) bun.JSError!jsc.JSValue {
         _ = globalThis; // autofix
         _ = callframe; // autofix
 
-        return JSC.JSValue.jsBoolean(this.hasPendingActivity());
+        return jsc.JSValue.jsBoolean(this.hasPendingActivity());
     }
 
     pub fn getStarted(
         this: *ThisInterpreter,
         globalThis: *JSGlobalObject,
-        callframe: *JSC.CallFrame,
-    ) bun.JSError!JSC.JSValue {
+        callframe: *jsc.CallFrame,
+    ) bun.JSError!jsc.JSValue {
         _ = globalThis; // autofix
         _ = callframe; // autofix
 
-        return JSC.JSValue.jsBoolean(this.started.load(.seq_cst));
+        return jsc.JSValue.jsBoolean(this.started.load(.seq_cst));
     }
 
     pub fn getBufferedStdout(
         this: *ThisInterpreter,
         globalThis: *JSGlobalObject,
-    ) JSC.JSValue {
+    ) jsc.JSValue {
         return ioToJSValue(globalThis, this.root_shell.buffered_stdout());
     }
 
     pub fn getBufferedStderr(
         this: *ThisInterpreter,
         globalThis: *JSGlobalObject,
-    ) JSC.JSValue {
+    ) jsc.JSValue {
         return ioToJSValue(globalThis, this.root_shell.buffered_stderr());
     }
 
@@ -2618,8 +2618,8 @@ pub const Interpreter = struct {
 
             result: std.ArrayList([:0]const u8),
             allocator: Allocator,
-            event_loop: JSC.EventLoopHandle,
-            concurrent_task: JSC.EventLoopTask,
+            event_loop: jsc.EventLoopHandle,
+            concurrent_task: jsc.EventLoopTask,
             // This is a poll because we want it to enter the uSockets loop
             ref: bun.Async.KeepAlive = .{},
             err: ?Err = null,
@@ -2633,7 +2633,7 @@ pub const Interpreter = struct {
                 pub fn toJSC(this: Err, globalThis: *JSGlobalObject) JSValue {
                     return switch (this) {
                         .syscall => |err| err.toJSC(globalThis),
-                        .unknown => |err| JSC.ZigString.fromBytes(@errorName(err)).toJS(globalThis),
+                        .unknown => |err| jsc.ZigString.fromBytes(@errorName(err)).toJS(globalThis),
                     };
                 }
             };
@@ -2643,7 +2643,7 @@ pub const Interpreter = struct {
                 var this = allocator.create(This) catch bun.outOfMemory();
                 this.* = .{
                     .event_loop = expansion.base.eventLoop(),
-                    .concurrent_task = JSC.EventLoopTask.fromEventLoop(expansion.base.eventLoop()),
+                    .concurrent_task = jsc.EventLoopTask.fromEventLoop(expansion.base.eventLoop()),
                     .walker = walker,
                     .allocator = allocator,
                     .expansion = expansion,
@@ -2724,7 +2724,7 @@ pub const Interpreter = struct {
         interpreter: *ThisInterpreter,
         shell: *ShellState,
 
-        pub inline fn eventLoop(this: *const State) JSC.EventLoopHandle {
+        pub inline fn eventLoop(this: *const State) jsc.EventLoopHandle {
             return this.interpreter.event_loop;
         }
 
@@ -3477,7 +3477,7 @@ pub const Interpreter = struct {
             }
         }
 
-        pub fn onIOWriterChunk(this: *Pipeline, _: usize, err: ?JSC.SystemError) void {
+        pub fn onIOWriterChunk(this: *Pipeline, _: usize, err: ?jsc.SystemError) void {
             if (comptime bun.Environment.allow_assert) {
                 assert(this.state == .waiting_write_err);
             }
@@ -3589,7 +3589,7 @@ pub const Interpreter = struct {
             return Maybe(void).success;
         }
 
-        fn writePipe(pipes: []Pipe, proc_idx: usize, cmd_count: usize, io: *IO, evtloop: JSC.EventLoopHandle) IO.OutKind {
+        fn writePipe(pipes: []Pipe, proc_idx: usize, cmd_count: usize, io: *IO, evtloop: jsc.EventLoopHandle) IO.OutKind {
             // Last command in the pipeline should write to stdout
             if (proc_idx == cmd_count - 1) return io.stdout.ref();
             return .{
@@ -3602,7 +3602,7 @@ pub const Interpreter = struct {
             };
         }
 
-        fn readPipe(pipes: []Pipe, proc_idx: usize, io: *IO, evtloop: JSC.EventLoopHandle) IO.InKind {
+        fn readPipe(pipes: []Pipe, proc_idx: usize, io: *IO, evtloop: jsc.EventLoopHandle) IO.InKind {
             // First command in the pipeline should read from stdin
             if (proc_idx == 0) return io.stdin.ref();
             return .{ .fd = IOReader.init(pipes[proc_idx - 1][0], evtloop) };
@@ -3742,7 +3742,7 @@ pub const Interpreter = struct {
             }
         }
 
-        pub fn onIOWriterChunk(this: *Subshell, _: usize, err: ?JSC.SystemError) void {
+        pub fn onIOWriterChunk(this: *Subshell, _: usize, err: ?jsc.SystemError) void {
             if (comptime bun.Environment.allow_assert) {
                 assert(this.state == .wait_write_err);
             }
@@ -3784,8 +3784,8 @@ pub const Interpreter = struct {
             },
             done: ExitCode,
         } = .idle,
-        event_loop: JSC.EventLoopHandle,
-        concurrent_task: JSC.EventLoopTask,
+        event_loop: jsc.EventLoopHandle,
+        concurrent_task: jsc.EventLoopTask,
 
         const ParentPtr = StatePtrUnion(.{
             Binary,
@@ -3817,7 +3817,7 @@ pub const Interpreter = struct {
                 .parent = parent,
                 .io = io,
                 .event_loop = interpreter.event_loop,
-                .concurrent_task = JSC.EventLoopTask.fromEventLoop(interpreter.event_loop),
+                .concurrent_task = jsc.EventLoopTask.fromEventLoop(interpreter.event_loop),
             });
         }
 
@@ -4127,7 +4127,7 @@ pub const Interpreter = struct {
             const stat_task = bun.new(ShellCondExprStatTask, .{
                 .task = .{
                     .event_loop = this.base.eventLoop(),
-                    .concurrent_task = JSC.EventLoopTask.fromEventLoop(this.base.eventLoop()),
+                    .concurrent_task = jsc.EventLoopTask.fromEventLoop(this.base.eventLoop()),
                 },
                 .condexpr = this,
                 .path = this.args.items[0],
@@ -4177,7 +4177,7 @@ pub const Interpreter = struct {
             this.base.shell.writeFailingErrorFmt(this, handler.enqueueCb, fmt, args);
         }
 
-        pub fn onIOWriterChunk(this: *CondExpr, _: usize, err: ?JSC.SystemError) void {
+        pub fn onIOWriterChunk(this: *CondExpr, _: usize, err: ?jsc.SystemError) void {
             if (err != null) {
                 defer err.?.deref();
                 const exit_code: ExitCode = @intFromEnum(err.?.getErrno());
@@ -4429,7 +4429,7 @@ pub const Interpreter = struct {
         /// undefined memory.
         pub const ShellAsyncSubprocessDone = struct {
             cmd: *Cmd,
-            concurrent_task: JSC.EventLoopTask,
+            concurrent_task: jsc.EventLoopTask,
 
             pub fn format(this: *const ShellAsyncSubprocessDone, comptime fmt: []const u8, opts: std.fmt.FormatOptions, writer: anytype) !void {
                 _ = fmt; // autofix
@@ -4733,7 +4733,7 @@ pub const Interpreter = struct {
             return this.next();
         }
 
-        pub fn onIOWriterChunk(this: *Cmd, _: usize, e: ?JSC.SystemError) void {
+        pub fn onIOWriterChunk(this: *Cmd, _: usize, e: ?jsc.SystemError) void {
             if (e) |err| {
                 this.base.throw(&bun.shell.ShellErr.newSys(err));
                 return;
@@ -4922,13 +4922,13 @@ pub const Interpreter = struct {
                         const global = this.base.eventLoop().js.global;
 
                         if (this.base.interpreter.jsobjs[val.idx].asArrayBuffer(global)) |buf| {
-                            const stdio: bun.shell.subproc.Stdio = .{ .array_buffer = JSC.ArrayBuffer.Strong{
+                            const stdio: bun.shell.subproc.Stdio = .{ .array_buffer = jsc.ArrayBuffer.Strong{
                                 .array_buffer = buf,
-                                .held = JSC.Strong.create(buf.value, global),
+                                .held = jsc.Strong.create(buf.value, global),
                             } };
 
                             setStdioFromRedirect(&spawn_args.stdio, this.node.redirect, stdio);
-                        } else if (this.base.interpreter.jsobjs[val.idx].as(JSC.WebCore.Blob)) |blob__| {
+                        } else if (this.base.interpreter.jsobjs[val.idx].as(jsc.WebCore.Blob)) |blob__| {
                             const blob = blob__.dupe();
                             if (this.node.redirect.stdin) {
                                 spawn_args.stdio[stdin_no].extractBlob(global, .{ .Blob = blob }, stdin_no) catch return;
@@ -4937,10 +4937,10 @@ pub const Interpreter = struct {
                             } else if (this.node.redirect.stderr) {
                                 spawn_args.stdio[stdin_no].extractBlob(global, .{ .Blob = blob }, stderr_no) catch return;
                             }
-                        } else if (JSC.WebCore.ReadableStream.fromJS(this.base.interpreter.jsobjs[val.idx], global)) |rstream| {
+                        } else if (jsc.WebCore.ReadableStream.fromJS(this.base.interpreter.jsobjs[val.idx], global)) |rstream| {
                             _ = rstream;
                             @panic("TODO SHELL READABLE STREAM");
-                        } else if (this.base.interpreter.jsobjs[val.idx].as(JSC.WebCore.Response)) |req| {
+                        } else if (this.base.interpreter.jsobjs[val.idx].as(jsc.WebCore.Response)) |req| {
                             req.getBodyValue().toBlobIfPossible();
                             if (this.node.redirect.stdin) {
                                 spawn_args.stdio[stdin_no].extractBlob(global, req.getBodyValue().useAsAnyBlob(), stdin_no) catch return;
@@ -5112,7 +5112,7 @@ pub const Interpreter = struct {
             this.exec.subproc.buffered_closed.close(this, .stdin);
         }
 
-        pub fn bufferedOutputClose(this: *Cmd, kind: Subprocess.OutKind, err: ?JSC.SystemError) void {
+        pub fn bufferedOutputClose(this: *Cmd, kind: Subprocess.OutKind, err: ?jsc.SystemError) void {
             switch (kind) {
                 .stdout => this.bufferedOutputCloseStdout(err),
                 .stderr => this.bufferedOutputCloseStderr(err),
@@ -5121,7 +5121,7 @@ pub const Interpreter = struct {
                 if (!this.spawn_arena_freed) {
                     var async_subprocess_done = bun.new(ShellAsyncSubprocessDone, .{
                         .cmd = this,
-                        .concurrent_task = JSC.EventLoopTask.fromEventLoop(this.base.eventLoop()),
+                        .concurrent_task = jsc.EventLoopTask.fromEventLoop(this.base.eventLoop()),
                     });
                     async_subprocess_done.enqueue();
                 } else {
@@ -5130,7 +5130,7 @@ pub const Interpreter = struct {
             }
         }
 
-        pub fn bufferedOutputCloseStdout(this: *Cmd, err: ?JSC.SystemError) void {
+        pub fn bufferedOutputCloseStdout(this: *Cmd, err: ?jsc.SystemError) void {
             if (comptime bun.Environment.allow_assert) {
                 assert(this.exec == .subproc);
             }
@@ -5147,7 +5147,7 @@ pub const Interpreter = struct {
             this.exec.subproc.child.closeIO(.stdout);
         }
 
-        pub fn bufferedOutputCloseStderr(this: *Cmd, err: ?JSC.SystemError) void {
+        pub fn bufferedOutputCloseStderr(this: *Cmd, err: ?jsc.SystemError) void {
             if (comptime bun.Environment.allow_assert) {
                 assert(this.exec == .subproc);
             }
@@ -5386,13 +5386,13 @@ pub const Interpreter = struct {
             };
 
             const ArrayBuf = struct {
-                buf: JSC.ArrayBuffer.Strong,
+                buf: jsc.ArrayBuffer.Strong,
                 i: u32 = 0,
             };
 
             const Blob = struct {
                 ref_count: usize = 1,
-                blob: bun.JSC.WebCore.Blob,
+                blob: bun.jsc.WebCore.Blob,
                 pub usingnamespace bun.NewRefCounted(Blob, Blob.deinit);
 
                 pub fn deinit(this: *Blob) void {
@@ -5580,9 +5580,9 @@ pub const Interpreter = struct {
                     .jsbuf => |val| {
                         const globalObject = interpreter.event_loop.js.global;
                         if (interpreter.jsobjs[file.jsbuf.idx].asArrayBuffer(globalObject)) |buf| {
-                            const arraybuf: BuiltinIO.ArrayBuf = .{ .buf = JSC.ArrayBuffer.Strong{
+                            const arraybuf: BuiltinIO.ArrayBuf = .{ .buf = jsc.ArrayBuffer.Strong{
                                 .array_buffer = buf,
-                                .held = JSC.Strong.create(buf.value, globalObject),
+                                .held = jsc.Strong.create(buf.value, globalObject),
                             }, .i = 0 };
 
                             if (node.redirect.stdin) {
@@ -5599,7 +5599,7 @@ pub const Interpreter = struct {
                                 cmd.exec.bltn.stderr.deref();
                                 cmd.exec.bltn.stderr = .{ .arraybuf = arraybuf };
                             }
-                        } else if (interpreter.jsobjs[file.jsbuf.idx].as(JSC.WebCore.Body.Value)) |body| {
+                        } else if (interpreter.jsobjs[file.jsbuf.idx].as(jsc.WebCore.Body.Value)) |body| {
                             if ((node.redirect.stdout or node.redirect.stderr) and !(body.* == .Blob and !body.Blob.needsToReadFile())) {
                                 // TODO: Locked->stream -> file -> blob conversion via .toBlobIfPossible() except we want to avoid modifying the Response/Request if unnecessary.
                                 cmd.base.interpreter.event_loop.js.global.throw("Cannot redirect stdout/stderr to an immutable blob. Expected a file", .{}) catch {};
@@ -5627,7 +5627,7 @@ pub const Interpreter = struct {
                                 cmd.exec.bltn.stderr.deref();
                                 cmd.exec.bltn.stderr = .{ .blob = blob };
                             }
-                        } else if (interpreter.jsobjs[file.jsbuf.idx].as(JSC.WebCore.Blob)) |blob| {
+                        } else if (interpreter.jsobjs[file.jsbuf.idx].as(jsc.WebCore.Blob)) |blob| {
                             if ((node.redirect.stdout or node.redirect.stderr) and !blob.needsToReadFile()) {
                                 // TODO: Locked->stream -> file -> blob conversion via .toBlobIfPossible() except we want to avoid modifying the Response/Request if unnecessary.
                                 cmd.base.interpreter.event_loop.js.global.throw("Cannot redirect stdout/stderr to an immutable blob. Expected a file", .{}) catch {};
@@ -5668,7 +5668,7 @@ pub const Interpreter = struct {
             return .cont;
         }
 
-        pub inline fn eventLoop(this: *const Builtin) JSC.EventLoopHandle {
+        pub inline fn eventLoop(this: *const Builtin) jsc.EventLoopHandle {
             return this.parentCmd().base.eventLoop();
         }
 
@@ -5807,7 +5807,7 @@ pub const Interpreter = struct {
                     bun.C.E.NOTEMPTY => this.fmtErrorArena(kind, "{s}: Directory not empty\n", .{err.path}),
                     else => this.fmtErrorArena(kind, "{s}\n", .{err.toSystemError().message.byteSlice()}),
                 },
-                JSC.SystemError => {
+                jsc.SystemError => {
                     if (err.path.length() == 0) return this.fmtErrorArena(kind, "{s}\n", .{err.message.byteSlice()});
                     return this.fmtErrorArena(kind, "{s}: {s}\n", .{ err.message.byteSlice(), err.path });
                 },
@@ -5958,7 +5958,7 @@ pub const Interpreter = struct {
                 }
             }
 
-            pub fn onIOWriterChunk(this: *Cat, _: usize, err: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *Cat, _: usize, err: ?jsc.SystemError) void {
                 debug("onIOWriterChunk(0x{x}, {s}, had_err={any})", .{ @intFromPtr(this), @tagName(this.state), err != null });
                 const errno: ExitCode = if (err) |e| brk: {
                     defer e.deref();
@@ -6043,7 +6043,7 @@ pub const Interpreter = struct {
                 return .cont;
             }
 
-            pub fn onIOReaderDone(this: *Cat, err: ?JSC.SystemError) void {
+            pub fn onIOReaderDone(this: *Cat, err: ?jsc.SystemError) void {
                 const errno: ExitCode = if (err) |e| brk: {
                     defer e.deref();
                     break :brk @as(ExitCode, @intCast(@intFromEnum(e.getErrno())));
@@ -6184,7 +6184,7 @@ pub const Interpreter = struct {
                     output_waiting: usize = 0,
                     started_output_queue: bool = false,
                     args: []const [*:0]const u8,
-                    err: ?JSC.SystemError = null,
+                    err: ?jsc.SystemError = null,
                 },
                 waiting_write_err,
                 done,
@@ -6258,7 +6258,7 @@ pub const Interpreter = struct {
                 }
             }
 
-            pub fn onIOWriterChunk(this: *Touch, _: usize, e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *Touch, _: usize, e: ?jsc.SystemError) void {
                 if (this.state == .waiting_write_err) {
                     return this.bltn.done(1);
                 }
@@ -6354,10 +6354,10 @@ pub const Interpreter = struct {
                 filepath: [:0]const u8,
                 cwd_path: [:0]const u8,
 
-                err: ?JSC.SystemError = null,
-                task: JSC.WorkPoolTask = .{ .callback = &runFromThreadPool },
-                event_loop: JSC.EventLoopHandle,
-                concurrent_task: JSC.EventLoopTask,
+                err: ?jsc.SystemError = null,
+                task: jsc.WorkPoolTask = .{ .callback = &runFromThreadPool },
+                event_loop: jsc.EventLoopHandle,
+                concurrent_task: jsc.EventLoopTask,
 
                 pub fn format(this: *const ShellTouchTask, comptime fmt: []const u8, opts: std.fmt.FormatOptions, writer: anytype) !void {
                     _ = fmt; // autofix
@@ -6382,7 +6382,7 @@ pub const Interpreter = struct {
                         .cwd_path = cwd_path,
                         .filepath = filepath,
                         .event_loop = touch.bltn.eventLoop(),
-                        .concurrent_task = JSC.EventLoopTask.fromEventLoop(touch.bltn.eventLoop()),
+                        .concurrent_task = jsc.EventLoopTask.fromEventLoop(touch.bltn.eventLoop()),
                     };
                     return task;
                 }
@@ -6401,7 +6401,7 @@ pub const Interpreter = struct {
                     this.runFromMainThread();
                 }
 
-                fn runFromThreadPool(task: *JSC.WorkPoolTask) void {
+                fn runFromThreadPool(task: *jsc.WorkPoolTask) void {
                     var this: *ShellTouchTask = @fieldParentPtr("task", task);
                     debug("{} runFromThreadPool", .{this});
 
@@ -6415,14 +6415,14 @@ pub const Interpreter = struct {
                         break :brk ResolvePath.joinZ(parts, .auto);
                     };
 
-                    var node_fs = JSC.Node.NodeFS{};
+                    var node_fs = jsc.Node.NodeFS{};
                     const milliseconds: f64 = @floatFromInt(std.time.milliTimestamp());
-                    const atime: JSC.Node.TimeLike = if (bun.Environment.isWindows) milliseconds / 1000.0 else JSC.Node.TimeLike{
+                    const atime: jsc.Node.TimeLike = if (bun.Environment.isWindows) milliseconds / 1000.0 else jsc.Node.TimeLike{
                         .tv_sec = @intFromFloat(@divFloor(milliseconds, std.time.ms_per_s)),
                         .tv_nsec = @intFromFloat(@mod(milliseconds, std.time.ms_per_s) * std.time.ns_per_ms),
                     };
                     const mtime = atime;
-                    const args = JSC.Node.Arguments.Utimes{
+                    const args = jsc.Node.Arguments.Utimes{
                         .atime = atime,
                         .mtime = mtime,
                         .path = .{ .string = bun.PathString.init(filepath) },
@@ -6577,13 +6577,13 @@ pub const Interpreter = struct {
                     output_waiting: u16 = 0,
                     output_done: u16 = 0,
                     args: []const [*:0]const u8,
-                    err: ?JSC.SystemError = null,
+                    err: ?jsc.SystemError = null,
                 },
                 waiting_write_err,
                 done,
             } = .idle,
 
-            pub fn onIOWriterChunk(this: *Mkdir, _: usize, e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *Mkdir, _: usize, e: ?jsc.SystemError) void {
                 if (e) |err| err.deref();
 
                 switch (this.state) {
@@ -6747,10 +6747,10 @@ pub const Interpreter = struct {
                 cwd_path: [:0]const u8,
                 created_directories: ArrayList(u8),
 
-                err: ?JSC.SystemError = null,
-                task: JSC.WorkPoolTask = .{ .callback = &runFromThreadPool },
-                event_loop: JSC.EventLoopHandle,
-                concurrent_task: JSC.EventLoopTask,
+                err: ?jsc.SystemError = null,
+                task: jsc.WorkPoolTask = .{ .callback = &runFromThreadPool },
+                event_loop: jsc.EventLoopHandle,
+                concurrent_task: jsc.EventLoopTask,
 
                 const debug = bun.Output.scoped(.ShellMkdirTask, true);
 
@@ -6786,7 +6786,7 @@ pub const Interpreter = struct {
                         .filepath = filepath,
                         .created_directories = ArrayList(u8).init(bun.default_allocator),
                         .event_loop = evtloop,
-                        .concurrent_task = JSC.EventLoopTask.fromEventLoop(evtloop),
+                        .concurrent_task = jsc.EventLoopTask.fromEventLoop(evtloop),
                     };
                     return task;
                 }
@@ -6805,7 +6805,7 @@ pub const Interpreter = struct {
                     this.runFromMainThread();
                 }
 
-                fn runFromThreadPool(task: *JSC.WorkPoolTask) void {
+                fn runFromThreadPool(task: *jsc.WorkPoolTask) void {
                     var this: *ShellMkdirTask = @fieldParentPtr("task", task);
                     debug("{} runFromThreadPool", .{this});
 
@@ -6820,11 +6820,11 @@ pub const Interpreter = struct {
                         break :brk ResolvePath.joinZ(parts, .auto);
                     };
 
-                    var node_fs = JSC.Node.NodeFS{};
+                    var node_fs = jsc.Node.NodeFS{};
                     // Recursive
                     if (this.opts.parents) {
-                        const args = JSC.Node.Arguments.Mkdir{
-                            .path = JSC.Node.PathLike{ .string = bun.PathString.init(filepath) },
+                        const args = jsc.Node.Arguments.Mkdir{
+                            .path = jsc.Node.PathLike{ .string = bun.PathString.init(filepath) },
                             .recursive = true,
                             .always_return_none = true,
                         };
@@ -6839,8 +6839,8 @@ pub const Interpreter = struct {
                             },
                         }
                     } else {
-                        const args = JSC.Node.Arguments.Mkdir{
-                            .path = JSC.Node.PathLike{ .string = bun.PathString.init(filepath) },
+                        const args = jsc.Node.Arguments.Mkdir{
+                            .path = jsc.Node.PathLike{ .string = bun.PathString.init(filepath) },
                             .recursive = false,
                             .always_return_none = true,
                         };
@@ -6970,7 +6970,7 @@ pub const Interpreter = struct {
                 return Maybe(void).success;
             }
 
-            pub fn onIOWriterChunk(this: *Export, _: usize, e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *Export, _: usize, e: ?jsc.SystemError) void {
                 if (comptime bun.Environment.allow_assert) {
                     assert(this.printing);
                 }
@@ -7101,7 +7101,7 @@ pub const Interpreter = struct {
                 return Maybe(void).success;
             }
 
-            pub fn onIOWriterChunk(this: *Echo, _: usize, e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *Echo, _: usize, e: ?jsc.SystemError) void {
                 if (comptime bun.Environment.allow_assert) {
                     assert(this.state == .waiting);
                 }
@@ -7140,7 +7140,7 @@ pub const Interpreter = struct {
                     },
                 },
                 done,
-                err: JSC.SystemError,
+                err: jsc.SystemError,
             } = .idle,
 
             pub fn start(this: *Which) Maybe(void) {
@@ -7239,7 +7239,7 @@ pub const Interpreter = struct {
                 this.next();
             }
 
-            pub fn onIOWriterChunk(this: *Which, _: usize, e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *Which, _: usize, e: ?jsc.SystemError) void {
                 if (comptime bun.Environment.allow_assert) {
                     assert(this.state == .one_arg or
                         (this.state == .multi_args and this.state.multi_args.state == .waiting_write));
@@ -7365,7 +7365,7 @@ pub const Interpreter = struct {
                 }
             }
 
-            pub fn onIOWriterChunk(this: *Cd, _: usize, e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *Cd, _: usize, e: ?jsc.SystemError) void {
                 if (comptime bun.Environment.allow_assert) {
                     assert(this.state == .waiting_write_stderr);
                 }
@@ -7447,7 +7447,7 @@ pub const Interpreter = struct {
                 }
             }
 
-            pub fn onIOWriterChunk(this: *Pwd, _: usize, e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *Pwd, _: usize, e: ?jsc.SystemError) void {
                 if (comptime bun.Environment.allow_assert) {
                     assert(this.state == .waiting_io);
                 }
@@ -7577,7 +7577,7 @@ pub const Interpreter = struct {
                 _ = this; // autofix
             }
 
-            pub fn onIOWriterChunk(this: *Ls, _: usize, e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *Ls, _: usize, e: ?jsc.SystemError) void {
                 if (e) |err| err.deref();
                 if (this.state == .waiting_write_err) {
                     return this.bltn.done(1);
@@ -7667,17 +7667,17 @@ pub const Interpreter = struct {
                 err: ?Syscall.Error = null,
                 result_kind: enum { file, dir, idk } = .idk,
 
-                event_loop: JSC.EventLoopHandle,
-                concurrent_task: JSC.EventLoopTask,
-                task: JSC.WorkPoolTask = .{
+                event_loop: jsc.EventLoopHandle,
+                concurrent_task: jsc.EventLoopTask,
+                task: jsc.WorkPoolTask = .{
                     .callback = workPoolCallback,
                 },
 
                 pub fn schedule(this: *@This()) void {
-                    JSC.WorkPool.schedule(&this.task);
+                    jsc.WorkPool.schedule(&this.task);
                 }
 
-                pub fn create(ls: *Ls, opts: Opts, task_count: *std.atomic.Value(usize), cwd: bun.FileDescriptor, path: [:0]const u8, event_loop: JSC.EventLoopHandle) *@This() {
+                pub fn create(ls: *Ls, opts: Opts, task_count: *std.atomic.Value(usize), cwd: bun.FileDescriptor, path: [:0]const u8, event_loop: jsc.EventLoopHandle) *@This() {
                     const task = bun.default_allocator.create(@This()) catch bun.outOfMemory();
                     task.* = @This(){
                         .ls = ls,
@@ -7685,7 +7685,7 @@ pub const Interpreter = struct {
                         .cwd = cwd,
                         .path = bun.default_allocator.dupeZ(u8, path[0..path.len]) catch bun.outOfMemory(),
                         .output = std.ArrayList(u8).init(bun.default_allocator),
-                        .concurrent_task = JSC.EventLoopTask.fromEventLoop(event_loop),
+                        .concurrent_task = jsc.EventLoopTask.fromEventLoop(event_loop),
                         .event_loop = event_loop,
                         .task_count = task_count,
                     };
@@ -7800,7 +7800,7 @@ pub const Interpreter = struct {
                     return err.withPath(bun.default_allocator.dupeZ(u8, path[0..path.len]) catch bun.outOfMemory());
                 }
 
-                pub fn workPoolCallback(task: *JSC.WorkPoolTask) void {
+                pub fn workPoolCallback(task: *jsc.WorkPoolTask) void {
                     var this: *@This() = @fieldParentPtr("task", task);
                     this.run();
                     this.doneLogic();
@@ -8334,7 +8334,7 @@ pub const Interpreter = struct {
                 err: ?Syscall.Error = null,
 
                 task: ShellTask(@This(), runFromThreadPool, runFromMainThread, debug),
-                event_loop: JSC.EventLoopHandle,
+                event_loop: jsc.EventLoopHandle,
 
                 pub fn runFromThreadPool(this: *@This()) void {
                     // Moving multiple entries into a directory
@@ -8461,7 +8461,7 @@ pub const Interpreter = struct {
                                         .target = this.args.target,
                                         .task = .{
                                             .event_loop = this.bltn.parentCmd().base.eventLoop(),
-                                            .concurrent_task = JSC.EventLoopTask.fromEventLoop(this.bltn.parentCmd().base.eventLoop()),
+                                            .concurrent_task = jsc.EventLoopTask.fromEventLoop(this.bltn.parentCmd().base.eventLoop()),
                                         },
                                     },
                                     .state = .running,
@@ -8534,7 +8534,7 @@ pub const Interpreter = struct {
                                         .error_signal = undefined,
                                         .task = .{
                                             .event_loop = this.bltn.parentCmd().base.eventLoop(),
-                                            .concurrent_task = JSC.EventLoopTask.fromEventLoop(this.bltn.parentCmd().base.eventLoop()),
+                                            .concurrent_task = jsc.EventLoopTask.fromEventLoop(this.bltn.parentCmd().base.eventLoop()),
                                         },
                                         .event_loop = this.bltn.parentCmd().base.eventLoop(),
                                     };
@@ -8574,7 +8574,7 @@ pub const Interpreter = struct {
                 return Maybe(void).success;
             }
 
-            pub fn onIOWriterChunk(this: *Mv, _: usize, e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *Mv, _: usize, e: ?jsc.SystemError) void {
                 defer if (e) |err| err.deref();
                 switch (this.state) {
                     .waiting_write_err => {
@@ -9056,7 +9056,7 @@ pub const Interpreter = struct {
                 return Maybe(void).success;
             }
 
-            pub fn onIOWriterChunk(this: *Rm, _: usize, e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *Rm, _: usize, e: ?jsc.SystemError) void {
                 log("Rm(0x{x}).onIOWriterChunk()", .{@intFromPtr(this)});
                 if (comptime bun.Environment.allow_assert) {
                     assert((this.state == .parse_opts and this.state.parse_opts.state == .wait_write_err) or
@@ -9246,9 +9246,9 @@ pub const Interpreter = struct {
                 err_mutex: bun.Mutex = .{},
                 err: ?Syscall.Error = null,
 
-                event_loop: JSC.EventLoopHandle,
-                concurrent_task: JSC.EventLoopTask,
-                task: JSC.WorkPoolTask = .{
+                event_loop: jsc.EventLoopHandle,
+                concurrent_task: jsc.EventLoopTask,
+                task: jsc.WorkPoolTask = .{
                     .callback = workPoolCallback,
                 },
                 join_style: JoinStyle,
@@ -9286,9 +9286,9 @@ pub const Interpreter = struct {
                     need_to_wait: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
                     deleting_after_waiting_for_children: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
                     kind_hint: EntryKindHint,
-                    task: JSC.WorkPoolTask = .{ .callback = runFromThreadPool },
+                    task: jsc.WorkPoolTask = .{ .callback = runFromThreadPool },
                     deleted_entries: std.ArrayList(u8),
-                    concurrent_task: JSC.EventLoopTask,
+                    concurrent_task: jsc.EventLoopTask,
 
                     const EntryKindHint = enum { idk, dir, file };
 
@@ -9308,7 +9308,7 @@ pub const Interpreter = struct {
                         this.runFromMainThread();
                     }
 
-                    pub fn runFromThreadPool(task: *JSC.WorkPoolTask) void {
+                    pub fn runFromThreadPool(task: *jsc.WorkPoolTask) void {
                         var this: *DirTask = @fieldParentPtr("task", task);
                         this.runFromThreadPoolImpl();
                     }
@@ -9472,10 +9472,10 @@ pub const Interpreter = struct {
                             .subtask_count = std.atomic.Value(usize).init(1),
                             .kind_hint = .idk,
                             .deleted_entries = std.ArrayList(u8).init(bun.default_allocator),
-                            .concurrent_task = JSC.EventLoopTask.fromEventLoop(rm.bltn.eventLoop()),
+                            .concurrent_task = jsc.EventLoopTask.fromEventLoop(rm.bltn.eventLoop()),
                         },
                         .event_loop = rm.bltn.parentCmd().base.eventLoop(),
-                        .concurrent_task = JSC.EventLoopTask.fromEventLoop(rm.bltn.eventLoop()),
+                        .concurrent_task = jsc.EventLoopTask.fromEventLoop(rm.bltn.eventLoop()),
                         .error_signal = error_signal,
                         .root_is_absolute = is_absolute,
                         .join_style = JoinStyle.fromPath(root_path),
@@ -9484,7 +9484,7 @@ pub const Interpreter = struct {
                 }
 
                 pub fn schedule(this: *@This()) void {
-                    JSC.WorkPool.schedule(&this.task);
+                    jsc.WorkPool.schedule(&this.task);
                 }
 
                 pub fn enqueue(this: *ShellRmTask, parent_dir: *DirTask, path: [:0]const u8, is_absolute: bool, kind_hint: DirTask.EntryKindHint) void {
@@ -9517,7 +9517,7 @@ pub const Interpreter = struct {
                         .subtask_count = std.atomic.Value(usize).init(1),
                         .kind_hint = kind_hint,
                         .deleted_entries = std.ArrayList(u8).init(bun.default_allocator),
-                        .concurrent_task = JSC.EventLoopTask.fromEventLoop(this.event_loop),
+                        .concurrent_task = jsc.EventLoopTask.fromEventLoop(this.event_loop),
                     };
 
                     const count = parent_task.subtask_count.fetchAdd(1, .monotonic);
@@ -9525,7 +9525,7 @@ pub const Interpreter = struct {
                         assert(count > 0);
                     }
 
-                    JSC.WorkPool.schedule(&subtask.task);
+                    jsc.WorkPool.schedule(&subtask.task);
                 }
 
                 pub fn getcwd(this: *ShellRmTask) bun.FileDescriptor {
@@ -9939,7 +9939,7 @@ pub const Interpreter = struct {
                     return out;
                 }
 
-                pub fn workPoolCallback(task: *JSC.WorkPoolTask) void {
+                pub fn workPoolCallback(task: *jsc.WorkPoolTask) void {
                     var this: *ShellRmTask = @alignCast(@fieldParentPtr("task", task));
                     this.root_task.runFromThreadPoolImpl();
                 }
@@ -10017,7 +10017,7 @@ pub const Interpreter = struct {
                 }
             }
 
-            pub fn onIOWriterChunk(this: *Exit, _: usize, maybe_e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *Exit, _: usize, maybe_e: ?jsc.SystemError) void {
                 if (comptime bun.Environment.allow_assert) {
                     assert(this.state == .waiting_io);
                 }
@@ -10044,7 +10044,7 @@ pub const Interpreter = struct {
                 return Maybe(void).success;
             }
 
-            pub fn onIOWriterChunk(_: *@This(), _: usize, _: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(_: *@This(), _: usize, _: ?jsc.SystemError) void {
                 // no IO is done
             }
 
@@ -10061,7 +10061,7 @@ pub const Interpreter = struct {
                 return Maybe(void).success;
             }
 
-            pub fn onIOWriterChunk(_: *@This(), _: usize, _: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(_: *@This(), _: usize, _: ?jsc.SystemError) void {
                 // no IO is done
             }
 
@@ -10087,7 +10087,7 @@ pub const Interpreter = struct {
                     const evtloop = this.bltn.eventLoop();
                     this.task = .{
                         .evtloop = evtloop,
-                        .concurrent_task = JSC.EventLoopTask.fromEventLoop(evtloop),
+                        .concurrent_task = jsc.EventLoopTask.fromEventLoop(evtloop),
                     };
                     this.state = .waiting_io;
                     this.bltn.stdout.enqueue(this, this.expletive, safeguard);
@@ -10112,7 +10112,7 @@ pub const Interpreter = struct {
                 @compileError(unreachable);
             }
 
-            pub fn onIOWriterChunk(this: *@This(), _: usize, maybe_e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *@This(), _: usize, maybe_e: ?jsc.SystemError) void {
                 if (maybe_e) |e| {
                     defer e.deref();
                     this.state = .err;
@@ -10126,8 +10126,8 @@ pub const Interpreter = struct {
             }
 
             pub const YesTask = struct {
-                evtloop: JSC.EventLoopHandle,
-                concurrent_task: JSC.EventLoopTask,
+                evtloop: jsc.EventLoopHandle,
+                concurrent_task: jsc.EventLoopTask,
 
                 pub fn enqueue(this: *@This()) void {
                     if (this.evtloop == .js) {
@@ -10273,7 +10273,7 @@ pub const Interpreter = struct {
                 return Maybe(void).success;
             }
 
-            pub fn onIOWriterChunk(this: *@This(), _: usize, maybe_e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *@This(), _: usize, maybe_e: ?jsc.SystemError) void {
                 if (maybe_e) |e| {
                     defer e.deref();
                     this.state = .err;
@@ -10346,7 +10346,7 @@ pub const Interpreter = struct {
                 return Maybe(void).success;
             }
 
-            pub fn onIOWriterChunk(this: *@This(), _: usize, maybe_e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *@This(), _: usize, maybe_e: ?jsc.SystemError) void {
                 if (maybe_e) |e| {
                     defer e.deref();
                     this.state = .err;
@@ -10414,7 +10414,7 @@ pub const Interpreter = struct {
                 return Maybe(void).success;
             }
 
-            pub fn onIOWriterChunk(this: *@This(), _: usize, maybe_e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *@This(), _: usize, maybe_e: ?jsc.SystemError) void {
                 if (maybe_e) |e| {
                     defer e.deref();
                     this.state = .err;
@@ -10630,7 +10630,7 @@ pub const Interpreter = struct {
                 return Maybe(void).success;
             }
 
-            pub fn onIOWriterChunk(this: *Cp, _: usize, e: ?JSC.SystemError) void {
+            pub fn onIOWriterChunk(this: *Cp, _: usize, e: ?jsc.SystemError) void {
                 if (e) |err| err.deref();
                 if (this.state == .waiting_write_err) {
                     return this.bltn.done(1);
@@ -10749,9 +10749,9 @@ pub const Interpreter = struct {
                 verbose_output_lock: bun.Mutex = .{},
                 verbose_output: ArrayList(u8) = ArrayList(u8).init(bun.default_allocator),
 
-                task: JSC.WorkPoolTask = .{ .callback = &runFromThreadPool },
-                event_loop: JSC.EventLoopHandle,
-                concurrent_task: JSC.EventLoopTask,
+                task: jsc.WorkPoolTask = .{ .callback = &runFromThreadPool },
+                event_loop: jsc.EventLoopHandle,
+                concurrent_task: jsc.EventLoopTask,
                 err: ?bun.shell.ShellErr = null,
 
                 const debug = bun.Output.scoped(.ShellCpTask, false);
@@ -10778,7 +10778,7 @@ pub const Interpreter = struct {
 
                 pub fn create(
                     cp: *Cp,
-                    evtloop: JSC.EventLoopHandle,
+                    evtloop: jsc.EventLoopHandle,
                     opts: Opts,
                     operands: usize,
                     src: [:0]const u8,
@@ -10793,7 +10793,7 @@ pub const Interpreter = struct {
                         .tgt = tgt,
                         .cwd_path = cwd_path,
                         .event_loop = evtloop,
-                        .concurrent_task = JSC.EventLoopTask.fromEventLoop(evtloop),
+                        .concurrent_task = jsc.EventLoopTask.fromEventLoop(evtloop),
                     });
                 }
 
@@ -10803,8 +10803,8 @@ pub const Interpreter = struct {
                     return out;
                 }
 
-                pub fn ensureDest(nodefs: *JSC.Node.NodeFS, dest: bun.OSPathSliceZ) Maybe(void) {
-                    return switch (nodefs.mkdirRecursiveOSPath(dest, JSC.Node.Arguments.Mkdir.DefaultMode, false)) {
+                pub fn ensureDest(nodefs: *jsc.Node.NodeFS, dest: bun.OSPathSliceZ) Maybe(void) {
+                    return switch (nodefs.mkdirRecursiveOSPath(dest, jsc.Node.Arguments.Mkdir.DefaultMode, false)) {
                         .err => |err| Maybe(void){ .err = err },
                         .result => Maybe(void).success,
                     };
@@ -10971,9 +10971,9 @@ pub const Interpreter = struct {
                     this.src_absolute = bun.default_allocator.dupeZ(u8, src[0..src.len]) catch bun.outOfMemory();
                     this.tgt_absolute = bun.default_allocator.dupeZ(u8, tgt[0..tgt.len]) catch bun.outOfMemory();
 
-                    const args = JSC.Node.Arguments.Cp{
-                        .src = JSC.Node.PathLike{ .string = bun.PathString.init(this.src_absolute.?) },
-                        .dest = JSC.Node.PathLike{ .string = bun.PathString.init(this.tgt_absolute.?) },
+                    const args = jsc.Node.Arguments.Cp{
+                        .src = jsc.Node.PathLike{ .string = bun.PathString.init(this.src_absolute.?) },
+                        .dest = jsc.Node.PathLike{ .string = bun.PathString.init(this.tgt_absolute.?) },
                         .flags = .{
                             .mode = @enumFromInt(0),
                             .recursive = this.opts.recursive,
@@ -10985,9 +10985,9 @@ pub const Interpreter = struct {
 
                     debug("Scheduling {s} -> {s}", .{ this.src_absolute.?, this.tgt_absolute.? });
                     if (this.event_loop == .js) {
-                        const vm: *JSC.VirtualMachine = this.event_loop.js.getVmImpl();
+                        const vm: *jsc.VirtualMachine = this.event_loop.js.getVmImpl();
                         debug("Yoops", .{});
-                        _ = JSC.Node.ShellAsyncCpTask.createWithShellTask(
+                        _ = jsc.Node.ShellAsyncCpTask.createWithShellTask(
                             vm.global,
                             args,
                             vm,
@@ -10996,7 +10996,7 @@ pub const Interpreter = struct {
                             false,
                         );
                     } else {
-                        _ = JSC.Node.ShellAsyncCpTask.createMini(
+                        _ = jsc.Node.ShellAsyncCpTask.createMini(
                             args,
                             this.event_loop.mini,
                             bun.ArenaAllocator.init(bun.default_allocator),
@@ -11177,9 +11177,9 @@ pub const Interpreter = struct {
         readers: Readers = .{ .inlined = .{} },
         read: usize = 0,
         ref_count: u32 = 1,
-        err: ?JSC.SystemError = null,
-        evtloop: JSC.EventLoopHandle,
-        concurrent_task: JSC.EventLoopTask,
+        err: ?jsc.SystemError = null,
+        evtloop: jsc.EventLoopHandle,
+        concurrent_task: jsc.EventLoopTask,
         async_deinit: AsyncDeinitReader,
         is_reading: if (bun.Environment.isWindows) bool else u0 = if (bun.Environment.isWindows) false else 0,
 
@@ -11201,7 +11201,7 @@ pub const Interpreter = struct {
             return this;
         }
 
-        pub fn eventLoop(this: *IOReader) JSC.EventLoopHandle {
+        pub fn eventLoop(this: *IOReader) jsc.EventLoopHandle {
             return this.evtloop;
         }
 
@@ -11209,12 +11209,12 @@ pub const Interpreter = struct {
             return this.evtloop.loop();
         }
 
-        pub fn init(fd: bun.FileDescriptor, evtloop: JSC.EventLoopHandle) *IOReader {
+        pub fn init(fd: bun.FileDescriptor, evtloop: jsc.EventLoopHandle) *IOReader {
             const this = IOReader.new(.{
                 .fd = fd,
                 .reader = ReaderImpl.init(@This()),
                 .evtloop = evtloop,
-                .concurrent_task = JSC.EventLoopTask.fromEventLoop(evtloop),
+                .concurrent_task = jsc.EventLoopTask.fromEventLoop(evtloop),
                 .async_deinit = .{},
             });
             log("IOReader(0x{x}, fd={}) create", .{ @intFromPtr(this), fd });
@@ -11445,9 +11445,9 @@ pub const Interpreter = struct {
         __idx: usize = 0,
         total_bytes_written: usize = 0,
         ref_count: u32 = 1,
-        err: ?JSC.SystemError = null,
-        evtloop: JSC.EventLoopHandle,
-        concurrent_task: JSC.EventLoopTask,
+        err: ?jsc.SystemError = null,
+        evtloop: jsc.EventLoopHandle,
+        concurrent_task: jsc.EventLoopTask,
         is_writing: if (bun.Environment.isWindows) bool else u0 = if (bun.Environment.isWindows) false else 0,
         async_deinit: AsyncDeinitWriter = .{},
         started: bool = false,
@@ -11493,11 +11493,11 @@ pub const Interpreter = struct {
             __unused: u5 = 0,
         };
 
-        pub fn init(fd: bun.FileDescriptor, flags: InitFlags, evtloop: JSC.EventLoopHandle) *This {
+        pub fn init(fd: bun.FileDescriptor, flags: InitFlags, evtloop: jsc.EventLoopHandle) *This {
             const this = IOWriter.new(.{
                 .fd = fd,
                 .evtloop = evtloop,
-                .concurrent_task = JSC.EventLoopTask.fromEventLoop(evtloop),
+                .concurrent_task = jsc.EventLoopTask.fromEventLoop(evtloop),
             });
 
             this.writer.parent = this;
@@ -11573,7 +11573,7 @@ pub const Interpreter = struct {
             return Maybe(void).success;
         }
 
-        pub fn eventLoop(this: *This) JSC.EventLoopHandle {
+        pub fn eventLoop(this: *This) jsc.EventLoopHandle {
             return this.evtloop;
         }
 
@@ -12085,10 +12085,10 @@ pub fn ShellTask(
 ) type {
     return struct {
         task: WorkPoolTask = .{ .callback = &runFromThreadPool },
-        event_loop: JSC.EventLoopHandle,
+        event_loop: jsc.EventLoopHandle,
         // This is a poll because we want it to enter the uSockets loop
         ref: bun.Async.KeepAlive = .{},
-        concurrent_task: JSC.EventLoopTask,
+        concurrent_task: jsc.EventLoopTask,
 
         pub const InnerShellTask = @This();
 
@@ -12148,7 +12148,7 @@ inline fn fastMod(val: anytype, comptime rhs: comptime_int) @TypeOf(val) {
 
 /// 'js' event loop will always return JSError
 /// 'mini' event loop will always return noreturn and exit 1
-fn throwShellErr(e: *const bun.shell.ShellErr, event_loop: JSC.EventLoopHandle) bun.JSError!noreturn {
+fn throwShellErr(e: *const bun.shell.ShellErr, event_loop: jsc.EventLoopHandle) bun.JSError!noreturn {
     return switch (event_loop) {
         .mini => e.throwMini(),
         .js => e.throwJS(event_loop.js.global),
@@ -12179,7 +12179,7 @@ pub const IOReaderChildPtr = struct {
         return this.ptr.call("onIOReaderChunk", .{chunk}, ReadChunkAction);
     }
 
-    pub fn onReaderDone(this: IOReaderChildPtr, err: ?JSC.SystemError) void {
+    pub fn onReaderDone(this: IOReaderChildPtr, err: ?jsc.SystemError) void {
         return this.ptr.call("onIOReaderDone", .{err}, void);
     }
 };
@@ -12225,7 +12225,7 @@ pub const IOWriterChildPtr = struct {
     }
 
     /// Called when the IOWriter writes a complete chunk of data the child enqueued
-    pub fn onWriteChunk(this: IOWriterChildPtr, amount: usize, err: ?JSC.SystemError) void {
+    pub fn onWriteChunk(this: IOWriterChildPtr, amount: usize, err: ?jsc.SystemError) void {
         return this.ptr.call("onIOWriterChunk", .{ amount, err }, void);
     }
 };
@@ -12424,7 +12424,7 @@ pub fn OutputTask(
             }
         }
 
-        pub fn onIOWriterChunk(this: *@This(), _: usize, err: ?JSC.SystemError) void {
+        pub fn onIOWriterChunk(this: *@This(), _: usize, err: ?jsc.SystemError) void {
             if (err) |e| {
                 e.deref();
             }

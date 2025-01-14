@@ -282,7 +282,7 @@ pub const Mapping = struct {
         ///
         /// This data is freed after printed on the assumption that printing
         /// errors to the console are rare (this isnt used for error.stack)
-        pub fn getSourceCode(lookup: Lookup, base_filename: []const u8) ?bun.JSC.ZigString.Slice {
+        pub fn getSourceCode(lookup: Lookup, base_filename: []const u8) ?bun.jsc.ZigString.Slice {
             const bytes = bytes: {
                 if (lookup.prefetched_source_code) |code| {
                     break :bytes code;
@@ -305,7 +305,7 @@ pub const Mapping = struct {
 
                     const code = serialized.sourceFileContents(@intCast(index));
 
-                    return bun.JSC.ZigString.Slice.fromUTF8NeverFree(code orelse return null);
+                    return bun.jsc.ZigString.Slice.fromUTF8NeverFree(code orelse return null);
                 }
 
                 if (provider.getSourceMap(
@@ -338,7 +338,7 @@ pub const Mapping = struct {
                 }
             };
 
-            return bun.JSC.ZigString.Slice.init(bun.default_allocator, bytes);
+            return bun.jsc.ZigString.Slice.init(bun.default_allocator, bytes);
         }
     };
 
@@ -745,14 +745,14 @@ pub const SourceMapLoadHint = enum(u2) {
 pub const SourceProviderMap = opaque {
     extern fn ZigSourceProvider__getSourceSlice(*SourceProviderMap) bun.String;
 
-    fn findSourceMappingURL(comptime T: type, source: []const T, alloc: std.mem.Allocator) ?bun.JSC.ZigString.Slice {
+    fn findSourceMappingURL(comptime T: type, source: []const T, alloc: std.mem.Allocator) ?bun.jsc.ZigString.Slice {
         const needle = comptime bun.strings.literal(T, "\n//# sourceMappingURL=");
         const found = bun.strings.indexOfT(T, source, needle) orelse return null;
         const end = std.mem.indexOfScalarPos(T, source, found + needle.len, '\n') orelse source.len;
         const url = std.mem.trimRight(T, source[found + needle.len .. end], &.{ ' ', '\r' });
         return switch (T) {
-            u8 => bun.JSC.ZigString.Slice.fromUTF8NeverFree(url),
-            u16 => bun.JSC.ZigString.Slice.init(
+            u8 => bun.jsc.ZigString.Slice.fromUTF8NeverFree(url),
+            u16 => bun.jsc.ZigString.Slice.init(
                 alloc,
                 bun.strings.toUTF8Alloc(alloc, url) catch bun.outOfMemory(),
             ),
@@ -832,7 +832,7 @@ pub const SourceProviderMap = opaque {
                             source_filename,
                             @errorName(err),
                         }); // Disable the "try using --sourcemap=external" hint
-                        bun.JSC.SavedSourceMap.MissingSourceMapNoteInfo.seen_invalid = true;
+                        bun.jsc.SavedSourceMap.MissingSourceMapNoteInfo.seen_invalid = true;
                         return null;
                     },
                 };
@@ -844,7 +844,7 @@ pub const SourceProviderMap = opaque {
                     @errorName(err),
                 });
                 // Disable the "try using --sourcemap=external" hint
-                bun.JSC.SavedSourceMap.MissingSourceMapNoteInfo.seen_invalid = true;
+                bun.jsc.SavedSourceMap.MissingSourceMapNoteInfo.seen_invalid = true;
                 return null;
             }
 

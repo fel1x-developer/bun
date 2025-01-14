@@ -778,7 +778,7 @@ pub const Arguments = struct {
                         .path_or_port = inspect_flag,
                     } };
 
-                bun.JSC.RuntimeTranspilerCache.is_disabled = true;
+                bun.jsc.RuntimeTranspilerCache.is_disabled = true;
             } else if (args.option("--inspect-wait")) |inspect_flag| {
                 ctx.runtime_options.debugger = if (inspect_flag.len == 0)
                     Command.Debugger{ .enable = .{
@@ -790,7 +790,7 @@ pub const Arguments = struct {
                         .wait_for_connection = true,
                     } };
 
-                bun.JSC.RuntimeTranspilerCache.is_disabled = true;
+                bun.jsc.RuntimeTranspilerCache.is_disabled = true;
             } else if (args.option("--inspect-brk")) |inspect_flag| {
                 ctx.runtime_options.debugger = if (inspect_flag.len == 0)
                     Command.Debugger{ .enable = .{
@@ -804,11 +804,11 @@ pub const Arguments = struct {
                         .set_breakpoint_on_first_line = true,
                     } };
 
-                bun.JSC.RuntimeTranspilerCache.is_disabled = true;
+                bun.jsc.RuntimeTranspilerCache.is_disabled = true;
             }
 
             if (args.flag("--expose-internals")) {
-                bun.JSC.ModuleLoader.is_allowed_to_use_internal_testing_apis = true;
+                bun.jsc.ModuleLoader.is_allowed_to_use_internal_testing_apis = true;
             }
             if (args.flag("--no-deprecation")) {
                 Bun__Node__ProcessNoDeprecation = true;
@@ -1155,7 +1155,7 @@ pub const Arguments = struct {
 
             if (opts.define) |define| {
                 if (define.keys.len > 0)
-                    bun.JSC.RuntimeTranspilerCache.is_disabled = true;
+                    bun.jsc.RuntimeTranspilerCache.is_disabled = true;
             }
         }
 

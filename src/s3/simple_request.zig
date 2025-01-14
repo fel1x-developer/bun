@@ -1,6 +1,6 @@
 const std = @import("std");
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const strings = bun.strings;
 const SignResult = @import("./credentials.zig").S3Credentials.SignResult;
 const S3Error = @import("./error.zig").S3Error;
@@ -61,9 +61,9 @@ pub const S3PartResult = union(enum) {
 
 pub const S3HttpSimpleTask = struct {
     http: bun.http.AsyncHTTP,
-    vm: *JSC.VirtualMachine,
+    vm: *jsc.VirtualMachine,
     sign_result: SignResult,
-    headers: JSC.WebCore.Headers,
+    headers: jsc.WebCore.Headers,
     callback_context: *anyopaque,
     callback: Callback,
     response_buffer: bun.MutableString = .{
@@ -74,7 +74,7 @@ pub const S3HttpSimpleTask = struct {
         },
     },
     result: bun.http.HTTPClientResult = .{},
-    concurrent_task: JSC.ConcurrentTask = .{},
+    concurrent_task: jsc.ConcurrentTask = .{},
     range: ?[]const u8,
     poll_ref: bun.Async.KeepAlive = bun.Async.KeepAlive.init(),
 
@@ -358,16 +358,16 @@ pub fn executeSimpleS3Request(
         var header_buffer: [10]picohttp.Header = undefined;
         if (options.range) |range_| {
             const _headers = result.mixWithHeader(&header_buffer, .{ .name = "range", .value = range_ });
-            break :brk JSC.WebCore.Headers.fromPicoHttpHeaders(_headers, bun.default_allocator) catch bun.outOfMemory();
+            break :brk jsc.WebCore.Headers.fromPicoHttpHeaders(_headers, bun.default_allocator) catch bun.outOfMemory();
         } else {
             if (options.content_type) |content_type| {
                 if (content_type.len > 0) {
                     const _headers = result.mixWithHeader(&header_buffer, .{ .name = "Content-Type", .value = content_type });
-                    break :brk JSC.WebCore.Headers.fromPicoHttpHeaders(_headers, bun.default_allocator) catch bun.outOfMemory();
+                    break :brk jsc.WebCore.Headers.fromPicoHttpHeaders(_headers, bun.default_allocator) catch bun.outOfMemory();
                 }
             }
 
-            break :brk JSC.WebCore.Headers.fromPicoHttpHeaders(result.headers(), bun.default_allocator) catch bun.outOfMemory();
+            break :brk jsc.WebCore.Headers.fromPicoHttpHeaders(result.headers(), bun.default_allocator) catch bun.outOfMemory();
         }
     };
     const task = S3HttpSimpleTask.new(.{
@@ -377,7 +377,7 @@ pub fn executeSimpleS3Request(
         .callback = callback,
         .range = options.range,
         .headers = headers,
-        .vm = JSC.VirtualMachine.get(),
+        .vm = jsc.VirtualMachine.get(),
     });
     task.poll_ref.ref(task.vm);
 

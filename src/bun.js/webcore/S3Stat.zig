@@ -1,9 +1,9 @@
 const bun = @import("../../bun.zig");
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 
 pub const S3Stat = struct {
     const log = bun.Output.scoped(.S3Stat, false);
-    pub usingnamespace JSC.Codegen.JSS3Stat;
+    pub usingnamespace jsc.Codegen.JSS3Stat;
     pub usingnamespace bun.New(@This());
 
     size: u64,
@@ -11,7 +11,7 @@ pub const S3Stat = struct {
     contentType: bun.String,
     lastModified: f64,
 
-    pub fn constructor(globalThis: *JSC.JSGlobalObject, _: *JSC.CallFrame) bun.JSError!*@This() {
+    pub fn constructor(globalThis: *jsc.JSGlobalObject, _: *jsc.CallFrame) bun.JSError!*@This() {
         return globalThis.throwInvalidArguments("S3Stat is not constructable", .{});
     }
 
@@ -20,7 +20,7 @@ pub const S3Stat = struct {
         etag: []const u8,
         contentType: []const u8,
         lastModified: []const u8,
-        globalThis: *JSC.JSGlobalObject,
+        globalThis: *jsc.JSGlobalObject,
     ) *@This() {
         var date_str = bun.String.init(lastModified);
         defer date_str.deref();
@@ -34,20 +34,20 @@ pub const S3Stat = struct {
         });
     }
 
-    pub fn getSize(this: *@This(), _: *JSC.JSGlobalObject) JSC.JSValue {
-        return JSC.JSValue.jsNumber(this.size);
+    pub fn getSize(this: *@This(), _: *jsc.JSGlobalObject) jsc.JSValue {
+        return jsc.JSValue.jsNumber(this.size);
     }
 
-    pub fn getEtag(this: *@This(), globalObject: *JSC.JSGlobalObject) JSC.JSValue {
+    pub fn getEtag(this: *@This(), globalObject: *jsc.JSGlobalObject) jsc.JSValue {
         return this.etag.toJS(globalObject);
     }
 
-    pub fn getContentType(this: *@This(), globalObject: *JSC.JSGlobalObject) JSC.JSValue {
+    pub fn getContentType(this: *@This(), globalObject: *jsc.JSGlobalObject) jsc.JSValue {
         return this.contentType.toJS(globalObject);
     }
 
-    pub fn getLastModified(this: *@This(), globalObject: *JSC.JSGlobalObject) JSC.JSValue {
-        return JSC.JSValue.fromDateNumber(globalObject, this.lastModified);
+    pub fn getLastModified(this: *@This(), globalObject: *jsc.JSGlobalObject) jsc.JSValue {
+        return jsc.JSValue.fromDateNumber(globalObject, this.lastModified);
     }
 
     pub fn finalize(this: *@This()) void {

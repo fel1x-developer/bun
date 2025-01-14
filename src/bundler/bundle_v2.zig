@@ -108,7 +108,7 @@ const Loader = options.Loader;
 pub const Index = @import("../ast/base.zig").Index;
 const Batcher = bun.Batcher;
 const Symbol = js_ast.Symbol;
-const EventLoop = bun.JSC.AnyEventLoop;
+const EventLoop = bun.jsc.AnyEventLoop;
 const MultiArrayList = bun.MultiArrayList;
 const Stmt = js_ast.Stmt;
 const Expr = js_ast.Expr;
@@ -122,7 +122,7 @@ const renamer = bun.renamer;
 const StableSymbolCount = renamer.StableSymbolCount;
 const MinifyRenamer = renamer.MinifyRenamer;
 const Scope = js_ast.Scope;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const debugTreeShake = Output.scoped(.TreeShake, true);
 const debugPartRanges = Output.scoped(.PartRanges, true);
 const BitSet = bun.bit_set.DynamicBitSetUnmanaged;
@@ -319,7 +319,7 @@ pub const ThreadPool = struct {
     };
 };
 
-const Watcher = bun.JSC.NewHotReloader(BundleV2, EventLoop, true);
+const Watcher = bun.jsc.NewHotReloader(BundleV2, EventLoop, true);
 
 /// This assigns a concise, predictable, and unique `.pretty` attribute to a Path.
 /// DevServer relies on pretty paths for identifying modules, so they must be unique.
@@ -383,8 +383,8 @@ pub const BundleV2 = struct {
     framework: ?bake.Framework,
     graph: Graph,
     linker: LinkerContext,
-    bun_watcher: ?*bun.JSC.Watcher,
-    plugins: ?*JSC.API.JSBundler.Plugin,
+    bun_watcher: ?*bun.jsc.Watcher,
+    plugins: ?*jsc.API.JSBundler.Plugin,
     completion: ?*JSBundleCompletionTask,
     source_code_length: usize,
 
@@ -413,7 +413,7 @@ pub const BundleV2 = struct {
         framework: bake.Framework,
         client_bundler: *Transpiler,
         ssr_bundler: *Transpiler,
-        plugins: ?*JSC.API.JSBundler.Plugin,
+        plugins: ?*jsc.API.JSBundler.Plugin,
     };
 
     const debug = Output.scoped(.Bundle, false);
@@ -422,8 +422,8 @@ pub const BundleV2 = struct {
         return &this.linker.loop;
     }
 
-    /// Returns the JSC.EventLoop where plugin callbacks can be queued up on
-    pub fn jsLoopForPlugins(this: *BundleV2) *JSC.EventLoop {
+    /// Returns the jsc.EventLoop where plugin callbacks can be queued up on
+    pub fn jsLoopForPlugins(this: *BundleV2) *jsc.EventLoop {
         bun.assert(this.plugins != null);
         if (this.completion) |completion|
             // From Bun.build
@@ -639,7 +639,7 @@ pub const BundleV2 = struct {
     /// This runs on the Bundle Thread.
     pub fn runResolver(
         this: *BundleV2,
-        import_record: bun.JSC.API.JSBundler.Resolve.MiniImportRecord,
+        import_record: bun.jsc.API.JSBundler.Resolve.MiniImportRecord,
         target: options.Target,
     ) void {
         const transpiler = this.bundlerForTarget(target);
@@ -1584,17 +1584,17 @@ pub const BundleV2 = struct {
     pub const JSBundleThread = BundleThread(JSBundleCompletionTask);
 
     pub fn generateFromJavaScript(
-        config: bun.JSC.API.JSBundler.Config,
-        plugins: ?*bun.JSC.API.JSBundler.Plugin,
-        globalThis: *JSC.JSGlobalObject,
-        event_loop: *bun.JSC.EventLoop,
+        config: bun.jsc.API.JSBundler.Config,
+        plugins: ?*bun.jsc.API.JSBundler.Plugin,
+        globalThis: *jsc.JSGlobalObject,
+        event_loop: *bun.jsc.EventLoop,
         allocator: std.mem.Allocator,
-    ) OOM!bun.JSC.JSValue {
+    ) OOM!bun.jsc.JSValue {
         var completion = try allocator.create(JSBundleCompletionTask);
         completion.* = JSBundleCompletionTask{
             .config = config,
             .jsc_event_loop = event_loop,
-            .promise = JSC.JSPromise.Strong.init(globalThis),
+            .promise = jsc.JSPromise.Strong.init(globalThis),
             .globalThis = globalThis,
             .poll_ref = Async.KeepAlive.init(),
             .env = globalThis.bunVM().transpiler.env,
@@ -1609,7 +1609,7 @@ pub const BundleV2 = struct {
 
         // Ensure this exists before we spawn the thread to prevent any race
         // conditions from creating two
-        _ = JSC.WorkPool.get();
+        _ = jsc.WorkPool.get();
 
         JSBundleThread.singleton.enqueue(completion);
 
@@ -1629,11 +1629,11 @@ pub const BundleV2 = struct {
     };
 
     pub const JSBundleCompletionTask = struct {
-        config: bun.JSC.API.JSBundler.Config,
-        jsc_event_loop: *bun.JSC.EventLoop,
-        task: bun.JSC.AnyTask,
-        globalThis: *JSC.JSGlobalObject,
-        promise: JSC.JSPromise.Strong,
+        config: bun.jsc.API.JSBundler.Config,
+        jsc_event_loop: *bun.jsc.EventLoop,
+        task: bun.jsc.AnyTask,
+        globalThis: *jsc.JSGlobalObject,
+        promise: jsc.JSPromise.Strong,
         poll_ref: Async.KeepAlive = Async.KeepAlive.init(),
         env: *bun.DotEnv.Loader,
         log: Logger.Log,
@@ -1642,7 +1642,7 @@ pub const BundleV2 = struct {
 
         next: ?*JSBundleCompletionTask = null,
         transpiler: *BundleV2 = undefined,
-        plugins: ?*bun.JSC.API.JSBundler.Plugin = null,
+        plugins: ?*bun.jsc.API.JSBundler.Plugin = null,
         ref_count: std.atomic.Value(u32) = std.atomic.Value(u32).init(1),
 
         pub fn configureBundler(
@@ -1718,10 +1718,10 @@ pub const BundleV2 = struct {
         }
 
         pub fn completeOnBundleThread(completion: *JSBundleCompletionTask) void {
-            completion.jsc_event_loop.enqueueTaskConcurrent(JSC.ConcurrentTask.create(completion.task.task()));
+            completion.jsc_event_loop.enqueueTaskConcurrent(jsc.ConcurrentTask.create(completion.task.task()));
         }
 
-        pub const TaskCompletion = bun.JSC.AnyTask.New(JSBundleCompletionTask, onComplete);
+        pub const TaskCompletion = bun.jsc.AnyTask.New(JSBundleCompletionTask, onComplete);
 
         pub fn deref(this: *JSBundleCompletionTask) void {
             if (this.ref_count.fetchSub(1, .monotonic) == 1) {
@@ -1750,30 +1750,30 @@ pub const BundleV2 = struct {
                         break :brk;
                     }
 
-                    const root_obj = JSC.JSValue.createEmptyObject(globalThis, 3);
-                    root_obj.put(globalThis, JSC.ZigString.static("outputs"), JSC.JSValue.createEmptyArray(globalThis, 0));
+                    const root_obj = jsc.JSValue.createEmptyObject(globalThis, 3);
+                    root_obj.put(globalThis, jsc.ZigString.static("outputs"), jsc.JSValue.createEmptyArray(globalThis, 0));
                     root_obj.put(
                         globalThis,
-                        JSC.ZigString.static("success"),
-                        JSC.JSValue.jsBoolean(false),
+                        jsc.ZigString.static("success"),
+                        jsc.JSValue.jsBoolean(false),
                     );
                     root_obj.put(
                         globalThis,
-                        JSC.ZigString.static("logs"),
+                        jsc.ZigString.static("logs"),
                         this.log.toJSArray(globalThis, bun.default_allocator),
                     );
                     promise.resolve(globalThis, root_obj);
                 },
                 .value => |*build| {
-                    const root_obj = JSC.JSValue.createEmptyObject(globalThis, 3);
+                    const root_obj = jsc.JSValue.createEmptyObject(globalThis, 3);
                     const output_files: []options.OutputFile = build.output_files.items;
-                    const output_files_js = JSC.JSValue.createEmptyArray(globalThis, output_files.len);
+                    const output_files_js = jsc.JSValue.createEmptyArray(globalThis, output_files.len);
                     if (output_files_js == .zero) {
                         @panic("Unexpected pending JavaScript exception in JSBundleCompletionTask.onComplete. This is a bug in Bun.");
                     }
 
                     defer build.output_files.deinit();
-                    var to_assign_on_sourcemap: JSC.JSValue = .zero;
+                    var to_assign_on_sourcemap: jsc.JSValue = .zero;
                     for (output_files, 0..) |*output_file, i| {
                         defer bun.default_allocator.free(output_file.src_path.text);
                         defer bun.default_allocator.free(output_file.dest_path);
@@ -1805,8 +1805,8 @@ pub const BundleV2 = struct {
                             globalThis,
                         );
                         if (to_assign_on_sourcemap != .zero) {
-                            JSC.Codegen.JSBuildArtifact.sourcemapSetCached(to_assign_on_sourcemap, globalThis, result);
-                            if (to_assign_on_sourcemap.as(JSC.API.BuildArtifact)) |to_assign_on_sourcemap_artifact| {
+                            jsc.Codegen.JSBuildArtifact.sourcemapSetCached(to_assign_on_sourcemap, globalThis, result);
+                            if (to_assign_on_sourcemap.as(jsc.API.BuildArtifact)) |to_assign_on_sourcemap_artifact| {
                                 to_assign_on_sourcemap_artifact.sourcemap.set(globalThis, result);
                             }
                             to_assign_on_sourcemap = .zero;
@@ -1819,15 +1819,15 @@ pub const BundleV2 = struct {
                         output_files_js.putIndex(globalThis, @as(u32, @intCast(i)), result);
                     }
 
-                    root_obj.put(globalThis, JSC.ZigString.static("outputs"), output_files_js);
+                    root_obj.put(globalThis, jsc.ZigString.static("outputs"), output_files_js);
                     root_obj.put(
                         globalThis,
-                        JSC.ZigString.static("success"),
-                        JSC.JSValue.jsBoolean(true),
+                        jsc.ZigString.static("success"),
+                        jsc.JSValue.jsBoolean(true),
                     );
                     root_obj.put(
                         globalThis,
-                        JSC.ZigString.static("logs"),
+                        jsc.ZigString.static("logs"),
                         this.log.toJSArray(globalThis, bun.default_allocator),
                     );
                     promise.resolve(globalThis, root_obj);
@@ -1840,14 +1840,14 @@ pub const BundleV2 = struct {
         }
     };
 
-    pub fn onLoadAsync(this: *BundleV2, load: *bun.JSC.API.JSBundler.Load) void {
+    pub fn onLoadAsync(this: *BundleV2, load: *bun.jsc.API.JSBundler.Load) void {
         switch (this.loop().*) {
             .js => |jsc_event_loop| {
-                jsc_event_loop.enqueueTaskConcurrent(JSC.ConcurrentTask.fromCallback(load, onLoadFromJsLoop));
+                jsc_event_loop.enqueueTaskConcurrent(jsc.ConcurrentTask.fromCallback(load, onLoadFromJsLoop));
             },
             .mini => |*mini| {
                 mini.enqueueTaskConcurrentWithExtraCtx(
-                    bun.JSC.API.JSBundler.Load,
+                    bun.jsc.API.JSBundler.Load,
                     BundleV2,
                     load,
                     BundleV2.onLoad,
@@ -1857,14 +1857,14 @@ pub const BundleV2 = struct {
         }
     }
 
-    pub fn onResolveAsync(this: *BundleV2, resolve: *bun.JSC.API.JSBundler.Resolve) void {
+    pub fn onResolveAsync(this: *BundleV2, resolve: *bun.jsc.API.JSBundler.Resolve) void {
         switch (this.loop().*) {
             .js => |jsc_event_loop| {
-                jsc_event_loop.enqueueTaskConcurrent(JSC.ConcurrentTask.fromCallback(resolve, onResolveFromJsLoop));
+                jsc_event_loop.enqueueTaskConcurrent(jsc.ConcurrentTask.fromCallback(resolve, onResolveFromJsLoop));
             },
             .mini => |*mini| {
                 mini.enqueueTaskConcurrentWithExtraCtx(
-                    bun.JSC.API.JSBundler.Resolve,
+                    bun.jsc.API.JSBundler.Resolve,
                     BundleV2,
                     resolve,
                     BundleV2.onResolve,
@@ -1874,11 +1874,11 @@ pub const BundleV2 = struct {
         }
     }
 
-    pub fn onLoadFromJsLoop(load: *bun.JSC.API.JSBundler.Load) void {
+    pub fn onLoadFromJsLoop(load: *bun.jsc.API.JSBundler.Load) void {
         onLoad(load, load.bv2);
     }
 
-    pub fn onLoad(load: *bun.JSC.API.JSBundler.Load, this: *BundleV2) void {
+    pub fn onLoad(load: *bun.jsc.API.JSBundler.Load, this: *BundleV2) void {
         debug("onLoad: ({d}, {s})", .{ load.source_index.get(), @tagName(load.value) });
         defer load.deinit();
         defer {
@@ -1959,11 +1959,11 @@ pub const BundleV2 = struct {
         }
     }
 
-    pub fn onResolveFromJsLoop(resolve: *bun.JSC.API.JSBundler.Resolve) void {
+    pub fn onResolveFromJsLoop(resolve: *bun.jsc.API.JSBundler.Resolve) void {
         onResolve(resolve, resolve.bv2);
     }
 
-    pub fn onResolve(resolve: *bun.JSC.API.JSBundler.Resolve, this: *BundleV2) void {
+    pub fn onResolve(resolve: *bun.jsc.API.JSBundler.Resolve, this: *BundleV2) void {
         defer resolve.deinit();
         defer this.decrementScanCounter();
         debug("onResolve: ({s}:{s}, {s})", .{ resolve.import_record.namespace, resolve.import_record.specifier, @tagName(resolve.value) });
@@ -2373,14 +2373,14 @@ pub const BundleV2 = struct {
         if (this.plugins) |plugins| {
             if (plugins.hasAnyMatches(&import_record.path, false)) {
                 // This is where onResolve plugins are enqueued
-                var resolve: *JSC.API.JSBundler.Resolve = bun.default_allocator.create(JSC.API.JSBundler.Resolve) catch unreachable;
+                var resolve: *jsc.API.JSBundler.Resolve = bun.default_allocator.create(jsc.API.JSBundler.Resolve) catch unreachable;
                 debug("enqueue onResolve: {s}:{s}", .{
                     import_record.path.namespace,
                     import_record.path.text,
                 });
                 this.incrementScanCounter();
 
-                resolve.* = JSC.API.JSBundler.Resolve.init(this, .{
+                resolve.* = jsc.API.JSBundler.Resolve.init(this, .{
                     .kind = import_record.kind,
                     .source_file = source_file,
                     .namespace = import_record.path.namespace,
@@ -2409,8 +2409,8 @@ pub const BundleV2 = struct {
                     parse.path.namespace,
                     parse.path.text,
                 });
-                const load = bun.default_allocator.create(JSC.API.JSBundler.Load) catch bun.outOfMemory();
-                load.* = JSC.API.JSBundler.Load.init(this, parse);
+                const load = bun.default_allocator.create(jsc.API.JSBundler.Load) catch bun.outOfMemory();
+                load.* = jsc.API.JSBundler.Load.init(this, parse);
                 load.dispatch();
                 return true;
             }
@@ -2521,7 +2521,7 @@ pub const BundleV2 = struct {
             };
 
             if (ast.target.isBun()) {
-                if (JSC.HardcodedModule.Aliases.get(import_record.path.text, options.Target.bun)) |replacement| {
+                if (jsc.HardcodedModule.Aliases.get(import_record.path.text, options.Target.bun)) |replacement| {
                     import_record.path.text = replacement.path;
                     import_record.tag = replacement.tag;
                     import_record.source_index = Index.invalid;
@@ -2817,7 +2817,7 @@ pub const BundleV2 = struct {
         this.decrementScanCounter();
     }
 
-    pub fn onNotifyDeferMini(_: *bun.JSC.API.JSBundler.Load, this: *BundleV2) void {
+    pub fn onNotifyDeferMini(_: *bun.jsc.API.JSBundler.Load, this: *BundleV2) void {
         this.onNotifyDefer();
     }
 
@@ -3251,9 +3251,9 @@ pub fn BundleThread(CompletionStruct: type) type {
                 transpiler,
                 null, // TODO: Kit
                 allocator,
-                JSC.AnyEventLoop.init(allocator),
+                jsc.AnyEventLoop.init(allocator),
                 false,
-                JSC.WorkPool.get(),
+                jsc.WorkPool.get(),
                 heap,
             );
 
@@ -3306,7 +3306,7 @@ const ServerComponentBoundary = js_ast.ServerComponentBoundary;
 pub const DeferredBatchTask = struct {
     running: if (Environment.isDebug) bool else u0 = if (Environment.isDebug) false else 0,
 
-    const AnyTask = JSC.AnyTask.New(@This(), runOnJSThread);
+    const AnyTask = jsc.AnyTask.New(@This(), runOnJSThread);
 
     pub fn init(this: *DeferredBatchTask) void {
         if (comptime Environment.isDebug) bun.debugAssert(!this.running);
@@ -3325,7 +3325,7 @@ pub const DeferredBatchTask = struct {
             bun.assert(!this.running);
             this.running = false;
         }
-        this.getCompletion().?.jsc_event_loop.enqueueTaskConcurrent(JSC.ConcurrentTask.create(JSC.Task.init(this)));
+        this.getCompletion().?.jsc_event_loop.enqueueTaskConcurrent(jsc.ConcurrentTask.create(jsc.Task.init(this)));
     }
 
     pub fn deinit(this: *DeferredBatchTask) void {
@@ -4212,7 +4212,7 @@ pub const ParseTask = struct {
             return 0;
         }
 
-        pub fn run(this: *OnBeforeParsePlugin, plugin: *JSC.API.JSBundler.Plugin, from_plugin: *bool) !CacheEntry {
+        pub fn run(this: *OnBeforeParsePlugin, plugin: *jsc.API.JSBundler.Plugin, from_plugin: *bool) !CacheEntry {
             var args = OnBeforeParseArguments{
                 .context = this,
                 .path_ptr = this.file_path.text.ptr,
@@ -4561,7 +4561,7 @@ pub const ParseTask = struct {
 
         switch (worker.ctx.loop().*) {
             .js => |jsc_event_loop| {
-                jsc_event_loop.enqueueTaskConcurrent(JSC.ConcurrentTask.fromCallback(result, onComplete));
+                jsc_event_loop.enqueueTaskConcurrent(jsc.ConcurrentTask.fromCallback(result, onComplete));
             },
             .mini => |*mini| {
                 mini.enqueueTaskConcurrentWithExtraCtx(
@@ -4632,7 +4632,7 @@ pub const ServerComponentParseTask = struct {
 
         switch (worker.ctx.loop().*) {
             .js => |jsc_event_loop| {
-                jsc_event_loop.enqueueTaskConcurrent(JSC.ConcurrentTask.fromCallback(result, ParseTask.onComplete));
+                jsc_event_loop.enqueueTaskConcurrent(jsc.ConcurrentTask.fromCallback(result, ParseTask.onComplete));
             },
             .mini => |*mini| {
                 mini.enqueueTaskConcurrentWithExtraCtx(
@@ -5090,7 +5090,7 @@ const EntryPoint = struct {
         dynamic_import,
         html,
 
-        pub fn outputKind(this: Kind) JSC.API.BuildArtifact.OutputKind {
+        pub fn outputKind(this: Kind) jsc.API.BuildArtifact.OutputKind {
             return switch (this) {
                 .user_specified => .@"entry-point",
                 else => .chunk,
@@ -13054,14 +13054,14 @@ pub const LinkerContext = struct {
                             .js;
 
                         if (loader.isJavaScriptLike()) {
-                            JSC.initialize(false);
+                            jsc.initialize(false);
                             var fdpath: bun.PathBuffer = undefined;
                             var source_provider_url = try bun.String.createFormat("{s}" ++ bun.bytecode_extension, .{chunk.final_rel_path});
                             source_provider_url.ref();
 
                             defer source_provider_url.deref();
 
-                            if (JSC.CachedBytecode.generate(c.options.output_format, code_result.buffer, &source_provider_url)) |result| {
+                            if (jsc.CachedBytecode.generate(c.options.output_format, code_result.buffer, &source_provider_url)) |result| {
                                 const bytecode, const cached_bytecode = result;
                                 const source_provider_url_str = source_provider_url.toSlice(bun.default_allocator);
                                 defer source_provider_url_str.deinit();
@@ -13323,11 +13323,11 @@ pub const LinkerContext = struct {
                         code_result.buffer = buf.items;
                     }
 
-                    switch (JSC.Node.NodeFS.writeFileWithPathBuffer(
+                    switch (jsc.Node.NodeFS.writeFileWithPathBuffer(
                         &pathbuf,
-                        JSC.Node.Arguments.WriteFile{
-                            .data = JSC.Node.StringOrBuffer{
-                                .buffer = JSC.Buffer{
+                        jsc.Node.Arguments.WriteFile{
+                            .data = jsc.Node.StringOrBuffer{
+                                .buffer = jsc.Buffer{
                                     .buffer = .{
                                         .ptr = @constCast(output_source_map.ptr),
                                         // TODO: handle > 4 GB files
@@ -13339,8 +13339,8 @@ pub const LinkerContext = struct {
                             .encoding = .buffer,
                             .dirfd = bun.toFD(root_dir.fd),
                             .file = .{
-                                .path = JSC.Node.PathLike{
-                                    .string = JSC.PathString.init(source_map_final_rel_path),
+                                .path = jsc.Node.PathLike{
+                                    .string = jsc.PathString.init(source_map_final_rel_path),
                                 },
                             },
                         },
@@ -13401,14 +13401,14 @@ pub const LinkerContext = struct {
                         .js;
 
                     if (loader.isJavaScriptLike()) {
-                        JSC.initialize(false);
+                        jsc.initialize(false);
                         var fdpath: bun.PathBuffer = undefined;
                         var source_provider_url = try bun.String.createFormat("{s}" ++ bun.bytecode_extension, .{chunk.final_rel_path});
                         source_provider_url.ref();
 
                         defer source_provider_url.deref();
 
-                        if (JSC.CachedBytecode.generate(c.options.output_format, code_result.buffer, &source_provider_url)) |result| {
+                        if (jsc.CachedBytecode.generate(c.options.output_format, code_result.buffer, &source_provider_url)) |result| {
                             const source_provider_url_str = source_provider_url.toSlice(bun.default_allocator);
                             defer source_provider_url_str.deinit();
                             const bytecode, const cached_bytecode = result;
@@ -13416,11 +13416,11 @@ pub const LinkerContext = struct {
                             @memcpy(fdpath[0..chunk.final_rel_path.len], chunk.final_rel_path);
                             fdpath[chunk.final_rel_path.len..][0..bun.bytecode_extension.len].* = bun.bytecode_extension.*;
                             defer cached_bytecode.deref();
-                            switch (JSC.Node.NodeFS.writeFileWithPathBuffer(
+                            switch (jsc.Node.NodeFS.writeFileWithPathBuffer(
                                 &pathbuf,
-                                JSC.Node.Arguments.WriteFile{
-                                    .data = JSC.Node.StringOrBuffer{
-                                        .buffer = JSC.Buffer{
+                                jsc.Node.Arguments.WriteFile{
+                                    .data = jsc.Node.StringOrBuffer{
+                                        .buffer = jsc.Buffer{
                                             .buffer = .{
                                                 .ptr = @constCast(bytecode.ptr),
                                                 .len = @as(u32, @truncate(bytecode.len)),
@@ -13433,8 +13433,8 @@ pub const LinkerContext = struct {
 
                                     .dirfd = bun.toFD(root_dir.fd),
                                     .file = .{
-                                        .path = JSC.Node.PathLike{
-                                            .string = JSC.PathString.init(fdpath[0 .. chunk.final_rel_path.len + bun.bytecode_extension.len]),
+                                        .path = jsc.Node.PathLike{
+                                            .string = jsc.PathString.init(fdpath[0 .. chunk.final_rel_path.len + bun.bytecode_extension.len]),
                                         },
                                     },
                                 },
@@ -13472,11 +13472,11 @@ pub const LinkerContext = struct {
                 break :brk null;
             };
 
-            switch (JSC.Node.NodeFS.writeFileWithPathBuffer(
+            switch (jsc.Node.NodeFS.writeFileWithPathBuffer(
                 &pathbuf,
-                JSC.Node.Arguments.WriteFile{
-                    .data = JSC.Node.StringOrBuffer{
-                        .buffer = JSC.Buffer{
+                jsc.Node.Arguments.WriteFile{
+                    .data = jsc.Node.StringOrBuffer{
+                        .buffer = jsc.Buffer{
                             .buffer = .{
                                 .ptr = @constCast(code_result.buffer.ptr),
                                 // TODO: handle > 4 GB files
@@ -13490,8 +13490,8 @@ pub const LinkerContext = struct {
 
                     .dirfd = bun.toFD(root_dir.fd),
                     .file = .{
-                        .path = JSC.Node.PathLike{
-                            .string = JSC.PathString.init(rel_path),
+                        .path = jsc.Node.PathLike{
+                            .string = jsc.PathString.init(rel_path),
                         },
                     },
                 },
@@ -13595,11 +13595,11 @@ pub const LinkerContext = struct {
                     }
                 }
 
-                switch (JSC.Node.NodeFS.writeFileWithPathBuffer(
+                switch (jsc.Node.NodeFS.writeFileWithPathBuffer(
                     &pathbuf,
-                    JSC.Node.Arguments.WriteFile{
-                        .data = JSC.Node.StringOrBuffer{
-                            .buffer = JSC.Buffer{
+                    jsc.Node.Arguments.WriteFile{
+                        .data = jsc.Node.StringOrBuffer{
+                            .buffer = jsc.Buffer{
                                 .buffer = .{
                                     .ptr = @constCast(bytes.ptr),
                                     .len = @as(u32, @truncate(bytes.len)),
@@ -13610,8 +13610,8 @@ pub const LinkerContext = struct {
                         .encoding = .buffer,
                         .dirfd = bun.toFD(root_dir.fd),
                         .file = .{
-                            .path = JSC.Node.PathLike{
-                                .string = JSC.PathString.init(src.dest_path),
+                            .path = jsc.Node.PathLike{
+                                .string = jsc.PathString.init(src.dest_path),
                             },
                         },
                     },
@@ -14078,7 +14078,7 @@ pub const LinkerContext = struct {
                         // time, so we emit a debug message and rewrite the value to the literal
                         // "undefined" instead of emitting an error.
                         symbol.import_item_status = .missing;
-                        if (c.resolver.opts.target == .browser and JSC.HardcodedModule.Aliases.has(next_source.path.pretty, .bun)) {
+                        if (c.resolver.opts.target == .browser and jsc.HardcodedModule.Aliases.has(next_source.path.pretty, .bun)) {
                             c.log.addRangeWarningFmtWithNote(
                                 source,
                                 r,

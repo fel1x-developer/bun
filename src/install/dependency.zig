@@ -15,7 +15,7 @@ const std = @import("std");
 const string = @import("../string_types.zig").string;
 const strings = @import("../string_immutable.zig");
 const Dependency = @This();
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 
 const URI = union(Tag) {
     local: String,
@@ -318,8 +318,8 @@ pub const Version = struct {
     literal: String = .{},
     value: Value = .{ .uninitialized = {} },
 
-    pub fn toJS(dep: *const Version, buf: []const u8, globalThis: *JSC.JSGlobalObject) bun.JSError!JSC.JSValue {
-        const object = JSC.JSValue.createEmptyObject(globalThis, 2);
+    pub fn toJS(dep: *const Version, buf: []const u8, globalThis: *jsc.JSGlobalObject) bun.JSError!jsc.JSValue {
+        const object = jsc.JSValue.createEmptyObject(globalThis, 2);
         object.put(globalThis, "type", bun.String.static(@tagName(dep.tag)).toJS(globalThis));
 
         switch (dep.tag) {
@@ -344,7 +344,7 @@ pub const Version = struct {
                 object.put(globalThis, "name", dep.value.npm.name.toJS(buf, globalThis));
                 var version_str = try bun.String.createFormat("{}", .{dep.value.npm.version.fmt(buf)});
                 object.put(globalThis, "version", version_str.transferToJS(globalThis));
-                object.put(globalThis, "alias", JSC.JSValue.jsBoolean(dep.value.npm.is_alias));
+                object.put(globalThis, "alias", jsc.JSValue.jsBoolean(dep.value.npm.is_alias));
             },
             .symlink => {
                 object.put(globalThis, "path", dep.value.symlink.toJS(buf, globalThis));
@@ -766,7 +766,7 @@ pub const Version = struct {
             return .npm;
         }
 
-        pub fn inferFromJS(globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+        pub fn inferFromJS(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
             const arguments = callframe.arguments_old(1).slice();
             if (arguments.len == 0 or !arguments[0].isString()) {
                 return .undefined;
@@ -1243,7 +1243,7 @@ pub fn parseWithTag(
     }
 }
 
-pub fn fromJS(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn fromJS(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(2).slice();
     if (arguments.len == 1) {
         return try bun.install.PackageManager.UpdateRequest.fromJS(globalThis, arguments[0]);

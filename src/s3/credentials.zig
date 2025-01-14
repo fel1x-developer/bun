@@ -4,8 +4,8 @@ const std = @import("std");
 
 const MultiPartUploadOptions = @import("./multipart_options.zig").MultiPartUploadOptions;
 const ACL = @import("./acl.zig").ACL;
-const JSC = bun.JSC;
-const RareData = JSC.RareData;
+const jsc = bun.jsc;
+const RareData = jsc.RareData;
 const strings = bun.strings;
 const DotEnv = bun.DotEnv;
 
@@ -42,7 +42,7 @@ pub const S3Credentials = struct {
 
         return hasher.final();
     }
-    pub fn getCredentialsWithOptions(this: S3Credentials, default_options: MultiPartUploadOptions, options: ?JSC.JSValue, default_acl: ?ACL, globalObject: *JSC.JSGlobalObject) bun.JSError!S3CredentialsWithOptions {
+    pub fn getCredentialsWithOptions(this: S3Credentials, default_options: MultiPartUploadOptions, options: ?jsc.JSValue, default_acl: ?ACL, globalObject: *jsc.JSGlobalObject) bun.JSError!S3CredentialsWithOptions {
         // get ENV config
         var new_credentials = S3CredentialsWithOptions{
             .credentials = this,
@@ -270,7 +270,7 @@ pub const S3Credentials = struct {
         // We can also use Date.now() but would be slower and would add JSC dependency
         // var buffer: [28]u8 = undefined;
         // the code bellow is the same as new Date(Date.now()).toISOString()
-        // JSC.JSValue.getDateNowISOString(globalObject, &buffer);
+        // jsc.JSValue.getDateNowISOString(globalObject, &buffer);
 
         // Create UTC timestamp
         const secs: u64 = @intCast(@divFloor(std.time.milliTimestamp(), 1000));
@@ -576,7 +576,7 @@ pub const S3Credentials = struct {
 
             const sigDateRegionServiceReq = brk_sign: {
                 const key = try std.fmt.bufPrint(&tmp_buffer, "{s}{s}{s}", .{ region, service_name, this.secretAccessKey });
-                var cache = (JSC.VirtualMachine.getMainThreadVM() orelse JSC.VirtualMachine.get()).rareData().awsCache();
+                var cache = (jsc.VirtualMachine.getMainThreadVM() orelse jsc.VirtualMachine.get()).rareData().awsCache();
                 if (cache.get(date_result.numeric_day, key)) |cached| {
                     break :brk_sign cached;
                 }
@@ -611,7 +611,7 @@ pub const S3Credentials = struct {
                     }
                 };
                 var sha_digest = std.mem.zeroes(bun.sha.SHA256.Digest);
-                bun.sha.SHA256.hash(canonical, &sha_digest, JSC.VirtualMachine.get().rareData().boringEngine());
+                bun.sha.SHA256.hash(canonical, &sha_digest, jsc.VirtualMachine.get().rareData().boringEngine());
 
                 const signValue = try std.fmt.bufPrint(&tmp_buffer, "AWS4-HMAC-SHA256\n{s}\n{s}/{s}/{s}/aws4_request\n{s}", .{ amz_date, amz_day, region, service_name, bun.fmt.bytesToHex(sha_digest[0..bun.sha.SHA256.digest], .lower) });
 
@@ -680,7 +680,7 @@ pub const S3Credentials = struct {
                     }
                 };
                 var sha_digest = std.mem.zeroes(bun.sha.SHA256.Digest);
-                bun.sha.SHA256.hash(canonical, &sha_digest, JSC.VirtualMachine.get().rareData().boringEngine());
+                bun.sha.SHA256.hash(canonical, &sha_digest, jsc.VirtualMachine.get().rareData().boringEngine());
 
                 const signValue = try std.fmt.bufPrint(&tmp_buffer, "AWS4-HMAC-SHA256\n{s}\n{s}/{s}/{s}/aws4_request\n{s}", .{ amz_date, amz_day, region, service_name, bun.fmt.bytesToHex(sha_digest[0..bun.sha.SHA256.digest], .lower) });
 
@@ -756,12 +756,12 @@ pub const S3CredentialsWithOptions = struct {
     /// indicates if the credentials have changed
     changed_credentials: bool = false,
 
-    _accessKeyIdSlice: ?JSC.ZigString.Slice = null,
-    _secretAccessKeySlice: ?JSC.ZigString.Slice = null,
-    _regionSlice: ?JSC.ZigString.Slice = null,
-    _endpointSlice: ?JSC.ZigString.Slice = null,
-    _bucketSlice: ?JSC.ZigString.Slice = null,
-    _sessionTokenSlice: ?JSC.ZigString.Slice = null,
+    _accessKeyIdSlice: ?jsc.ZigString.Slice = null,
+    _secretAccessKeySlice: ?jsc.ZigString.Slice = null,
+    _regionSlice: ?jsc.ZigString.Slice = null,
+    _endpointSlice: ?jsc.ZigString.Slice = null,
+    _bucketSlice: ?jsc.ZigString.Slice = null,
+    _sessionTokenSlice: ?jsc.ZigString.Slice = null,
 
     pub fn deinit(this: *@This()) void {
         if (this._accessKeyIdSlice) |slice| slice.deinit();

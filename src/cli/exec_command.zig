@@ -23,7 +23,7 @@ pub const ExecCommand = struct {
             null,
         );
         try bundle.runEnvLoader(false);
-        const mini = bun.JSC.MiniEventLoop.initGlobal(bundle.env);
+        const mini = bun.jsc.MiniEventLoop.initGlobal(bundle.env);
         var buf: bun.PathBuffer = undefined;
 
         const cwd = switch (bun.sys.getcwd(&buf)) {

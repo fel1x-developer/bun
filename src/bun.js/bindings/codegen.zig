@@ -1,17 +1,17 @@
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const std = @import("std");
 const bun = @import("root").bun;
 
-pub const CallbackGetterFn = fn (JSC.JSValue) callconv(.C) JSC.JSValue;
-pub const CallbackSetterFn = fn (JSC.JSValue, JSC.JSValue) callconv(.C) void;
+pub const CallbackGetterFn = fn (jsc.JSValue) callconv(.C) jsc.JSValue;
+pub const CallbackSetterFn = fn (jsc.JSValue, jsc.JSValue) callconv(.C) void;
 
 pub fn CallbackWrapper(comptime Getter: *const CallbackGetterFn, comptime Setter: *const CallbackSetterFn) type {
     return struct {
         const GetFn = Getter;
         const SetFn = Setter;
-        container: JSC.JSValue,
+        container: jsc.JSValue,
 
-        pub inline fn get(self: @This()) ?JSC.JSValue {
+        pub inline fn get(self: @This()) ?jsc.JSValue {
             const res = GetFn(self.container);
             if (res.isEmptyOrUndefinedOrNull())
                 return null;
@@ -19,11 +19,11 @@ pub fn CallbackWrapper(comptime Getter: *const CallbackGetterFn, comptime Setter
             return res;
         }
 
-        pub inline fn set(self: @This(), value: JSC.JSValue) void {
+        pub inline fn set(self: @This(), value: jsc.JSValue) void {
             SetFn(self.container, value);
         }
 
-        pub inline fn call(self: @This(), globalObject: *JSC.JSGlobalObject, args: []const JSC.JSValue) ?JSC.JSValue {
+        pub inline fn call(self: @This(), globalObject: *jsc.JSGlobalObject, args: []const jsc.JSValue) ?jsc.JSValue {
             if (self.get()) |callback| {
                 return callback.call(globalObject, args);
             }

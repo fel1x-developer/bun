@@ -1,4 +1,4 @@
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const bun = @import("root").bun;
 const string = bun.string;
 const std = @import("std");
@@ -23,7 +23,7 @@ fn _getSystem() type {
 const Environment = bun.Environment;
 const system = _getSystem();
 
-const Maybe = JSC.Maybe;
+const Maybe = jsc.Maybe;
 
 const fd_t = std.posix.fd_t;
 const pid_t = std.posix.pid_t;
@@ -420,7 +420,7 @@ pub const PosixSpawn = struct {
                 },
                 .INTR => continue,
 
-                else => return JSC.Maybe(WaitPidResult).errnoSys(rc, .waitpid).?,
+                else => return jsc.Maybe(WaitPidResult).errnoSys(rc, .waitpid).?,
             }
         }
     }
@@ -440,7 +440,7 @@ pub const PosixSpawn = struct {
                 },
                 .INTR => continue,
 
-                else => return JSC.Maybe(WaitPidResult).errnoSys(rc, .waitpid).?,
+                else => return jsc.Maybe(WaitPidResult).errnoSys(rc, .waitpid).?,
             }
         }
     }

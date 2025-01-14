@@ -65,7 +65,7 @@ pub const Waker = struct {
     const zeroed = std.mem.zeroes([16]Kevent64);
 
     pub fn wake(this: *Waker) void {
-        bun.JSC.markBinding(@src());
+        bun.jsc.markBinding(@src());
 
         if (io_darwin_schedule_wakeup(this.machport)) {
             this.has_pending_wake = false;
@@ -79,7 +79,7 @@ pub const Waker = struct {
     }
 
     pub fn wait(this: Waker) void {
-        bun.JSC.markBinding(@src());
+        bun.jsc.markBinding(@src());
         var events = zeroed;
 
         _ = std.posix.system.kevent64(
@@ -109,7 +109,7 @@ pub const Waker = struct {
     }
 
     pub fn initWithFileDescriptor(allocator: std.mem.Allocator, kq: i32) !Waker {
-        bun.JSC.markBinding(@src());
+        bun.jsc.markBinding(@src());
         assert(kq > -1);
         const machport_buf = try allocator.alloc(u8, 1024);
         const machport = io_darwin_create_machport(
@@ -132,7 +132,7 @@ pub const Waker = struct {
 //     ident: u64 = undefined,
 
 //     pub fn wake(this: UserFilterWaker) !void {
-//         bun.JSC.markBinding(@src());
+//         bun.jsc.markBinding(@src());
 //         var events = zeroed;
 //         events[0].ident = this.ident;
 //         events[0].filter = c.EVFILT_USER;

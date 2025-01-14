@@ -42,7 +42,7 @@ configuration_hash_key: [16]u8,
 /// The virtual machine (global object) to execute code in.
 vm: *VirtualMachine,
 /// May be `null` if not attached to an HTTP server yet.
-server: ?bun.JSC.API.AnyServer,
+server: ?bun.jsc.API.AnyServer,
 /// Contains the tree of routes. This structure contains FileIndex
 router: FrameworkRouter,
 /// Every navigatable route has bundling state here.
@@ -79,11 +79,11 @@ bundling_failures: std.ArrayHashMapUnmanaged(
 
 // These values are handles to the functions in `hmr-runtime-server.ts`.
 // For type definitions, see `./bake.private.d.ts`
-server_fetch_function_callback: JSC.Strong,
-server_register_update_callback: JSC.Strong,
+server_fetch_function_callback: jsc.Strong,
+server_register_update_callback: jsc.Strong,
 
 // Watching
-bun_watcher: *JSC.Watcher,
+bun_watcher: *jsc.Watcher,
 directory_watchers: DirectoryWatchStore,
 watcher_atomics: WatcherAtomics,
 
@@ -171,13 +171,13 @@ pub const RouteBundle = struct {
 
     /// Cached to avoid re-creating the array every request.
     /// Invalidated when a layout is added or removed from this route.
-    cached_module_list: JSC.Strong,
+    cached_module_list: jsc.Strong,
     /// Cached to avoid re-creating the string every request.
     /// Invalidated when any client file associated with the route is updated.
-    cached_client_bundle_url: JSC.Strong,
+    cached_client_bundle_url: jsc.Strong,
     /// Cached to avoid re-creating the array every request.
     /// Invalidated when the list of CSS files changes.
-    cached_css_file_array: JSC.Strong,
+    cached_css_file_array: jsc.Strong,
 
     /// Reference count of how many HmrSockets say they are on this route. This
     /// allows hot-reloading events to reduce the amount of times it traces the
@@ -466,10 +466,10 @@ fn initServerRuntime(dev: *DevServer) void {
     const fetch_function = interface.get(dev.vm.global, "handleRequest") catch null orelse
         @panic("Internal assertion failure: expected interface from HMR runtime to contain handleRequest");
     bun.assert(fetch_function.isCallable(dev.vm.jsc));
-    dev.server_fetch_function_callback = JSC.Strong.create(fetch_function, dev.vm.global);
+    dev.server_fetch_function_callback = jsc.Strong.create(fetch_function, dev.vm.global);
     const register_update = interface.get(dev.vm.global, "registerUpdate") catch null orelse
         @panic("Internal assertion failure: expected interface from HMR runtime to contain registerUpdate");
-    dev.server_register_update_callback = JSC.Strong.create(register_update, dev.vm.global);
+    dev.server_register_update_callback = jsc.Strong.create(register_update, dev.vm.global);
 
     fetch_function.ensureStillAlive();
     register_update.ensureStillAlive();
@@ -488,7 +488,7 @@ fn scanInitialRoutes(dev: *DevServer) !void {
 }
 
 pub fn attachRoutes(dev: *DevServer, server: anytype) !void {
-    dev.server = bun.JSC.API.AnyServer.from(server);
+    dev.server = bun.jsc.API.AnyServer.from(server);
     const app = server.app.?;
 
     // For this to work, the route handlers need to be augmented to use the comptime
@@ -742,7 +742,7 @@ fn appendRouteEntryPointsIfNotStale(dev: *DevServer, entry_points: *EntryPointLi
 fn onRequestWithBundle(
     dev: *DevServer,
     route_bundle_index: RouteBundle.Index,
-    req: bun.JSC.API.SavedRequest.Union,
+    req: bun.jsc.API.SavedRequest.Union,
     resp: *Response,
 ) void {
     const server_request_callback = dev.server_fetch_function_callback.get() orelse
@@ -764,7 +764,7 @@ fn onRequestWithBundle(
                 const str = bun.String.createUTF8(dev.relativePath(name));
                 defer str.deref();
                 const js = str.toJS(dev.vm.global);
-                router_type.server_file_string = JSC.Strong.create(js, dev.vm.global);
+                router_type.server_file_string = jsc.Strong.create(js, dev.vm.global);
                 break :str js;
             },
             // routeModules
@@ -790,7 +790,7 @@ fn onRequestWithBundle(
                     }
                     route = dev.router.routePtr(route.parent.unwrap() orelse break);
                 }
-                route_bundle.cached_module_list = JSC.Strong.create(arr, global);
+                route_bundle.cached_module_list = jsc.Strong.create(arr, global);
                 break :arr arr;
             },
             // clientId
@@ -806,13 +806,13 @@ fn onRequestWithBundle(
                 const str = bun.String.createFormat(client_prefix ++ "/route.{}.js", .{std.fmt.fmtSliceHexLower(std.mem.asBytes(&id))}) catch bun.outOfMemory();
                 defer str.deref();
                 const js = str.toJS(dev.vm.global);
-                route_bundle.cached_client_bundle_url = JSC.Strong.create(js, dev.vm.global);
+                route_bundle.cached_client_bundle_url = jsc.Strong.create(js, dev.vm.global);
                 break :str js;
             },
             // styles
             route_bundle.cached_css_file_array.get() orelse arr: {
                 const js = dev.generateCssJSArray(route_bundle) catch bun.outOfMemory();
-                route_bundle.cached_css_file_array = JSC.Strong.create(js, dev.vm.global);
+                route_bundle.cached_css_file_array = jsc.Strong.create(js, dev.vm.global);
                 break :arr js;
             },
         },
@@ -837,7 +837,7 @@ pub fn onSrcRequest(dev: *DevServer, req: *uws.Request, resp: *App.Response) voi
     }
 
     const ctx = &dev.vm.rareData().editor_context;
-    ctx.autoDetectEditor(JSC.VirtualMachine.get().transpiler.env);
+    ctx.autoDetectEditor(jsc.VirtualMachine.get().transpiler.env);
     const line: ?[]const u8 = req.header("editor-line");
     const column: ?[]const u8 = req.header("editor-column");
 
@@ -864,7 +864,7 @@ const DeferredRequest = struct {
     data: Data,
 
     const Data = union(enum) {
-        server_handler: bun.JSC.API.SavedRequest,
+        server_handler: bun.jsc.API.SavedRequest,
         js_payload: *Response,
 
         const Tag = @typeInfo(Data).Union.tag_type.?;
@@ -909,7 +909,7 @@ fn startAsyncBundle(
         allocator,
         .{ .js = dev.vm.eventLoop() },
         false, // reloading is handled separately
-        JSC.WorkPool.get(),
+        jsc.WorkPool.get(),
         heap,
     );
     bv2.bun_watcher = dev.bun_watcher;
@@ -1031,7 +1031,7 @@ fn generateClientBundle(dev: *DevServer, route_bundle: *RouteBundle) bun.OOM![]c
     );
 }
 
-fn generateCssJSArray(dev: *DevServer, route_bundle: *RouteBundle) bun.OOM!JSC.JSValue {
+fn generateCssJSArray(dev: *DevServer, route_bundle: *RouteBundle) bun.OOM!jsc.JSValue {
     if (Environment.allow_assert) assert(!route_bundle.cached_css_file_array.has());
     assert(route_bundle.server_state == .loaded); // page is unfit to load
 
@@ -1050,7 +1050,7 @@ fn generateCssJSArray(dev: *DevServer, route_bundle: *RouteBundle) bun.OOM!JSC.J
     try dev.traceAllRouteImports(route_bundle, &gts, .{ .find_css = true });
 
     const names = dev.client_graph.current_css_files.items;
-    const arr = JSC.JSArray.createEmpty(dev.vm.global, names.len);
+    const arr = jsc.JSArray.createEmpty(dev.vm.global, names.len);
     for (names, 0..) |item, i| {
         const str = bun.String.createUTF8(item);
         defer str.deref();
@@ -1083,9 +1083,9 @@ fn traceAllRouteImports(dev: *DevServer, route_bundle: *RouteBundle, gts: *Graph
     }
 }
 
-fn makeArrayForServerComponentsPatch(dev: *DevServer, global: *JSC.JSGlobalObject, items: []const IncrementalGraph(.server).FileIndex) JSValue {
+fn makeArrayForServerComponentsPatch(dev: *DevServer, global: *jsc.JSGlobalObject, items: []const IncrementalGraph(.server).FileIndex) JSValue {
     if (items.len == 0) return .null;
-    const arr = JSC.JSArray.createEmpty(global, items.len);
+    const arr = jsc.JSArray.createEmpty(global, items.len);
     const names = dev.server_graph.bundled_files.keys();
     for (items, 0..) |item, i| {
         const str = bun.String.createUTF8(dev.relativePath(names[item.get()]));
@@ -3153,7 +3153,7 @@ const DirectoryWatchStore = struct {
         const specifier_cloned = try dev.allocator.dupe(u8, specifier);
         errdefer dev.allocator.free(specifier_cloned);
 
-        const watch_index = switch (dev.bun_watcher.addDirectory(fd, dir_name, bun.JSC.GenericWatcher.getHash(dir_name), false)) {
+        const watch_index = switch (dev.bun_watcher.addDirectory(fd, dir_name, bun.jsc.GenericWatcher.getHash(dir_name), false)) {
             .err => return error.Ignore,
             .result => |id| id,
         };
@@ -3444,15 +3444,15 @@ pub const SerializedFailure = struct {
         try w.writeAll(data);
     }
 
-    // fn writeJsValue(value: JSValue, global: *JSC.JSGlobalObject, w: *Writer) !void {
+    // fn writeJsValue(value: JSValue, global: *jsc.JSGlobalObject, w: *Writer) !void {
     //     if (value.isAggregateError(global)) {
     //         //
     //     }
     //     if (value.jsType() == .DOMWrapper) {
-    //         if (value.as(JSC.BuildMessage)) |build_error| {
+    //         if (value.as(jsc.BuildMessage)) |build_error| {
     //             _ = build_error; // autofix
     //             //
-    //         } else if (value.as(JSC.ResolveMessage)) |resolve_error| {
+    //         } else if (value.as(jsc.ResolveMessage)) |resolve_error| {
     //             _ = resolve_error; // autofix
     //             @panic("TODO");
     //         }
@@ -3837,18 +3837,18 @@ const HmrSocket = struct {
 
 const c = struct {
     // BakeSourceProvider.cpp
-    extern fn BakeGetDefaultExportFromModule(global: *JSC.JSGlobalObject, module: JSValue) JSValue;
+    extern fn BakeGetDefaultExportFromModule(global: *jsc.JSGlobalObject, module: JSValue) JSValue;
 
-    fn BakeLoadServerHmrPatch(global: *JSC.JSGlobalObject, code: bun.String) !JSValue {
+    fn BakeLoadServerHmrPatch(global: *jsc.JSGlobalObject, code: bun.String) !JSValue {
         const f = @extern(
-            *const fn (*JSC.JSGlobalObject, bun.String) callconv(.C) JSValue.MaybeException,
+            *const fn (*jsc.JSGlobalObject, bun.String) callconv(.C) JSValue.MaybeException,
             .{ .name = "BakeLoadServerHmrPatch" },
         );
         return f(global, code).unwrap();
     }
 
-    fn BakeLoadInitialServerCode(global: *JSC.JSGlobalObject, code: bun.String, separate_ssr_graph: bool) bun.JSError!JSValue {
-        const f = @extern(*const fn (*JSC.JSGlobalObject, bun.String, bool) callconv(.C) JSValue.MaybeException, .{
+    fn BakeLoadInitialServerCode(global: *jsc.JSGlobalObject, code: bun.String, separate_ssr_graph: bool) bun.JSError!JSValue {
+        const f = @extern(*const fn (*jsc.JSGlobalObject, bun.String, bool) callconv(.C) JSValue.MaybeException, .{
             .name = "BakeLoadInitialServerCode",
         });
         return f(global, code, separate_ssr_graph).unwrap();
@@ -3912,7 +3912,7 @@ pub const HotReloadEvent = struct {
 
     owner: *DevServer,
     /// Initialized in WatcherAtomics.watcherReleaseAndSubmitEvent
-    concurrent_task: JSC.ConcurrentTask,
+    concurrent_task: jsc.ConcurrentTask,
     /// The watcher is not able to peek into the incremental graph to know what
     /// files to invalidate, so the watch events are de-duplicated and passed
     /// along.
@@ -4100,7 +4100,7 @@ const WatcherAtomics = struct {
                 ev.concurrent_task = .{
                     .auto_delete = false,
                     .next = null,
-                    .task = JSC.Task.init(ev),
+                    .task = jsc.Task.init(ev),
                 };
                 ev.contention_indicator.store(0, .seq_cst);
                 ev.owner.vm.event_loop.enqueueTaskConcurrent(&ev.concurrent_task);
@@ -4477,13 +4477,13 @@ const Response = App.Response;
 
 const MimeType = bun.http.MimeType;
 
-const JSC = bun.JSC;
-const Watcher = bun.JSC.Watcher;
-const JSValue = JSC.JSValue;
-const VirtualMachine = JSC.VirtualMachine;
-const JSModuleLoader = JSC.JSModuleLoader;
-const EventLoopHandle = JSC.EventLoopHandle;
-const JSInternalPromise = JSC.JSInternalPromise;
+const jsc = bun.jsc;
+const Watcher = bun.jsc.Watcher;
+const JSValue = jsc.JSValue;
+const VirtualMachine = jsc.VirtualMachine;
+const JSModuleLoader = jsc.JSModuleLoader;
+const EventLoopHandle = jsc.EventLoopHandle;
+const JSInternalPromise = jsc.JSInternalPromise;
 
 const ThreadlocalArena = @import("../allocators/mimalloc_arena.zig").Arena;
 const Chunk = bun.bundle_v2.Chunk;

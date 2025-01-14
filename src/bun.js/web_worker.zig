@@ -1,9 +1,9 @@
 const bun = @import("root").bun;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const Output = bun.Output;
 const log = Output.scoped(.Worker, true);
 const std = @import("std");
-const JSValue = JSC.JSValue;
+const JSValue = jsc.JSValue;
 const Async = bun.Async;
 const WTFStringImpl = @import("../string.zig").WTFStringImpl;
 
@@ -12,13 +12,13 @@ const Bool = std.atomic.Value(bool);
 /// Shared implementation of Web and Node `Worker`
 pub const WebWorker = struct {
     /// null when haven't started yet
-    vm: ?*JSC.VirtualMachine = null,
+    vm: ?*jsc.VirtualMachine = null,
     status: std.atomic.Value(Status) = std.atomic.Value(Status).init(.start),
     /// To prevent UAF, the `spin` function (aka the worker's event loop) will call deinit once this is set and properly exit the loop.
     requested_terminate: Bool = Bool.init(false),
     execution_context_id: u32 = 0,
     parent_context_id: u32 = 0,
-    parent: *JSC.VirtualMachine,
+    parent: *jsc.VirtualMachine,
 
     /// Already resolved.
     specifier: []const u8 = "",
@@ -45,11 +45,11 @@ pub const WebWorker = struct {
         terminated,
     };
 
-    extern fn WebWorker__dispatchExit(?*JSC.JSGlobalObject, *anyopaque, i32) void;
-    extern fn WebWorker__dispatchOnline(this: *anyopaque, *JSC.JSGlobalObject) void;
-    extern fn WebWorker__dispatchError(*JSC.JSGlobalObject, *anyopaque, bun.String, JSValue) void;
+    extern fn WebWorker__dispatchExit(?*jsc.JSGlobalObject, *anyopaque, i32) void;
+    extern fn WebWorker__dispatchOnline(this: *anyopaque, *jsc.JSGlobalObject) void;
+    extern fn WebWorker__dispatchError(*jsc.JSGlobalObject, *anyopaque, bun.String, JSValue) void;
 
-    export fn WebWorker__getParentWorker(vm: *JSC.VirtualMachine) ?*anyopaque {
+    export fn WebWorker__getParentWorker(vm: *jsc.VirtualMachine) ?*anyopaque {
         const worker = vm.worker orelse return null;
         return worker.cpp_worker;
     }
@@ -78,7 +78,7 @@ pub const WebWorker = struct {
     }
 
     fn resolveEntryPointSpecifier(
-        parent: *JSC.VirtualMachine,
+        parent: *jsc.VirtualMachine,
         str: []const u8,
         error_message: *bun.String,
         logger: *bun.logger.Log,
@@ -143,8 +143,8 @@ pub const WebWorker = struct {
             }
         }
 
-        if (JSC.WebCore.ObjectURLRegistry.isBlobURL(str)) {
-            if (JSC.WebCore.ObjectURLRegistry.singleton().has(str["blob:".len..])) {
+        if (jsc.WebCore.ObjectURLRegistry.isBlobURL(str)) {
+            if (jsc.WebCore.ObjectURLRegistry.singleton().has(str["blob:".len..])) {
                 return str;
             } else {
                 error_message.* = bun.String.static("Blob URL is missing");
@@ -167,7 +167,7 @@ pub const WebWorker = struct {
 
     pub fn create(
         cpp_worker: *void,
-        parent: *JSC.VirtualMachine,
+        parent: *jsc.VirtualMachine,
         name_str: bun.String,
         specifier_str: bun.String,
         error_message: *bun.String,
@@ -182,7 +182,7 @@ pub const WebWorker = struct {
         preload_modules_ptr: ?[*]bun.String,
         preload_modules_len: u32,
     ) callconv(.C) ?*WebWorker {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         log("[{d}] WebWorker.create", .{this_context_id});
         var spec_slice = specifier_str.toUTF8(bun.default_allocator);
         defer spec_slice.deinit();
@@ -272,7 +272,7 @@ pub const WebWorker = struct {
         assert(this.vm == null);
 
         this.arena = try bun.MimallocArena.init();
-        var vm = try JSC.VirtualMachine.initWorker(this, .{
+        var vm = try jsc.VirtualMachine.initWorker(this, .{
             .allocator = this.arena.?.allocator(),
             .args = this.parent.transpiler.options.transform_options,
             .store_fd = this.store_fd,
@@ -301,9 +301,9 @@ pub const WebWorker = struct {
 
         vm.loadExtraEnvAndSourceCodePrinter();
         vm.is_main_thread = false;
-        JSC.VirtualMachine.is_main_thread_vm = false;
+        jsc.VirtualMachine.is_main_thread_vm = false;
         vm.onUnhandledRejection = onUnhandledRejection;
-        const callback = JSC.OpaqueWrap(WebWorker, WebWorker.spin);
+        const callback = jsc.OpaqueWrap(WebWorker, WebWorker.spin);
 
         this.vm = vm;
 
@@ -324,7 +324,7 @@ pub const WebWorker = struct {
     }
 
     fn flushLogs(this: *WebWorker) void {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         var vm = this.vm orelse return;
         if (vm.log.msgs.items.len == 0) return;
         const err = vm.log.toJS(vm.global, bun.default_allocator, "Error in worker");
@@ -333,9 +333,9 @@ pub const WebWorker = struct {
         WebWorker__dispatchError(vm.global, this.cpp_worker, str, err);
     }
 
-    fn onUnhandledRejection(vm: *JSC.VirtualMachine, globalObject: *JSC.JSGlobalObject, error_instance_or_exception: JSC.JSValue) void {
+    fn onUnhandledRejection(vm: *jsc.VirtualMachine, globalObject: *jsc.JSGlobalObject, error_instance_or_exception: jsc.JSValue) void {
         // Prevent recursion
-        vm.onUnhandledRejection = &JSC.VirtualMachine.onQuietUnhandledRejectionHandlerCaptureValue;
+        vm.onUnhandledRejection = &jsc.VirtualMachine.onQuietUnhandledRejectionHandlerCaptureValue;
 
         var error_instance = error_instance_or_exception.toError() orelse error_instance_or_exception;
 
@@ -350,10 +350,10 @@ pub const WebWorker = struct {
         const Writer = @TypeOf(writer);
         // we buffer this because it'll almost always be < 4096
         // when it's under 4096, we want to avoid the dynamic allocation
-        bun.JSC.ConsoleObject.format2(
+        bun.jsc.ConsoleObject.format2(
             .Debug,
             globalObject,
-            &[_]JSC.JSValue{error_instance},
+            &[_]jsc.JSValue{error_instance},
             1,
             Writer,
             Writer,
@@ -374,7 +374,7 @@ pub const WebWorker = struct {
         buffered_writer.flush() catch {
             bun.outOfMemory();
         };
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         WebWorker__dispatchError(globalObject, worker.cpp_worker, bun.String.createUTF8(array.slice()), error_instance);
         if (vm.worker) |worker_| {
             _ = worker.setRequestedTerminate();
@@ -494,15 +494,15 @@ pub const WebWorker = struct {
     /// Only call after the VM is initialized AND on the same thread as the worker.
     /// Otherwise, call `requestTerminate` to cause the event loop to safely terminate after the next tick.
     pub fn exitAndDeinit(this: *WebWorker) noreturn {
-        JSC.markBinding(@src());
+        jsc.markBinding(@src());
         this.setStatus(.terminated);
         bun.Analytics.Features.workers_terminated += 1;
 
         log("[{d}] exitAndDeinit", .{this.execution_context_id});
         const cpp_worker = this.cpp_worker;
         var exit_code: i32 = 0;
-        var globalObject: ?*JSC.JSGlobalObject = null;
-        var vm_to_deinit: ?*JSC.VirtualMachine = null;
+        var globalObject: ?*jsc.JSGlobalObject = null;
+        var vm_to_deinit: ?*jsc.VirtualMachine = null;
         var loop: ?*bun.uws.Loop = null;
         if (this.vm) |vm| {
             loop = vm.uwsLoop();
@@ -535,7 +535,7 @@ pub const WebWorker = struct {
     }
 
     comptime {
-        if (!JSC.is_bindgen) {
+        if (!jsc.is_bindgen) {
             @export(create, .{ .name = "WebWorker__create" });
             @export(requestTerminate, .{ .name = "WebWorker__requestTerminate" });
             @export(setRef, .{ .name = "WebWorker__setRef" });

@@ -2280,20 +2280,20 @@ pub const PackCommand = struct {
 };
 
 pub const bindings = struct {
-    const JSC = bun.JSC;
-    const JSValue = JSC.JSValue;
-    const JSGlobalObject = JSC.JSGlobalObject;
-    const CallFrame = JSC.CallFrame;
-    const ZigString = JSC.ZigString;
+    const jsc = bun.jsc;
+    const JSValue = jsc.JSValue;
+    const JSGlobalObject = jsc.JSGlobalObject;
+    const CallFrame = jsc.CallFrame;
+    const ZigString = jsc.ZigString;
     const String = bun.String;
-    const JSArray = JSC.JSArray;
-    const JSObject = JSC.JSObject;
+    const JSArray = jsc.JSArray;
+    const JSObject = jsc.JSObject;
 
     // pub fn generate(global: *JSGlobalObject) JSValue {
     //     const obj = JSValue.createEmptyObject(global, 1);
 
     //     const readTarEntries = ZigString.static("readTarEntries");
-    //     obj.put(global, readTarEntries, JSC.createCallback(global, readTarEntries, 1, jsReadTarEntries));
+    //     obj.put(global, readTarEntries, jsc.createCallback(global, readTarEntries, 1, jsReadTarEntries));
     //     return obj;
     // }
 

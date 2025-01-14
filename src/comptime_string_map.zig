@@ -1,4 +1,4 @@
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const std = @import("std");
 const bun = @import("root").bun;
 const mem = std.mem;
@@ -166,7 +166,7 @@ pub fn ComptimeStringMapWithKeyType(comptime KeyType: type, comptime V: type, co
         }
 
         /// Caller must ensure that the input is a string.
-        pub fn fromJS(globalThis: *JSC.JSGlobalObject, input: JSC.JSValue) ?V {
+        pub fn fromJS(globalThis: *jsc.JSGlobalObject, input: jsc.JSValue) ?V {
             if (comptime bun.Environment.allow_assert) {
                 if (!input.isString()) {
                     @panic("ComptimeStringMap.fromJS: input is not a string");
@@ -180,7 +180,7 @@ pub fn ComptimeStringMapWithKeyType(comptime KeyType: type, comptime V: type, co
         }
 
         /// Caller must ensure that the input is a string.
-        pub fn fromJSCaseInsensitive(globalThis: *JSC.JSGlobalObject, input: JSC.JSValue) ?V {
+        pub fn fromJSCaseInsensitive(globalThis: *jsc.JSGlobalObject, input: jsc.JSValue) ?V {
             if (comptime bun.Environment.allow_assert) {
                 if (!input.isString()) {
                     @panic("ComptimeStringMap.fromJS: input is not a string");

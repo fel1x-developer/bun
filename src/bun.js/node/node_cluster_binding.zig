@@ -1,18 +1,18 @@
 const std = @import("std");
 const bun = @import("root").bun;
 const Environment = bun.Environment;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const string = bun.string;
 const Output = bun.Output;
-const ZigString = JSC.ZigString;
+const ZigString = jsc.ZigString;
 const log = Output.scoped(.IPC, false);
 
-extern fn Bun__Process__queueNextTick1(*JSC.JSGlobalObject, JSC.JSValue, JSC.JSValue) void;
-extern fn Process__emitErrorEvent(global: *JSC.JSGlobalObject, value: JSC.JSValue) void;
+extern fn Bun__Process__queueNextTick1(*jsc.JSGlobalObject, jsc.JSValue, jsc.JSValue) void;
+extern fn Process__emitErrorEvent(global: *jsc.JSGlobalObject, value: jsc.JSValue) void;
 
 pub var child_singleton: InternalMsgHolder = .{};
 
-pub fn sendHelperChild(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn sendHelperChild(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     log("sendHelperChild", .{});
 
     const arguments = callframe.arguments_old(3).ptr;
@@ -35,21 +35,21 @@ pub fn sendHelperChild(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFram
         return globalThis.throwInvalidArgumentTypeValue("message", "object", message);
     }
     if (callback.isFunction()) {
-        child_singleton.callbacks.put(bun.default_allocator, child_singleton.seq, JSC.Strong.create(callback, globalThis)) catch bun.outOfMemory();
+        child_singleton.callbacks.put(bun.default_allocator, child_singleton.seq, jsc.Strong.create(callback, globalThis)) catch bun.outOfMemory();
     }
 
     // sequence number for InternalMsgHolder
-    message.put(globalThis, ZigString.static("seq"), JSC.JSValue.jsNumber(child_singleton.seq));
+    message.put(globalThis, ZigString.static("seq"), jsc.JSValue.jsNumber(child_singleton.seq));
     child_singleton.seq +%= 1;
 
     // similar code as Bun__Process__send
-    var formatter = JSC.ConsoleObject.Formatter{ .globalThis = globalThis };
+    var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis };
     if (Environment.isDebug) log("child: {}", .{message.toFmt(&formatter)});
 
     const ipc_instance = vm.getIPCInstance().?;
 
     const S = struct {
-        fn impl(globalThis_: *JSC.JSGlobalObject, callframe_: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+        fn impl(globalThis_: *jsc.JSGlobalObject, callframe_: *jsc.CallFrame) bun.JSError!jsc.JSValue {
             const arguments_ = callframe_.arguments_old(1).slice();
             const ex = arguments_[0];
             Process__emitErrorEvent(globalThis_, ex);
@@ -62,7 +62,7 @@ pub fn sendHelperChild(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFram
     if (!good) {
         const ex = globalThis.createTypeErrorInstance("sendInternal() failed", .{});
         ex.put(globalThis, ZigString.static("syscall"), bun.String.static("write").toJS(globalThis));
-        const fnvalue = JSC.JSFunction.create(globalThis, "", S.impl, 1, .{});
+        const fnvalue = jsc.JSFunction.create(globalThis, "", S.impl, 1, .{});
         Bun__Process__queueNextTick1(globalThis, fnvalue, ex);
         return .false;
     }
@@ -70,16 +70,16 @@ pub fn sendHelperChild(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFram
     return .true;
 }
 
-pub fn onInternalMessageChild(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn onInternalMessageChild(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     log("onInternalMessageChild", .{});
     const arguments = callframe.arguments_old(2).ptr;
-    child_singleton.worker = JSC.Strong.create(arguments[0], globalThis);
-    child_singleton.cb = JSC.Strong.create(arguments[1], globalThis);
+    child_singleton.worker = jsc.Strong.create(arguments[0], globalThis);
+    child_singleton.cb = jsc.Strong.create(arguments[1], globalThis);
     try child_singleton.flush(globalThis);
     return .undefined;
 }
 
-pub fn handleInternalMessageChild(globalThis: *JSC.JSGlobalObject, message: JSC.JSValue) bun.JSError!void {
+pub fn handleInternalMessageChild(globalThis: *jsc.JSGlobalObject, message: jsc.JSValue) bun.JSError!void {
     log("handleInternalMessageChild", .{});
 
     try child_singleton.dispatch(message, globalThis);
@@ -94,23 +94,23 @@ pub fn handleInternalMessageChild(globalThis: *JSC.JSGlobalObject, message: JSC.
 /// when a message is recieved with an 'ack' property of the same sequence number.
 pub const InternalMsgHolder = struct {
     seq: i32 = 0,
-    callbacks: std.AutoArrayHashMapUnmanaged(i32, JSC.Strong) = .{},
+    callbacks: std.AutoArrayHashMapUnmanaged(i32, jsc.Strong) = .{},
 
-    worker: JSC.Strong = .{},
-    cb: JSC.Strong = .{},
-    messages: std.ArrayListUnmanaged(JSC.Strong) = .{},
+    worker: jsc.Strong = .{},
+    cb: jsc.Strong = .{},
+    messages: std.ArrayListUnmanaged(jsc.Strong) = .{},
 
     pub fn isReady(this: *InternalMsgHolder) bool {
         return this.worker.has() and this.cb.has();
     }
 
-    pub fn enqueue(this: *InternalMsgHolder, message: JSC.JSValue, globalThis: *JSC.JSGlobalObject) void {
+    pub fn enqueue(this: *InternalMsgHolder, message: jsc.JSValue, globalThis: *jsc.JSGlobalObject) void {
         //TODO: .addOne is workaround for .append causing crash/ dependency loop in zig compiler
         const new_item_ptr = this.messages.addOne(bun.default_allocator) catch bun.outOfMemory();
-        new_item_ptr.* = JSC.Strong.create(message, globalThis);
+        new_item_ptr.* = jsc.Strong.create(message, globalThis);
     }
 
-    pub fn dispatch(this: *InternalMsgHolder, message: JSC.JSValue, globalThis: *JSC.JSGlobalObject) bun.JSError!void {
+    pub fn dispatch(this: *InternalMsgHolder, message: jsc.JSValue, globalThis: *jsc.JSGlobalObject) bun.JSError!void {
         if (!this.isReady()) {
             this.enqueue(message, globalThis);
             return;
@@ -118,7 +118,7 @@ pub const InternalMsgHolder = struct {
         try this.dispatchUnsafe(message, globalThis);
     }
 
-    fn dispatchUnsafe(this: *InternalMsgHolder, message: JSC.JSValue, globalThis: *JSC.JSGlobalObject) bun.JSError!void {
+    fn dispatchUnsafe(this: *InternalMsgHolder, message: jsc.JSValue, globalThis: *jsc.JSGlobalObject) bun.JSError!void {
         const cb = this.cb.get().?;
         const worker = this.worker.get().?;
 
@@ -148,7 +148,7 @@ pub const InternalMsgHolder = struct {
         });
     }
 
-    pub fn flush(this: *InternalMsgHolder, globalThis: *JSC.JSGlobalObject) bun.JSError!void {
+    pub fn flush(this: *InternalMsgHolder, globalThis: *jsc.JSGlobalObject) bun.JSError!void {
         bun.assert(this.isReady());
         var messages = this.messages;
         this.messages = .{};
@@ -171,11 +171,11 @@ pub const InternalMsgHolder = struct {
     }
 };
 
-pub fn sendHelperPrimary(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn sendHelperPrimary(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     log("sendHelperPrimary", .{});
 
     const arguments = callframe.arguments_old(4).ptr;
-    const subprocess = arguments[0].as(bun.JSC.Subprocess).?;
+    const subprocess = arguments[0].as(bun.jsc.Subprocess).?;
     const message = arguments[1];
     const handle = arguments[2];
     const callback = arguments[3];
@@ -189,15 +189,15 @@ pub fn sendHelperPrimary(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFr
         return globalThis.throwInvalidArgumentTypeValue("message", "object", message);
     }
     if (callback.isFunction()) {
-        ipc_data.internal_msg_queue.callbacks.put(bun.default_allocator, ipc_data.internal_msg_queue.seq, JSC.Strong.create(callback, globalThis)) catch bun.outOfMemory();
+        ipc_data.internal_msg_queue.callbacks.put(bun.default_allocator, ipc_data.internal_msg_queue.seq, jsc.Strong.create(callback, globalThis)) catch bun.outOfMemory();
     }
 
     // sequence number for InternalMsgHolder
-    message.put(globalThis, ZigString.static("seq"), JSC.JSValue.jsNumber(ipc_data.internal_msg_queue.seq));
+    message.put(globalThis, ZigString.static("seq"), jsc.JSValue.jsNumber(ipc_data.internal_msg_queue.seq));
     ipc_data.internal_msg_queue.seq +%= 1;
 
-    // similar code as bun.JSC.Subprocess.doSend
-    var formatter = JSC.ConsoleObject.Formatter{ .globalThis = globalThis };
+    // similar code as bun.jsc.Subprocess.doSend
+    var formatter = jsc.ConsoleObject.Formatter{ .globalThis = globalThis };
     if (Environment.isDebug) log("primary: {}", .{message.toFmt(&formatter)});
 
     _ = handle;
@@ -207,16 +207,16 @@ pub fn sendHelperPrimary(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFr
     return .true;
 }
 
-pub fn onInternalMessagePrimary(globalThis: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn onInternalMessagePrimary(globalThis: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(3).ptr;
-    const subprocess = arguments[0].as(bun.JSC.Subprocess).?;
+    const subprocess = arguments[0].as(bun.jsc.Subprocess).?;
     const ipc_data = subprocess.ipc() orelse return .undefined;
-    ipc_data.internal_msg_queue.worker = JSC.Strong.create(arguments[1], globalThis);
-    ipc_data.internal_msg_queue.cb = JSC.Strong.create(arguments[2], globalThis);
+    ipc_data.internal_msg_queue.worker = jsc.Strong.create(arguments[1], globalThis);
+    ipc_data.internal_msg_queue.cb = jsc.Strong.create(arguments[2], globalThis);
     return .undefined;
 }
 
-pub fn handleInternalMessagePrimary(globalThis: *JSC.JSGlobalObject, subprocess: *JSC.Subprocess, message: JSC.JSValue) bun.JSError!void {
+pub fn handleInternalMessagePrimary(globalThis: *jsc.JSGlobalObject, subprocess: *jsc.Subprocess, message: jsc.JSValue) bun.JSError!void {
     const ipc_data = subprocess.ipc() orelse return;
 
     const event_loop = globalThis.bunVM().eventLoop();
@@ -249,9 +249,9 @@ pub fn handleInternalMessagePrimary(globalThis: *JSC.JSGlobalObject, subprocess:
 //
 //
 
-extern fn Bun__setChannelRef(*JSC.JSGlobalObject, bool) void;
+extern fn Bun__setChannelRef(*jsc.JSGlobalObject, bool) void;
 
-pub fn setRef(globalObject: *JSC.JSGlobalObject, callframe: *JSC.CallFrame) bun.JSError!JSC.JSValue {
+pub fn setRef(globalObject: *jsc.JSGlobalObject, callframe: *jsc.CallFrame) bun.JSError!jsc.JSValue {
     const arguments = callframe.arguments_old(1).ptr;
 
     if (arguments.len == 0) {

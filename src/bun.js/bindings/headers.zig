@@ -1,5 +1,5 @@
 const bun = @import("root").bun;
-const bindings = bun.JSC;
+const bindings = bun.jsc;
 pub const struct_JSC__CallFrame = bindings.CallFrame;
 pub const struct_JSC__StringPrototype = bindings.StringPrototype;
 pub const struct_JSC__SetIteratorPrototype = bindings.SetIteratorPrototype;
@@ -183,7 +183,7 @@ pub extern fn JSC__JSMap__get_(arg0: ?*bindings.Map, arg1: *bindings.JSGlobalObj
 pub extern fn JSC__JSMap__has(arg0: ?*bindings.Map, arg1: *bindings.JSGlobalObject, JSValue2: JSC__JSValue) bool;
 pub extern fn JSC__JSMap__remove(arg0: ?*bindings.Map, arg1: *bindings.JSGlobalObject, JSValue2: JSC__JSValue) bool;
 pub extern fn JSC__JSMap__set(arg0: ?*bindings.Map, arg1: *bindings.JSGlobalObject, JSValue2: JSC__JSValue, JSValue3: JSC__JSValue) void;
-pub extern fn JSC__JSValue___then(JSValue0: JSC__JSValue, arg1: *bindings.JSGlobalObject, JSValue2: JSC__JSValue, ArgFn3: ?bun.JSC.JSHostFunctionPtr, ArgFn4: ?bun.JSC.JSHostFunctionPtr) void;
+pub extern fn JSC__JSValue___then(JSValue0: JSC__JSValue, arg1: *bindings.JSGlobalObject, JSValue2: JSC__JSValue, ArgFn3: ?bun.jsc.JSHostFunctionPtr, ArgFn4: ?bun.jsc.JSHostFunctionPtr) void;
 pub extern fn JSC__JSValue__asArrayBuffer_(JSValue0: JSC__JSValue, arg1: *bindings.JSGlobalObject, arg2: ?*Bun__ArrayBuffer) bool;
 pub extern fn JSC__JSValue__asBigIntCompare(JSValue0: JSC__JSValue, arg1: *bindings.JSGlobalObject, JSValue2: JSC__JSValue) u8;
 pub extern fn JSC__JSValue__asCell(JSValue0: JSC__JSValue) [*c]bindings.JSCell;

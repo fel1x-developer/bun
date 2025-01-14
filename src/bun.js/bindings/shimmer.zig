@@ -120,11 +120,11 @@ pub fn Shimmer(comptime _namespace: []const u8, comptime _name: []const u8, comp
                         @compileError("Expected " ++ @typeName(Parent) ++ "." ++ @typeName(Function) ++ " to be a function but received " ++ @tagName(@typeInfo(Function)));
                     }
                     const Fn: std.builtin.Type.Fn = @typeInfo(Function).Fn;
-                    if (Function == bun.JSC.JSHostFunctionTypeWithCCallConvForAssertions and bun.JSC.conv != .C) {
-                        @compileError("Expected " ++ bun.meta.typeName(Function) ++ " to have a JSC.conv Calling Convention.");
-                    } else if (Function == bun.JSC.JSHostFunctionType) {
+                    if (Function == bun.jsc.JSHostFunctionTypeWithCCallConvForAssertions and bun.jsc.conv != .C) {
+                        @compileError("Expected " ++ bun.meta.typeName(Function) ++ " to have a jsc.conv Calling Convention.");
+                    } else if (Function == bun.jsc.JSHostFunctionType) {
                         //
-                    } else if (Function == bun.JSC.JSHostZigFunction) {
+                    } else if (Function == bun.jsc.JSHostZigFunction) {
                         //
                     } else if (Fn.calling_convention != .C) {
                         @compileError("Expected " ++ @typeName(Parent) ++ "." ++ @typeName(Function) ++ " to have a C Calling Convention.");

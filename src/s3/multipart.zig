@@ -3,7 +3,7 @@ const bun = @import("root").bun;
 const strings = bun.strings;
 const S3Credentials = @import("./credentials.zig").S3Credentials;
 const ACL = @import("./acl.zig").ACL;
-const JSC = bun.JSC;
+const jsc = bun.jsc;
 const MultiPartUploadOptions = @import("./multipart_options.zig").MultiPartUploadOptions;
 const S3SimpleRequest = @import("./simple_request.zig");
 const executeSimpleS3Request = S3SimpleRequest.executeSimpleS3Request;
@@ -27,8 +27,8 @@ pub const MultiPartUpload = struct {
     acl: ?ACL = null,
     credentials: *S3Credentials,
     poll_ref: bun.Async.KeepAlive = bun.Async.KeepAlive.init(),
-    vm: *JSC.VirtualMachine,
-    globalThis: *JSC.JSGlobalObject,
+    vm: *jsc.VirtualMachine,
+    globalThis: *jsc.JSGlobalObject,
 
     buffered: std.ArrayListUnmanaged(u8) = .{},
     offset: usize = 0,
