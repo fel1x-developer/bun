@@ -25,7 +25,7 @@ At its core is the _Bun runtime_, a fast JavaScript runtime designed as a drop-i
 - Test runner codelens
 - Debugger support
 - Run scripts from package.json
-- Visual lockfile viewer (`bun.lockb`)
+- Visual binary lockfile viewer (`bun.lockb`)
 
 ## In-editor error messages
 
